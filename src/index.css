@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+  }
+  *:focus-visible {
+    @apply outline-none ring-2 ring-jata-500 ring-offset-2 ring-offset-white;
+  }
+}
+
+@layer components {
+  /* ── Kawalan borang ──────────────────────────────────────────── */
+  .medan {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm
+           text-slate-900 shadow-sm transition
+           placeholder:text-slate-400
+           focus:border-jata-500 focus:ring-2 focus:ring-jata-500/20
+           disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+  .nota {
+    @apply mt-1 text-xs leading-relaxed text-slate-500;
+  }
+
+  /* ── Butang ──────────────────────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2
+           text-sm font-medium transition
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-utama {
+    @apply btn bg-jata-600 text-white shadow-sm hover:bg-jata-700 active:bg-jata-800;
+  }
+  .btn-kedua {
+    @apply btn border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50;
+  }
+  .btn-hijau {
+    @apply btn bg-emerald-600 text-white shadow-sm hover:bg-emerald-700;
+  }
+  .btn-jingga {
+    @apply btn bg-orange-500 text-white shadow-sm hover:bg-orange-600;
+  }
+  .btn-merah {
+    @apply btn bg-rose-600 text-white shadow-sm hover:bg-rose-700;
+  }
+  .btn-halus {
+    @apply btn text-slate-600 hover:bg-slate-100;
+  }
+
+  /* ── Susun atur ──────────────────────────────────────────────── */
+  .kad {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+  .kad-tajuk {
+    @apply border-b border-slate-200 px-5 py-4;
+  }
+  .kad-isi {
+    @apply px-5 py-4;
+  }
+  .lencana {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs
+           font-medium ring-1 ring-inset;
+  }
+  .jadual {
+    @apply w-full border-collapse text-sm;
+  }
+  .jadual th {
+    @apply border-b border-slate-200 bg-slate-50 px-3 py-2.5 text-left
+           text-xs font-semibold uppercase tracking-wide text-slate-600;
+  }
+  .jadual td {
+    @apply border-b border-slate-100 px-3 py-2.5 align-top;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Lembaran gaya cetak
+   Menu dan bar sistem hilang automatik; kertas menjadi A4 bersih
+   yang menyerupai borang rasmi.
+   ══════════════════════════════════════════════════════════════════ */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 14mm 16mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    font-size: 10.5pt;
+    color: #000;
+  }
+
+  .tanpa-cetak,
+  header.app-bar,
+  nav.app-nav,
+  footer.app-kaki {
+    display: none !important;
+  }
+
+  .halaman-cetak {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+  }
+
+  .pecah-halaman {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .elak-pecah {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: '';
+  }
+
+  table {
+    border-collapse: collapse !important;
+  }
+  thead {
+    display: table-header-group;
+  }
+}
+
+/* Borang rasmi — dipakai pada skrin dan kertas */
+.borang-rasmi {
+  font-family: 'Times New Roman', Georgia, serif;
+  color: #000;
+  line-height: 1.45;
+}
+.borang-rasmi table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.borang-rasmi td,
+.borang-rasmi th {
+  border: 1px solid #000;
+  padding: 4px 6px;
+  vertical-align: top;
+  font-size: 10.5pt;
+}
+.borang-rasmi th {
+  background: #f1f1f1;
+  text-align: left;
+  font-weight: 700;
+}
+.borang-rasmi .tajuk-bahagian {
+  background: #e4e4e4;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.borang-rasmi .kotak-pangkah {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1px solid #000;
+  text-align: center;
+  line-height: 11px;
+  font-size: 10pt;
+  margin-right: 4px;
+}
+.borang-rasmi .garis-tandatangan {
+  border-top: 1px solid #000;
+  margin-top: 46px;
+  padding-top: 3px;
+  font-size: 9.5pt;
+}

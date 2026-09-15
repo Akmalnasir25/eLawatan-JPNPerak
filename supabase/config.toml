@@ -1,0 +1,69 @@
+project_id = "elawatan-perak"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:5173"
+additional_redirect_urls = ["http://127.0.0.1:5173", "http://localhost:5173"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+secure_password_change = true
+# OTP 6 digit, sah selama 10 minit
+otp_length = 6
+otp_expiry = 600
+max_frequency = "60s"
+
+[auth.email.template.magic_link]
+subject = "Kod pengesahan eLAWATAN Perak"
+content_path = "./templates/otp.html"
+
+# Google OIDC — dimatikan buat masa ini.
+# Hidupkan apabila Client ID DELIMa diperoleh, dan hadkan domain
+# di peringkat penyedia identiti (hd=moe-dl.edu.my).
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = ""
+skip_nonce_check = false
+
+[storage]
+enabled = false   # Dokumen disimpan dalam Cloudflare R2, bukan Supabase Storage.
+
+[edge_runtime]
+enabled = true
+policy = "oneshot"
+inspector_port = 8083
+
+[analytics]
+enabled = false
