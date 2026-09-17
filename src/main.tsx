@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { PembekalAuth } from '@/lib/auth'
 import { App } from './App'
+import { BanerDemo } from '@/komponen/BanerDemo'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -10,6 +11,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <PembekalAuth>
         <App />
+        <BanerDemo />
       </PembekalAuth>
     </BrowserRouter>
   </React.StrictMode>,

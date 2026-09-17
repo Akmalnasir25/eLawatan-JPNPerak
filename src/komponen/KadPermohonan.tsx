@@ -21,7 +21,7 @@ export function KadPermohonan({
   return (
     <Link
       to={`/permohonan/${p.id}`}
-      className="kad block transition hover:border-jata-300 hover:shadow-md"
+      className="kad block min-w-0 transition hover:border-jata-300 hover:shadow-md"
     >
       <div className="kad-isi">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -38,7 +38,9 @@ export function KadPermohonan({
               </p>
             )}
           </div>
-          <LencanaStatus status={p.status} />
+          <span className="shrink-0">
+            <LencanaStatus status={p.status} />
+          </span>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">

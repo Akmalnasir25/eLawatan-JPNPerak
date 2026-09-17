@@ -4,7 +4,7 @@
 // dalam pelayar sebelum penghantaran dan disimpan bersama rekod, supaya
 // pegawai boleh membuktikan dokumen yang diluluskan ialah fail yang sama.
 
-import { panggilFungsi, supabase } from './supabase'
+import { hantarFail, panggilFungsi, supabase } from './supabase'
 import { cincangFail } from './guna'
 import type { Dokumen } from './jenis'
 
@@ -38,7 +38,7 @@ export async function muatNaikDokumen(
     saiz: fail.size,
   })
 
-  await hantarKeR2(presign.url, fail, (p) =>
+  await hantarFail(presign.url, fail, (p) =>
     onKemajuan?.({ peratus: 15 + Math.round(p * 0.75), fasa: 'hantar' }),
   )
 
@@ -81,36 +81,6 @@ export async function muatNaikDokumen(
 
   onKemajuan?.({ peratus: 100, fasa: 'siap' })
   return data as Dokumen
-}
-
-/** PUT dengan kemajuan — fetch() tidak melaporkan kemajuan muat naik. */
-function hantarKeR2(
-  url: string,
-  fail: File,
-  onKemajuan: (peratus: number) => void,
-): Promise<void> {
-  return new Promise((selesai, gagal) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open('PUT', url, true)
-    xhr.setRequestHeader(
-      'Content-Type',
-      fail.type || 'application/octet-stream',
-    )
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) onKemajuan(e.loaded / e.total)
-    }
-    xhr.onload = () =>
-      xhr.status >= 200 && xhr.status < 300
-        ? selesai()
-        : gagal(new Error(`Muat naik ke storan gagal (HTTP ${xhr.status}).`))
-    xhr.onerror = () =>
-      gagal(
-        new Error(
-          'Muat naik gagal. Semak sambungan internet dan tetapan CORS bucket R2.',
-        ),
-      )
-    xhr.send(fail)
-  })
 }
 
 export type ButiranDokumen = {

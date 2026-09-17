@@ -52,10 +52,13 @@ export function BorangPermohonan() {
   const langkah = Math.min(6, Math.max(1, Number(params.get('langkah') ?? 1)))
   const tertunda = useRef<Partial<Permohonan>>({})
   const pemasa = useRef<number | null>(null)
+  const sudahCipta = useRef(false)
 
-  // Cipta draf baharu apabila tiada id
+  // Cipta draf baharu apabila tiada id. Pengawal ref menghalang draf
+  // berganda apabila kesan dijalankan semula (StrictMode, profil dimuat semula).
   useEffect(() => {
-    if (id || !sekolah) return
+    if (id || !sekolah || sudahCipta.current) return
+    sudahCipta.current = true
     ciptaPermohonan(sekolah, pegawai?.id ?? null, nisbahCadangan(sekolah.jenis))
       .then((p) => navigate(`/permohonan/${p.id}/sunting?langkah=1`, { replace: true }))
       .catch((e) => setRalat(e.message))

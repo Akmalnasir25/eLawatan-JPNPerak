@@ -43,7 +43,30 @@ menjalankan sistem**.
 
 ---
 
-## 3. Sediakan Supabase
+## 3. Cuba Dahulu — Mod Demo (tanpa akaun)
+
+```bash
+npm install
+npm run demo             # http://localhost:5173
+```
+
+Postgres sebenar (PGlite) berjalan **dalam pelayar**, menjalankan migrasi
+yang sama seperti pengeluaran. Semua peraturan, rantaian kelulusan dan RLS
+berkelakuan seperti sistem sebenar. Tiada data dihantar ke mana-mana.
+
+- Baner kuning di bawah skrin: **log masuk pantas** sebagai mana-mana
+  peranan, dan **Set semula** untuk memadam data demo.
+- Log masuk biasa pun berfungsi — kod OTP dipaparkan di penjuru kanan atas.
+- Empat permohonan contoh disediakan dalam pelbagai status.
+- Dokumen yang dimuat naik disimpan dalam IndexedDB pelayar, bukan R2.
+
+Kod demo (`src/demo/`) hanya dimuatkan oleh `npm run demo`. Binaan
+pengeluaran (`npm run build`) tidak mengandunginya langsung — alias
+`#klien` dalam `vite.config.ts` memilih klien Supabase sebenar.
+
+---
+
+## 4. Sediakan Supabase
 
 1. Buka `https://supabase.com/dashboard` → **New project**.
    Pilih wilayah **Singapore (ap-southeast-1)** — paling hampir.
@@ -84,7 +107,7 @@ memautkan baris tersebut kepada akaun auth anda secara automatik.
 
 ---
 
-## 4. Sediakan Cloudflare R2
+## 5. Sediakan Cloudflare R2
 
 1. Cloudflare Dashboard → **R2** → *Create bucket*, namakan
    `elawatan-dokumen`. Pilih lokasi **Asia-Pacific**.
@@ -101,7 +124,7 @@ memautkan baris tersebut kepada akaun auth anda secara automatik.
 
 ---
 
-## 5. Rahsia
+## 6. Rahsia
 
 ### Frontend
 
@@ -135,7 +158,7 @@ disuntik automatik oleh platform.
 
 ---
 
-## 6. Jalankan
+## 7. Jalankan
 
 ```bash
 npm install
@@ -184,7 +207,7 @@ Deno dimuat turun automatik melalui npm pada kali pertama.
 
 ---
 
-## 7. Cara Sistem Menguatkuasakan Dasar
+## 8. Cara Sistem Menguatkuasakan Dasar
 
 | Peraturan | Tempat ia dikuatkuasakan |
 |---|---|
@@ -205,7 +228,7 @@ peringkat pangkalan data.
 
 ---
 
-## 8. Perkara Yang Perlu Disahkan Sebelum Pelancaran
+## 9. Perkara Yang Perlu Disahkan Sebelum Pelancaran
 
 Diambil daripada `00-INDEKS.md`, dan kekal terbuka:
 
@@ -223,7 +246,7 @@ Diambil daripada `00-INDEKS.md`, dan kekal terbuka:
 
 ---
 
-## 9. Had Yang Diketahui
+## 10. Had Yang Diketahui
 
 - **Google OIDC DELIMa dimatikan.** Log masuk menggunakan OTP e-mel.
   Hidupkan dalam `supabase/config.toml` apabila Client ID diperoleh, dan

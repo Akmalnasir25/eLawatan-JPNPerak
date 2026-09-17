@@ -14,6 +14,7 @@ Baca `README.md` untuk cara pasang; fail ini hanya menyenaraikan
 | Edge Functions (4) | Lulus `deno check`; tandatangan R2 lulus 4 ujian luar talian |
 | Antara muka React penuh | `tsc` lulus, `vite build` lulus |
 | Cetakan, panel pentadbir, laporan, pengesahan QR | Siap |
+| Mod demo (`npm run demo`) | Diuji hujung-ke-hujung dalam Chrome tanpa kepala: OTP, borang, muat naik, kelulusan, cetakan, pentadbir, paparan telefon |
 
 Jalankan semua semakan: `npm run ujian`
 
@@ -26,12 +27,15 @@ Jalankan semua semakan: `npm run ujian`
 2. `selaras_tarikh_permohonan` — merujuk `new` pada DELETE (dibetulkan
    sebelum checkpoint pertama, kini disahkan oleh ujian).
 3. `daftar-semak` — ralat jenis pada data `ppd` yang dibenamkan.
+4. Borang baharu mencipta **dua** draf setiap kali dibuka (kesan React
+   berjalan semula) — dikawal dengan ref.
+5. Kad permohonan melimpah keluar skrin telefon — `min-w-0` pada item grid.
 
 ---
 
 ## Belum dibuat — mula di sini
 
-1. **Sambung ke projek Supabase sebenar.** Ikut README bahagian 3.
+1. **Sambung ke projek Supabase sebenar.** Ikut README bahagian 4.
    Ujian PGlite meniru Supabase, bukan Supabase itu sendiri — perkara
    yang belum diuji: templat e-mel OTP, had kadar Auth, dan pemanggilan
    Edge Functions melalui gerbang Supabase.

@@ -1,22 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '#klien'
 
-const url = import.meta.env.VITE_SUPABASE_URL
-const kunci = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!url || !kunci) {
-  throw new Error(
-    'VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY belum ditetapkan. Salin .env.example ke .env.',
-  )
-}
-
-export const supabase = createClient(url, kunci, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: false,
-    storageKey: 'elawatan-sesi',
-  },
-})
+// `#klien` ialah Supabase sebenar dalam pengeluaran, atau Postgres dalam
+// pelayar semasa `npm run demo`. Lihat vite.config.ts.
+export { supabase, hantarFail, MOD_DEMO, demo } from '#klien'
 
 export const DOMAIN_DIBENARKAN = (
   import.meta.env.VITE_DOMAIN_DIBENARKAN ?? 'moe-dl.edu.my,moe.gov.my'

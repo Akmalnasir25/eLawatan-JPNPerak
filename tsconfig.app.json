@@ -17,7 +17,10 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] }
+    "paths": {
+      "@/*": ["./src/*"],
+      "#klien": ["./src/lib/klien-sebenar.ts"]
+    }
   },
   "include": ["src"]
 }

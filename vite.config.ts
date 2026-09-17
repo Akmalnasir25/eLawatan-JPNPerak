@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     VitePWA({
@@ -29,7 +29,18 @@ export default defineConfig({
       },
     }),
   ],
-  resolve: { alias: { '@': path.resolve(__dirname, './src') } },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      // Mod demo menggantikan Supabase dengan Postgres dalam pelayar.
+      // Binaan pengeluaran tidak pernah melihat kod demo.
+      '#klien': path.resolve(
+        __dirname,
+        mode === 'demo' ? './src/demo/klien.ts' : './src/lib/klien-sebenar.ts',
+      ),
+    },
+  },
+  optimizeDeps: { exclude: ['@electric-sql/pglite'] },
   server: { port: 5173 },
   build: {
     rollupOptions: {
@@ -44,4 +55,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))
