@@ -115,11 +115,10 @@ export function KepalaJabatan({ kanan }: { kanan?: ReactNode }) {
     <div className="bg-white">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3.5 sm:px-6">
         <Link to="/" className="flex min-w-0 items-center gap-3">
-          <LogoRasmi saiz={56} />
-          <div className="min-w-0 leading-tight">
-            <p className="hidden text-xs font-medium text-slate-500 sm:block">
-              {jabatan.kementerian}
-            </p>
+          {/* Logo korporat sudah membawa nama kementerian */}
+          <LogoRasmi varian="penuh" saiz={72} className="hidden sm:block" />
+          <LogoRasmi varian="penuh" saiz={46} className="sm:hidden" />
+          <div className="min-w-0 border-l border-slate-200 pl-3 leading-tight">
             <p className="truncate text-sm font-extrabold uppercase text-jata-900 sm:text-lg">
               <span className="sm:hidden">{jabatan.nama_ringkas || jabatan.nama}</span>
               <span className="hidden sm:inline">{jabatan.nama}</span>
