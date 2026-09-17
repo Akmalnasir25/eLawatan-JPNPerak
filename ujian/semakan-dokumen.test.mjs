@@ -67,6 +67,21 @@ test('penyemak JPN belum boleh membuat keputusan pada giliran PPD', async () => 
   await rekod(u.jpn)
   await assert.rejects(rekod(u.jpn, 'PATUH'), /giliran semasa/)
 })
+test('log bersama menunjukkan pembukaan dan keputusan PPD kepada pegawai JPN dalam skop', async () => {
+  const g = await satu(db, 'select id from pegawai where user_id=$1', [u.ppd])
+  const bersama = await sebagai(db, u.jpn, () => db.query(
+    'select * from semakan_dokumen where dokumen_id=$1 order by masa desc', [d.id]))
+  assert.ok(bersama.rows.some((r) => r.pegawai_id === g.id && r.status === 'DIBUKA'))
+  assert.ok(bersama.rows.some((r) => r.pegawai_id === g.id && r.status === 'PATUH' && r.catatan === 'Disemak.'))
+  assert.ok(bersama.rows.every((r) => r.nama_pegawai && r.peranan && r.masa))
+})
+test('pembukaan JPN dapat dilihat semula oleh PPD tanpa mengubah keputusan PPD', async () => {
+  const g = await satu(db, 'select id from pegawai where user_id=$1', [u.jpn])
+  const bersama = await sebagai(db, u.ppd, () => db.query(
+    'select * from semakan_dokumen where dokumen_id=$1 order by masa desc', [d.id]))
+  assert.ok(bersama.rows.some((r) => r.pegawai_id === g.id && r.status === 'DIBUKA'))
+  assert.equal(bersama.rows.find((r) => r.status === 'PATUH')?.catatan, 'Disemak.')
+})
 test('klien tidak boleh memalsukan, mengubah atau memadam rekod', async () => {
   await sebagai(db, u.ppd, async () => {
     await assert.rejects(db.query(`update semakan_dokumen set catatan='palsu'`), /permission denied/)

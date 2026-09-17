@@ -1,5 +1,22 @@
 # Semakan Dokumen Sokongan
 
+## Kemas kini log bersama
+
+- Keputusan kekal mengikut giliran semakan (dipersetujui CikguIK). Pilihan
+  keputusan tidak dipaparkan jika bukan giliran; status permohonan dan sebab
+  kini dijelaskan pada senarai dokumen serta panel.
+- Senarai menunjukkan jumlah pengguna yang pernah membuka versi fail itu,
+  nama/peranan dan masa pembukaan terakhir, berasingan daripada status sendiri.
+- Log bersama mengandungi pembukaan, keputusan dan catatan semua pengguna
+  dalam skop. Dibaca semula apabila log dibuka; butang Muat semula log disediakan.
+  Tiada langganan masa nyata. Pembacaan berhalaman mengelakkan sejarah terpotong
+  pada had respons lalai. Respons bacaan tidak memadam rekod baharu dalam panel.
+- 12 ujian semakan dokumen lulus, termasuk perkongsian rekod antara PPD/JPN
+  dan sekatan di luar skop. Build lulus; UI pelayar belum disahkan bagi kemas kini ini.
+- Tiada perubahan permission atau migrasi baharu. Dalam mod demo, perkongsian
+  ini antara akaun demo dalam pangkalan pelayar yang sama; ia tidak menyegerak
+  data antara komputer. Supabase sebenar berkongsi rekod melalui pangkalan server.
+
 ## Apa yang berubah
 
 Sebelum ini butang Lihat membuka fail dalam tab baharu tanpa keputusan semakan

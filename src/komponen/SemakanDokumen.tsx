@@ -14,11 +14,12 @@ const WARNA = {
   PEMBETULAN: 'border-amber-200 bg-amber-50 text-amber-950',
 }
 
-export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, dipilih, pilih, butiran }: {
+export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, notaSemakan, dipilih, pilih, butiran }: {
   permohonanId: string
   dokumen: Dokumen[]
   pegawai: Pegawai
   bolehSemak: boolean
+  notaSemakan: string
   dipilih: Dokumen | null
   pilih: (d: Dokumen | null) => void
   butiran: (d: Dokumen) => void
@@ -34,6 +35,13 @@ export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, dip
     finally { setMemuat(false) }
   }, [permohonanId])
   useEffect(() => { void muat() }, [muat])
+  const segarLog = useCallback(async () => {
+    const baharu = await senaraiSemakanDokumen(permohonanId)
+    // Gabung supaya respons bacaan yang bermula sebelum simpan tidak
+    // menghilangkan rekod yang baru ditambah dalam panel.
+    setRekod((lama) => [...new Map([...lama, ...baharu].map((r) => [r.id, r])).values()]
+      .sort((a, b) => b.masa.localeCompare(a.masa) || a.id.localeCompare(b.id)))
+  }, [permohonanId])
   const tambah = (r: Rekod) => setRekod((lama) => [r, ...lama.filter((x) => x.id !== r.id)])
   const selesai = dokumen.filter((d) => {
     const s = semakanSendiri(rekod, d, pegawai.id)?.status
@@ -46,11 +54,15 @@ export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, dip
     </div>
     <div className="kad-isi">
       <p className="mb-4 text-sm text-slate-600">Buka dokumen untuk membaca dan menyemak. Keputusan serta catatan disimpan bagi setiap fail.</p>
+      {!bolehSemak && <p className="mb-4 text-sm text-slate-600">{notaSemakan}</p>}
       {ralat && <div className="mb-3"><Mesej jenis="ralat">{ralat} <button type="button" onClick={() => void muat()} className="underline">Cuba lagi</button></Mesej></div>}
       {!dokumen.length && <p className="text-sm text-slate-600">Tiada dokumen dimuat naik.</p>}
       <ul className="space-y-3">
         {dokumen.map((d) => {
           const s = semakanSendiri(rekod, d, pegawai.id)
+          const pembukaan = rekod.filter((r) => r.dokumen_id === d.id &&
+            r.cincangan_sha256 === d.cincangan_sha256 && r.status === 'DIBUKA')
+          const terakhir = pembukaan[0]
           const Ikon = s?.status === 'PATUH' ? CheckCircle2 : s?.status === 'PEMBETULAN' ? AlertCircle : Eye
           return <li key={d.id} className={kelas('rounded-lg border p-3', !ralat && !memuat && s ? WARNA[s.status] : 'border-slate-200 bg-white text-slate-800')}>
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -60,6 +72,9 @@ export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, dip
                 <p className="mt-2 flex items-center gap-1.5 text-xs font-medium"><Ikon className="h-4 w-4 shrink-0" aria-hidden />
                   {memuat ? 'Memuatkan status…' : ralat ? 'Status belum tersedia' : s ? LABEL_SEMAKAN[s.status] : 'Belum dibuka oleh anda'}
                 </p>
+                {!memuat && !ralat && terakhir && <p className="mt-2 text-xs">
+                  Dibuka oleh {new Set(pembukaan.map((r) => r.pegawai_id)).size} pengguna · Terakhir: {terakhir.nama_pegawai} ({LABEL_PERANAN[terakhir.peranan]}) · {formatMasa(terakhir.masa)}
+                </p>}
               </div>
               <div className="flex gap-2">
                 <button type="button" className="btn-kedua min-h-11 px-3 text-xs" onClick={() => butiran(d)}>Butiran</button>
@@ -73,13 +88,16 @@ export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, dip
     </div>
     {dipilih && !memuat && createPortal(<PanelDokumen key={`${dipilih.id}:${pegawai.id}`} dokumen={dipilih}
       senarai={dokumen} rekod={rekod} pegawai={pegawai} bolehSemak={bolehSemak && !ralat}
-      pilih={pilih} tambah={tambah} />, document.body)}
+      notaSemakan={ralat || notaSemakan}
+      pilih={pilih} tambah={tambah} segarLog={segarLog} />, document.body)}
   </section>
 }
 
-function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, pilih, tambah }: {
+function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, notaSemakan, pilih, tambah, segarLog }: {
   dokumen: Dokumen; senarai: Dokumen[]; rekod: Rekod[]; pegawai: Pegawai; bolehSemak: boolean
   pilih: (d: Dokumen | null) => void; tambah: (r: Rekod) => void
+  segarLog: () => Promise<void>
+  notaSemakan: string
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const asal = semakanSendiri(rekod, d, pegawai.id)
@@ -96,10 +114,18 @@ function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, pilih, 
   const [cubaan, setCubaan] = useState(0)
   const [dibuka, setDibuka] = useState(false)
   const [log, setLog] = useState(false)
+  const [memuatLog, setMemuatLog] = useState(false)
+  const [ralatLog, setRalatLog] = useState('')
   const tambahRef = useRef(tambah)
   tambahRef.current = tambah
   const kedudukan = senarai.findIndex((x) => x.id === d.id)
   const sejarah = rekod.filter((r) => r.dokumen_id === d.id && r.cincangan_sha256 === d.cincangan_sha256)
+  async function muatLogBersama() {
+    setMemuatLog(true); setRalatLog('')
+    try { await segarLog() }
+    catch { setRalatLog('Log terkini belum dapat dimuatkan. Rekod yang ada dikekalkan; cuba muat semula log.') }
+    finally { setMemuatLog(false) }
+  }
 
   useEffect(() => {
     const pencetus = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -204,11 +230,14 @@ function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, pilih, 
             </fieldset>
             <button type="button" onClick={() => void simpan()} disabled={sibuk || !dibuka || memuat} className="btn-utama min-h-11">{sibuk ? <Berputar /> : <CheckCircle2 className="h-4 w-4" />}Simpan semakan</button>
           </div>
-        </div> : <p className="text-sm text-slate-600">Paparan dokumen dan sejarah semakan. Keputusan boleh disimpan oleh penyemak pada giliran semasa.</p>}
+        </div> : <p className="text-sm text-slate-600">{notaSemakan}</p>}
         {ralat && <div role="alert" className="mt-2 text-sm text-red-700">{ralat} {url && !dibuka && <button type="button" disabled={sibuk} className="underline" onClick={() => void ulangRekod()}>Cuba rekod semula</button>}</div>}
         {berjaya && <p role="status" className="mt-2 text-sm text-emerald-800">{berjaya}</p>}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <button type="button" className="btn-halus min-h-11 text-xs" aria-expanded={log} onClick={() => setLog(!log)}><History className="h-4 w-4" />Log semakan ({sejarah.length})</button>
+          <button type="button" className="btn-halus min-h-11 text-xs" aria-expanded={log} onClick={() => {
+            setLog(!log)
+            if (!log) void muatLogBersama()
+          }}><History className="h-4 w-4" />Log bersama ({sejarah.length})</button>
           {url && <a href={url} download={d.nama_fail} className="btn-halus min-h-11 text-xs"><Download className="h-4 w-4" />Muat turun</a>}
           <div className="flex gap-2">
             <button type="button" className="btn-kedua min-h-11 px-3 text-xs" disabled={sibuk || kedudukan < 1} onClick={() => beralih(senarai[kedudukan - 1])}><ChevronLeft className="h-4 w-4" />Sebelumnya</button>
@@ -216,7 +245,12 @@ function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, pilih, 
           </div>
         </div>
         {log && <div className="mt-2 max-h-48 overflow-y-auto border-t border-slate-200 pt-2">
-          {!sejarah.length && <p className="text-sm text-slate-600">Belum ada rekod untuk versi dokumen ini.</p>}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-slate-600">Pembukaan dan keputusan semua pengguna yang mempunyai akses kepada versi dokumen ini.</p>
+            <button type="button" disabled={memuatLog} className="btn-halus min-h-11 text-xs" onClick={() => void muatLogBersama()}>{memuatLog ? 'Memuatkan log…' : 'Muat semula log'}</button>
+          </div>
+          {ralatLog && <p role="alert" className="text-sm text-red-700">{ralatLog}</p>}
+          {!memuatLog && !ralatLog && !sejarah.length && <p className="text-sm text-slate-600">Belum ada rekod untuk versi dokumen ini.</p>}
           <ol className="divide-y divide-slate-200">{sejarah.map((r) => <li key={r.id} className="py-2 text-sm">
             <p className="font-medium text-slate-800">{r.status === 'DIBUKA' ? 'Dokumen dibuka' : LABEL_SEMAKAN[r.status]} · {r.nama_pegawai}</p>
             <p className="text-xs text-slate-600">{LABEL_PERANAN[r.peranan]} · {formatMasa(r.masa)}</p>

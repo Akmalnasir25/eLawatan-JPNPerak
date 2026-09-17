@@ -492,6 +492,9 @@ export function PaparPermohonan() {
 
           <SemakanDokumen permohonanId={p.id} dokumen={b.dokumen} pegawai={pegawai!}
             bolehSemak={bolehBertindak && tahapSemak} dipilih={dokSemak}
+            notaSemakan={`Status permohonan: ${LABEL_STATUS[p.status]}. ${tahapSemak && peranPerlu
+              ? `Keputusan dokumen kini di bawah giliran ${LABEL_PERANAN[peranPerlu]}.`
+              : 'Peringkat ini bukan giliran semakan dokumen.'} Anda masih boleh membaca dokumen dan log bersama.`}
             pilih={setDokSemak} butiran={setDokPapar} />
         </div>
 

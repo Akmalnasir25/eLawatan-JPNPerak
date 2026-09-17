@@ -23,10 +23,16 @@ export const LABEL_SEMAKAN = {
 }
 
 export async function senaraiSemakanDokumen(id: string): Promise<SemakanDokumen[]> {
-  const { data, error } = await supabase.from('semakan_dokumen').select('*')
-    .eq('permohonan_id', id).order('masa', { ascending: false })
-  if (error) throw new Error('Rekod semakan belum dapat dimuatkan. Sila cuba lagi; pastikan pangkalan data telah dikemas kini.')
-  return (data ?? []) as SemakanDokumen[]
+  const semua: SemakanDokumen[] = []
+  for (let mula = 0; ; mula += 500) {
+    const { data, error } = await supabase.from('semakan_dokumen').select('*')
+      .eq('permohonan_id', id).order('masa', { ascending: false })
+      .order('id', { ascending: true }).range(mula, mula + 499)
+    if (error) throw new Error('Rekod semakan belum dapat dimuatkan. Sila cuba lagi; pastikan pangkalan data telah dikemas kini.')
+    const baris = (data ?? []) as SemakanDokumen[]
+    semua.push(...baris)
+    if (baris.length < 500) return semua
+  }
 }
 
 export async function rekodSemakanDokumen(d: Dokumen, status: StatusSemakan, catatan = ''): Promise<SemakanDokumen> {
