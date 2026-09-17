@@ -225,7 +225,11 @@ export type Kelulusan = {
   tarikh_tindakan: string
   kunci_tandatangan: string | null
   kunci_cop: string | null
+  /** Perkara yang ditanda penyemak; null di luar peringkat semakan. */
+  semakan: ItemSemakan[] | null
 }
+
+export type ItemSemakan = { kod: string; label: string }
 
 export type LaporanPasca = {
   permohonan_id: string

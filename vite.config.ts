@@ -4,11 +4,15 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
 export default defineConfig(({ mode }) => ({
+  // GitHub Pages menghidangkan laman di /<nama-repo>/ — ditetapkan oleh aliran kerja.
+  base: process.env.BASE_PATH ?? '/',
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'logo-jabatan.png'],
+      // Enjin Postgres mod demo (±10 MB) dimuat turun terus, bukan dicache awal.
+      workbox: { globIgnores: ['**/pglite*', '**/*.wasm', '**/*.data'] },
       manifest: {
         name: 'eLAWATAN Perak',
         short_name: 'eLAWATAN',
@@ -17,7 +21,7 @@ export default defineConfig(({ mode }) => ({
         background_color: '#f6f8fb',
         display: 'standalone',
         lang: 'ms',
-        start_url: '/',
+        start_url: '.',
         icons: [
           { src: 'ikon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'ikon-512.png', sizes: '512x512', type: 'image/png' },

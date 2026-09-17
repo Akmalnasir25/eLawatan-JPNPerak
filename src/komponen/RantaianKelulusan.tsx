@@ -10,14 +10,21 @@ import {
 import { formatTarikh, kelas } from '@/lib/guna'
 import type { Kategori, Kelulusan, Permohonan, Status } from '@/lib/jenis'
 
-export const RANTAIAN: Record<Kategori, Status[]> = {
+// Sepadan dengan status_seterusnya(): KPPD hanya bagi lawatan dalam daerah.
+const RANTAIAN: Record<Kategori, Status[]> = {
   DALAM_DAERAH: ['MENUNGGU_PPD_SEMAK', 'MENUNGGU_PPD_SAH'],
-  ANTARA_DAERAH: ['MENUNGGU_PPD_SEMAK', 'MENUNGGU_PPD_SAH', 'MENUNGGU_JPN_SEMAK', 'MENUNGGU_JPN_SAH'],
-  ANTARA_NEGERI: ['MENUNGGU_PPD_SEMAK', 'MENUNGGU_PPD_SAH', 'MENUNGGU_JPN_SEMAK', 'MENUNGGU_JPN_SAH'],
-  LUAR_NEGARA: [
-    'MENUNGGU_PPD_SEMAK', 'MENUNGGU_PPD_SAH',
-    'MENUNGGU_JPN_SEMAK', 'MENUNGGU_JPN_SAH', 'MENUNGGU_KPM',
-  ],
+  ANTARA_DAERAH: ['MENUNGGU_PPD_SEMAK', 'MENUNGGU_JPN_SEMAK', 'MENUNGGU_JPN_SAH'],
+  ANTARA_NEGERI: ['MENUNGGU_PPD_SEMAK', 'MENUNGGU_JPN_SEMAK', 'MENUNGGU_JPN_SAH'],
+  LUAR_NEGARA: ['MENUNGGU_PPD_SEMAK', 'MENUNGGU_JPN_SEMAK', 'MENUNGGU_JPN_SAH', 'MENUNGGU_KPM'],
+}
+
+/** Permohonan luar daerah yang dihantar sebelum aliran baharu masih melalui KPPD. */
+function rantaianBagi(p: Permohonan, kelulusan: Kelulusan[]): Status[] {
+  const rantai = p.kategori ? RANTAIAN[p.kategori] : []
+  const lalui =
+    p.status === 'MENUNGGU_PPD_SAH' || kelulusan.some((k) => k.peringkat === 'MENUNGGU_PPD_SAH')
+  if (!lalui || rantai.includes('MENUNGGU_PPD_SAH')) return rantai
+  return [rantai[0], 'MENUNGGU_PPD_SAH', ...rantai.slice(1)]
 }
 
 const PERINGKAT: Partial<Record<Status, { tajuk: string; oleh: string }>> = {
@@ -47,7 +54,7 @@ const GAYA: Record<Keadaan, { bulat: string; ikon: LucideIcon; teks: string }> =
 }
 
 function binaNod(p: Permohonan, kelulusan: Kelulusan[]): Nod[] {
-  const rantai = p.kategori ? RANTAIAN[p.kategori] : []
+  const rantai = rantaianBagi(p, kelulusan)
   const dihantar = p.status !== 'DRAF'
   // Hanya tindakan selepas penghantaran terkini dikira bagi status semasa
   const selepasHantar = kelulusan.filter(

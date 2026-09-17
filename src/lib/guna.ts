@@ -1,5 +1,8 @@
 // Fungsi bantuan am.
 
+/** Laluan dalam aplikasi, termasuk laluan asas (cth. GitHub Pages di /eLawatan-JPNPerak/). */
+export const laluan = (p: string) => import.meta.env.BASE_URL + p.replace(/^\//, '')
+
 const BULAN = [
   'Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
   'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember',

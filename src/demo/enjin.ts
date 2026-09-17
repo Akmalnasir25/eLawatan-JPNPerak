@@ -278,7 +278,13 @@ async function isiContoh(db: PGlite) {
     transaksiPada(db, { uid: sekolah }, (tx) => tx.query('select hantar_permohonan($1)', [id]))
   const lulus = (emel: string, id: string, catatan: string | null = null) =>
     transaksiPada(db, { uid: uid[emel] }, (tx) =>
-      tx.query(`select tindakan_kelulusan($1, 'SOKONG', $2)`, [id, catatan]),
+      // Penyemak menanda semua perkara; pengesah mengabaikannya.
+      tx.query(
+        `select tindakan_kelulusan($1, 'SOKONG', $2,
+           (select array_agg(i ->> 'kod')
+              from jsonb_array_elements((select nilai from tetapan where kunci = 'item_semakan')) i))`,
+        [id, catatan],
+      ),
     )
 
   // 1. Diluluskan — surat kelulusan dan kod QR tersedia
@@ -307,7 +313,7 @@ async function isiContoh(db: PGlite) {
   })
   await hantar(b)
 
-  // 3. Antara negeri — sudah melepasi PPD, menunggu semakan JPN
+  // 3. Antara negeri — disemak PPD (tanpa KPPD), menunggu semakan JPN
   const c = await cipta({
     kategori: 'ANTARA_NEGERI',
     tujuan: 'Lawatan ke Pusat Sains Negara sempena Bulan Sains, Teknologi dan Inovasi',
@@ -319,8 +325,7 @@ async function isiContoh(db: PGlite) {
     pengangkutan: 'BAS_PERSIARAN',
   })
   await hantar(c)
-  await lulus('ppd.ku.pegawai@moe.gov.my', c)
-  await lulus('ppd.ku.ketua@moe.gov.my', c, 'Disokong ke JPN.')
+  await lulus('ppd.ku.pegawai@moe.gov.my', c, 'Disemak dan dikemukakan ke JPN.')
 
   // 4. Draf — boleh disunting oleh sekolah
   await cipta({

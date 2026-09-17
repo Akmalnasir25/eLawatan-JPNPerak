@@ -81,9 +81,17 @@ async function muatNaikSemuaWajib(id) {
 const status = async (id) =>
   (await satu(db, 'select status from permohonan where id = $1', [id])).status
 
-async function bertindak(uid, id, tindakan, catatan = null) {
+/** Kod semua perkara dalam senarai semak penyemak. */
+async function semuaItemSemakan() {
+  const r = await satu(db, `select nilai from tetapan where kunci = 'item_semakan'`)
+  return r.nilai.map((i) => i.kod)
+}
+
+/** Sokong sentiasa menanda semua perkara; hantar `semakan` untuk menguji tandaan separa. */
+async function bertindak(uid, id, tindakan, catatan = null, semakan) {
+  const kod = semakan ?? (tindakan === 'SOKONG' ? await semuaItemSemakan() : null)
   return sebagai(db, uid, () =>
-    satu(db, rpc('tindakan_kelulusan', [1, 2, 3]), [id, tindakan, catatan]),
+    satu(db, rpc('tindakan_kelulusan', [1, 2, 3, 4]), [id, tindakan, catatan, kod]),
   )
 }
 
@@ -414,12 +422,12 @@ describe('Rantaian kelulusan', () => {
     await assert.rejects(bertindak(u.sekolah, id, 'SOKONG'), /menunggu tindakan/)
   })
 
-  test('Antara Negeri: melalui PPD kemudian JPN, Bahagian H', async () => {
+  test('Antara Negeri: penyemak PPD terus ke JPN tanpa KPPD, Bahagian H', async () => {
     const id = await ciptaLengkap({ kategori: 'ANTARA_NEGERI' })
     await sebagai(db, u.sekolah, () => db.query(rpc('hantar_permohonan', [1]), [id]))
     await bertindak(u.ppdPegawai, id, 'SOKONG')
-    await bertindak(u.ppdKetua, id, 'SOKONG')
     assert.equal(await status(id), 'MENUNGGU_JPN_SEMAK')
+    await assert.rejects(bertindak(u.ppdKetua, id, 'SOKONG'), /menunggu tindakan jpn_pegawai/)
     await bertindak(u.jpnPegawai, id, 'SOKONG')
     assert.equal(await status(id), 'MENUNGGU_JPN_SAH')
     await bertindak(u.jpnPengarah, id, 'SOKONG')
@@ -428,13 +436,37 @@ describe('Rantaian kelulusan', () => {
       `select bahagian from kelulusan where permohonan_id = $1 and bahagian is not null order by tarikh_tindakan`,
       [id],
     )
-    assert.deepEqual(k.rows.map((r) => r.bahagian), ['G', 'H'])
+    assert.deepEqual(k.rows.map((r) => r.bahagian), ['H'])
+  })
+
+  test('Antara Daerah: KPPD tidak terlibat, Pengarah melulus', async () => {
+    const id = await ciptaLengkap({ kategori: 'ANTARA_DAERAH' })
+    await sebagai(db, u.sekolah, () => db.query(rpc('hantar_permohonan', [1]), [id]))
+    for (const uid of [u.ppdPegawai, u.jpnPegawai, u.jpnPengarah]) {
+      await bertindak(uid, id, 'SOKONG')
+    }
+    assert.equal(await status(id), 'DILULUSKAN')
+    const peranan = await db.query(
+      `select peranan from kelulusan where permohonan_id = $1 order by tarikh_tindakan`, [id])
+    assert.deepEqual(peranan.rows.map((r) => r.peranan), ['ppd_pegawai', 'jpn_pegawai', 'jpn_pengarah'])
+  })
+
+  test('PPD hanya melihat sekolah di bawah seliaannya', async () => {
+    const kod = (uid) =>
+      sebagai(db, uid, async () =>
+        (await db.query('select kod_sekolah, kod_ppd from sekolah')).rows)
+    const ku = await kod(u.ppdKetua)
+    assert.ok(ku.length > 0)
+    assert.ok(ku.every((s) => s.kod_ppd === 'PRK-KU'))
+    const ks = await kod(u.ppdLain)
+    assert.ok(ks.every((s) => s.kod_ppd === 'PRK-KS'))
+    assert.ok(!ks.some((s) => s.kod_sekolah === 'ABA1234'))
   })
 
   test('Luar Negara: diangkat ke KPM, Bahagian J, pasport wajib', async () => {
     const id = await ciptaLengkap({ kategori: 'LUAR_NEGARA', hari: 75, negara: 'Singapura' })
     await sebagai(db, u.sekolah, () => db.query(rpc('hantar_permohonan', [1]), [id]))
-    for (const uid of [u.ppdPegawai, u.ppdKetua, u.jpnPegawai, u.jpnPengarah]) {
+    for (const uid of [u.ppdPegawai, u.jpnPegawai, u.jpnPengarah]) {
       await bertindak(uid, id, 'SOKONG')
     }
     assert.equal(await status(id), 'MENUNGGU_KPM')
@@ -804,5 +836,47 @@ describe('Identiti korporat (migrasi 6)', () => {
     assert.equal(m.nilai.telefon, '05-525 6000')
     assert.equal(m.nilai.emel, 'jpn.perak@moe.gov.my')
     assert.match(m.nilai.alamat, /Persiaran Meru Utama.*30020 Ipoh/)
+  })
+})
+
+describe('Senarai semak penyemak (migrasi 8)', () => {
+  test('penyemak tidak boleh memperakukan tanpa menanda semua perkara', async () => {
+    const id = await ciptaLengkap()
+    await sebagai(db, u.sekolah, () => db.query(rpc('hantar_permohonan', [1]), [id]))
+
+    await assert.rejects(bertindak(u.ppdPegawai, id, 'SOKONG', null, []), /Belum ditanda/)
+    const [pertama] = await semuaItemSemakan()
+    await assert.rejects(bertindak(u.ppdPegawai, id, 'SOKONG', null, [pertama]), /Belum ditanda/)
+    assert.equal(await status(id), 'MENUNGGU_PPD_SEMAK')
+  })
+
+  test('perakuan penyemak disimpan; pengesah tidak perlu menanda', async () => {
+    const id = await ciptaLengkap()
+    await sebagai(db, u.sekolah, () => db.query(rpc('hantar_permohonan', [1]), [id]))
+    await bertindak(u.ppdPegawai, id, 'SOKONG', 'Semua dokumen lengkap.')
+
+    const semak = await satu(
+      db,
+      `select semakan from kelulusan where permohonan_id = $1 and peringkat = 'MENUNGGU_PPD_SEMAK'`,
+      [id],
+    )
+    assert.deepEqual(semak.semakan.map((i) => i.kod), await semuaItemSemakan())
+    assert.ok(semak.semakan.every((i) => i.label))
+
+    await bertindak(u.ppdKetua, id, 'SOKONG', null, [])
+    assert.equal(await status(id), 'DILULUSKAN')
+    const sah = await satu(
+      db,
+      `select semakan from kelulusan where permohonan_id = $1 and peringkat = 'MENUNGGU_PPD_SAH'`,
+      [id],
+    )
+    assert.equal(sah.semakan, null)
+  })
+
+  test('penyemak masih boleh mengembalikan tanpa menanda', async () => {
+    const id = await ciptaLengkap()
+    await sebagai(db, u.sekolah, () => db.query(rpc('hantar_permohonan', [1]), [id]))
+    await bertindak(u.ppdPegawai, id, 'KEMBALI', 'Sila lengkapkan senarai peserta.')
+    assert.equal(await status(id), 'DIKEMBALIKAN')
   })
 })

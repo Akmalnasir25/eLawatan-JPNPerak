@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { demo as demoKlien, MOD_DEMO } from '@/lib/supabase'
 import { gunaAuth } from '@/lib/auth'
+import { laluan } from '@/lib/guna'
 import type { demo as JenisDemo } from '@/demo/klien'
 
 // `#klien` sebenar mengeksport `demo = null`; dalam mod demo ia objek kawalan.
@@ -46,7 +47,7 @@ function Baner({ d }: { d: typeof JenisDemo }) {
     if (!window.confirm('Padam semua data demo dan mula semula?')) return
     setSibuk(true)
     await d.setSemula()
-    window.location.href = '/masuk'
+    window.location.href = laluan('masuk')
   }
 
   return (

@@ -55,9 +55,10 @@ function Isi({
       : (hariLagi(p.tarikh_mula) ?? 0)
 
   const kumpulan = [...new Set(perlu.map((d) => d.kumpulan))]
-  const pengesahPpd = [...b.kelulusan]
-    .reverse()
-    .find((k) => k.peringkat === 'MENUNGGU_PPD_SAH' && k.tindakan === 'SOKONG')
+  // Lawatan luar daerah tidak melalui KPPD: penyemak PPD menandatangani.
+  const sokongan = (peringkat: string) =>
+    [...b.kelulusan].reverse().find((k) => k.peringkat === peringkat && k.tindakan === 'SOKONG')
+  const pengesahPpd = sokongan('MENUNGGU_PPD_SAH') ?? sokongan('MENUNGGU_PPD_SEMAK')
   let bil = 0
 
   return (

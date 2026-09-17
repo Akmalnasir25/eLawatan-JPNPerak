@@ -1,0 +1,59 @@
+# Uji dan terbitkan mod demo ke GitHub Pages pada setiap push ke main.
+# Mod demo menjalankan Postgres dalam pelayar — tiada Supabase, R2 atau rahsia.
+#
+# Sekali sahaja: Settings → Pages → Build and deployment → Source: GitHub Actions.
+
+name: Terbit demo ke GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  bina:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Uji skema dan aliran kelulusan
+        run: npm run ujian:db
+
+      - name: Bina mod demo
+        run: npm run build -- --mode demo
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_URL_SISTEM: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+
+      # Pages tiada penghalaan SPA: 404.html memuatkan aplikasi untuk laluan dalam.
+      - run: cp dist/index.html dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  terbit:
+    needs: bina
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.terbit.outputs.page_url }}
+    steps:
+      - id: terbit
+        uses: actions/deploy-pages@v4

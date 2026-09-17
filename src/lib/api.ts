@@ -159,11 +159,13 @@ export async function tindakanKelulusan(
   id: string,
   tindakan: Tindakan,
   catatan?: string,
+  semakan?: string[],
 ): Promise<Permohonan> {
   const { data, error } = await supabase.rpc('tindakan_kelulusan', {
     p_permohonan_id: id,
     p_tindakan: tindakan,
     p_catatan: catatan ?? null,
+    p_semakan: semakan ?? null,
   })
   return semak(data, error) as Permohonan
 }

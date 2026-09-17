@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { kelas } from '@/lib/guna'
+import { kelas, laluan } from '@/lib/guna'
 
 /**
  * Logo jabatan. Letakkan fail logo rasmi yang diluluskan di
@@ -23,7 +23,7 @@ export function LogoRasmi({
   if (!gagal) {
     return (
       <img
-        src="/logo-jabatan.png"
+        src={laluan('logo-jabatan.png')}
         alt="Logo Jabatan Pendidikan Negeri Perak"
         width={saiz}
         height={saiz}

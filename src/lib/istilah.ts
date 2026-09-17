@@ -71,6 +71,30 @@ export const PERANAN_BAGI_STATUS: Partial<Record<Status, Peranan>> = {
   MENUNGGU_KPM: 'kpm',
 }
 
+/** Peringkat penyemak: setiap perkara mesti ditanda sebelum diperakukan. */
+export const PERINGKAT_SEMAK: Status[] = ['MENUNGGU_PPD_SEMAK', 'MENUNGGU_JPN_SEMAK']
+
+/** Peringkat pengesah (KPPD, Pengarah) dan peringkat semakan yang mendahuluinya. */
+export const SEMAKAN_BAGI_PENGESAH: Partial<Record<Status, Status>> = {
+  MENUNGGU_PPD_SAH: 'MENUNGGU_PPD_SEMAK',
+  MENUNGGU_JPN_SAH: 'MENUNGGU_JPN_SEMAK',
+}
+
+/** Label butang Sokong mengikut peringkat — sepadan dengan status_seterusnya(). */
+export function labelSokong(status: Status, kategori: Kategori | null): string {
+  if (status === 'MENUNGGU_PPD_SEMAK') {
+    return kategori === 'DALAM_DAERAH' ? 'Perakukan & Kemukakan ke KPPD' : 'Perakukan & Kemukakan ke JPN'
+  }
+  if (status === 'MENUNGGU_JPN_SEMAK') return 'Perakukan & Kemukakan ke Pengarah'
+  if (status === 'MENUNGGU_PPD_SAH') {
+    return kategori === 'DALAM_DAERAH' ? 'Sahkan & Luluskan' : 'Sahkan & Kemukakan ke JPN'
+  }
+  if (status === 'MENUNGGU_JPN_SAH') {
+    return kategori === 'LUAR_NEGARA' ? 'Sahkan & Kemukakan ke KPM' : 'Sahkan & Luluskan'
+  }
+  return LABEL_TINDAKAN.SOKONG
+}
+
 export const LABEL_PENGANGKUTAN: Record<Pengangkutan, string> = {
   BAS_PERSIARAN: 'Bas Persiaran',
   VAN_PERSIARAN: 'Van Persiaran',

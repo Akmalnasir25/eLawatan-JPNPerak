@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { dapatPermohonan, hantarLaporanPasca, type BundelPermohonan } from '@/lib/api'
-import { formatTarikh, hariLagi } from '@/lib/guna'
+import { formatTarikh, hariLagi, laluan } from '@/lib/guna'
 import { Berputar, Medan, Memuat, Mesej, Petak } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
 import { ClipboardPen, Printer } from 'lucide-react'
@@ -85,7 +85,7 @@ export function LaporanPascaLawatan() {
         aksi={
           b.laporan && (
             <a
-              href={`/cetak/lampiran-g/${p.id}`}
+              href={laluan(`cetak/lampiran-g/${p.id}`)}
               target="_blank"
               rel="noreferrer"
               className="btn-kedua"

@@ -45,6 +45,13 @@ menjalankan sistem**.
 
 ## 3. Cuba Dahulu — Mod Demo (tanpa akaun)
 
+**Dalam talian:** https://akmalnasir25.github.io/eLawatan-JPNPerak/ — dikemas
+kini automatik setiap kali `main` di-push (`.github/workflows/pages.yml`
+menjalankan `ujian:db` dahulu). Kemajuan setiap terbitan boleh dilihat di tab
+**Actions** repositori.
+
+Secara setempat:
+
 ```bash
 npm install
 npm run demo             # http://localhost:5173

@@ -4,7 +4,7 @@ import { dokumenDiperlukan, hantarPermohonan } from '@/lib/api'
 import { gunaAuth } from '@/lib/auth'
 import { lihatDokumen, muatNaikDokumen, padamDokumen } from '@/lib/r2'
 import { LABEL_KUMPULAN_DOKUMEN } from '@/lib/istilah'
-import { formatMasa, formatSaiz, kelas } from '@/lib/guna'
+import { formatMasa, formatSaiz, kelas, laluan } from '@/lib/guna'
 import { Berputar, Memuat, Mesej, Modal, SenaraiRalat } from '@/komponen/ui'
 import type { Dokumen, JenisDokumen } from '@/lib/jenis'
 import type { PropLangkah } from '../BorangPermohonan'
@@ -137,7 +137,7 @@ export function Langkah6({ bundel, muatSemula, kelengkapan }: PropLangkah) {
 
           <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-4">
             <a
-              href={`/cetak/lampiran-a/${p.id}`}
+              href={laluan(`cetak/lampiran-a/${p.id}`)}
               target="_blank"
               rel="noreferrer"
               className="btn-kedua"
@@ -145,7 +145,7 @@ export function Langkah6({ bundel, muatSemula, kelengkapan }: PropLangkah) {
               Pratonton Lampiran A
             </a>
             <a
-              href={`/cetak/senarai-semak/${p.id}`}
+              href={laluan(`cetak/senarai-semak/${p.id}`)}
               target="_blank"
               rel="noreferrer"
               className="btn-kedua"

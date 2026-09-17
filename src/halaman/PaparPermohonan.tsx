@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   dapatPermohonan,
+  dapatTetapan,
   senaraiAudit,
   tindakanKelulusan,
   type BundelPermohonan,
@@ -18,8 +19,11 @@ import {
   LABEL_STATUS,
   LABEL_TINDAKAN,
   PERANAN_BAGI_STATUS,
+  PERINGKAT_SEMAK,
+  SEMAKAN_BAGI_PENGESAH,
+  labelSokong,
 } from '@/lib/istilah'
-import { formatMasa, formatSaiz, formatTarikh, formatWang, kelas } from '@/lib/guna'
+import { formatMasa, formatSaiz, formatTarikh, formatWang, kelas, laluan } from '@/lib/guna'
 import {
   Baris,
   Berputar,
@@ -30,8 +34,10 @@ import {
 } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
 import { RantaianKelulusan } from '@/komponen/RantaianKelulusan'
+import { PaparanPengesah } from '@/komponen/PaparanPengesah'
 import {
   Banknote,
+  ArrowLeft,
   CheckCircle2,
   ClipboardCheck,
   FileText,
@@ -47,7 +53,7 @@ import {
   XCircle,
   type LucideIcon,
 } from 'lucide-react'
-import type { Dokumen, LogAudit, Tindakan } from '@/lib/jenis'
+import type { Dokumen, ItemSemakan, LogAudit, Tindakan } from '@/lib/jenis'
 
 export function PaparPermohonan() {
   const { id } = useParams<{ id: string }>()
@@ -61,6 +67,9 @@ export function PaparPermohonan() {
   const [catatan, setCatatan] = useState('')
   const [sibuk, setSibuk] = useState(false)
   const [dokPapar, setDokPapar] = useState<Dokumen | null>(null)
+  const [itemSemakan, setItemSemakan] = useState<ItemSemakan[]>([])
+  const [ditanda, setDitanda] = useState<string[]>([])
+  const [paparPenuh, setPaparPenuh] = useState(false)
 
   const muat = useCallback(async () => {
     if (!id) return
@@ -76,6 +85,10 @@ export function PaparPermohonan() {
     void muat()
   }, [muat])
 
+  useEffect(() => {
+    void dapatTetapan<ItemSemakan[]>('item_semakan').then((i) => setItemSemakan(i ?? []))
+  }, [])
+
   if (ralat && !b) return <Mesej jenis="ralat">{ralat}</Mesej>
   if (!b) return <Memuat />
 
@@ -85,6 +98,10 @@ export function PaparPermohonan() {
   const giliranSaya = peranPerlu === peranan
   const pintasan = peranan === 'admin' && !!peranPerlu && !giliranSaya
   const bolehBertindak = giliranSaya || pintasan
+  const tahapSemak = PERINGKAT_SEMAK.includes(p.status)
+  const semuaDitanda = itemSemakan.every((i) => ditanda.includes(i.kod))
+  const modPengesah = bolehBertindak && !!SEMAKAN_BAGI_PENGESAH[p.status]
+  const ringkas = modPengesah && !paparPenuh
   const milikSekolah = peranan === 'sekolah' && pegawai!.kod_skop === p.kod_sekolah
   const bolehSunting =
     (milikSekolah || peranan === 'admin') &&
@@ -100,9 +117,16 @@ export function PaparPermohonan() {
     setSibuk(true)
     setRalat(null)
     try {
-      await tindakanKelulusan(id, tindakan, catatan.trim() || undefined)
+      await tindakanKelulusan(
+        id,
+        tindakan,
+        catatan.trim() || undefined,
+        tahapSemak && tindakan === 'SOKONG' ? ditanda : undefined,
+      )
       setTindakan(null)
       setCatatan('')
+      setDitanda([])
+      setPaparPenuh(false)
       await muat()
     } catch (e) {
       setRalat(e instanceof Error ? e.message : 'Tindakan gagal.')
@@ -143,16 +167,16 @@ export function PaparPermohonan() {
                 Sunting
               </Link>
             )}
-            <a href={`/cetak/lampiran-a/${p.id}`} target="_blank" rel="noreferrer" className="btn-kedua">
+            <a href={laluan(`cetak/lampiran-a/${p.id}`)} target="_blank" rel="noreferrer" className="btn-kedua">
               <Printer className="h-4 w-4" aria-hidden />
               Lampiran A
             </a>
-            <a href={`/cetak/senarai-semak/${p.id}`} target="_blank" rel="noreferrer" className="btn-kedua">
+            <a href={laluan(`cetak/senarai-semak/${p.id}`)} target="_blank" rel="noreferrer" className="btn-kedua">
               <Printer className="h-4 w-4" aria-hidden />
               Senarai Semak
             </a>
             {(p.status === 'DILULUSKAN' || p.status === 'SELESAI') && (
-              <a href={`/cetak/surat-kelulusan/${p.id}`} target="_blank" rel="noreferrer" className="btn-hijau">
+              <a href={laluan(`cetak/surat-kelulusan/${p.id}`)} target="_blank" rel="noreferrer" className="btn-hijau">
                 <Printer className="h-4 w-4" aria-hidden />
                 Surat Kelulusan
               </a>
@@ -182,6 +206,27 @@ export function PaparPermohonan() {
         </div>
       )}
 
+      {ringkas && (
+        <PaparanPengesah
+          b={b}
+          peranan={peranPerlu!}
+          pintasan={pintasan}
+          onTindakan={setTindakan}
+          onPaparPenuh={() => setPaparPenuh(true)}
+        />
+      )}
+
+      {modPengesah && paparPenuh && (
+        <div className="mb-5">
+          <button type="button" className="btn-kedua btn-kecil" onClick={() => setPaparPenuh(false)}>
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+            Kembali ke paparan ringkas
+          </button>
+        </div>
+      )}
+
+      {!ringkas && (
+      <>
       {/* ── Aliran kelulusan ──────────────────────────────────── */}
       {p.kategori && (
         <section className="kad mb-6">
@@ -220,9 +265,15 @@ export function PaparPermohonan() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" className="btn-hijau" onClick={() => setTindakan('SOKONG')}>
+              <button
+                type="button"
+                className="btn-hijau"
+                disabled={tahapSemak && !semuaDitanda}
+                title={tahapSemak && !semuaDitanda ? 'Tanda semua perkara semakan dahulu' : undefined}
+                onClick={() => setTindakan('SOKONG')}
+              >
                 <CheckCircle2 className="h-4 w-4" aria-hidden />
-                {LABEL_TINDAKAN.SOKONG}
+                {labelSokong(p.status, p.kategori)}
               </button>
               <button type="button" className="btn-jingga" onClick={() => setTindakan('KEMBALI')}>
                 <RotateCcw className="h-4 w-4" aria-hidden />
@@ -234,6 +285,55 @@ export function PaparPermohonan() {
               </button>
             </div>
           </div>
+          {tahapSemak && (
+            <fieldset className="border-t border-emas-200 px-5 py-4">
+              <legend className="sr-only">Senarai semak penyemak</legend>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-bold text-jata-900">
+                  Senarai semak penyemak
+                  <span className="ml-2 text-xs font-medium text-slate-500">
+                    {ditanda.length}/{itemSemakan.length} ditanda
+                  </span>
+                </p>
+                <button
+                  type="button"
+                  className="btn-halus btn-kecil"
+                  onClick={() => setDitanda(semuaDitanda ? [] : itemSemakan.map((i) => i.kod))}
+                >
+                  {semuaDitanda ? 'Kosongkan semua' : 'Tanda semua'}
+                </button>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {itemSemakan.map((i) => (
+                  <label
+                    key={i.kod}
+                    className={kelas(
+                      'flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition',
+                      ditanda.includes(i.kod)
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-biru-300',
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-600"
+                      checked={ditanda.includes(i.kod)}
+                      onChange={(e) =>
+                        setDitanda((d) =>
+                          e.target.checked ? [...d, i.kod] : d.filter((k) => k !== i.kod),
+                        )
+                      }
+                    />
+                    {i.label}
+                  </label>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-slate-500">
+                Dengan memperakukan, anda mengesahkan setiap perkara di atas telah disemak.
+                Pengesah akan membaca perakuan ini tanpa menyemak semula butiran.
+              </p>
+            </fieldset>
+          )}
           {pintasan && (
             <p className="border-t border-emas-200 px-5 py-2.5 text-xs text-amber-900">
               Tindakan anda direkodkan dalam log audit sebagai pintasan pentadbir dan tidak
@@ -509,6 +609,12 @@ export function PaparPermohonan() {
                           <p className="text-xs text-slate-400">
                             {formatMasa(k.tarikh_tindakan)}
                           </p>
+                          {k.semakan && (
+                            <p className="mt-0.5 flex items-center gap-1 text-xs text-emerald-700">
+                              <CheckCircle2 className="h-3 w-3" aria-hidden />
+                              {k.semakan.length} perkara disemak
+                            </p>
+                          )}
                           {k.pintasan_admin && (
                             <p className="mt-0.5 text-xs font-medium text-amber-700">
                               (pintasan pentadbir)
@@ -555,10 +661,18 @@ export function PaparPermohonan() {
           )}
         </div>
       </div>
+      </>
+      )}
 
       {/* ── Modal tindakan ─────────────────────────────────────── */}
       <Modal
-        tajuk={tindakan ? LABEL_TINDAKAN[tindakan] : ''}
+        tajuk={
+          tindakan === 'SOKONG'
+            ? labelSokong(p.status, p.kategori)
+            : tindakan
+              ? LABEL_TINDAKAN[tindakan]
+              : ''
+        }
         buka={!!tindakan}
         tutup={() => {
           setTindakan(null)
@@ -567,7 +681,9 @@ export function PaparPermohonan() {
       >
         <p className="mb-4 text-sm leading-relaxed text-slate-600">
           {tindakan === 'SOKONG' &&
-            'Permohonan akan maju ke peringkat seterusnya. Catatan adalah pilihan.'}
+            (tahapSemak
+              ? `Anda memperakukan ${itemSemakan.length} perkara semakan. Permohonan akan dihantar ke peringkat seterusnya. Catatan adalah pilihan.`
+              : 'Permohonan akan maju ke peringkat seterusnya. Catatan adalah pilihan.')}
           {tindakan === 'KEMBALI' &&
             'Sekolah boleh menyunting dan menghantar semula. Catatan wajib — nyatakan dengan jelas apa yang perlu dibetulkan.'}
           {tindakan === 'TOLAK' &&
