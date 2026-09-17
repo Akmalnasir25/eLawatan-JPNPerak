@@ -1,39 +1,48 @@
 import { useState } from 'react'
 import { kelas, laluan } from '@/lib/guna'
 
-/**
- * Logo jabatan. Letakkan fail logo rasmi yang diluluskan di
- * `public/logo-jabatan.png` — ia dipaparkan secara automatik.
- *
- * Sebelum fail itu wujud, lambang neutral dipaparkan. Sistem ini tidak
- * melukis semula Jata Negara atau logo rasmi mana-mana agensi.
- */
+// Logo Korporat KPM (versi BM, tulisan hitam), dipangkas daripada fail
+// asal Logo-Korporat-KPM-BM-Tulisan-Hitam.png:
+//   public/logo-kpm.png      — lambang + "KEMENTERIAN PENDIDIKAN" (598×360)
+//   public/logo-jabatan.png  — lambang sahaja (325×256)
+// Tulisan hitam tidak kelihatan di atas latar gelap, jadi guna varian
+// 'lambang' di situ.
+const FAIL = {
+  penuh: { src: 'logo-kpm.png', nisbah: 598 / 360 },
+  lambang: { src: 'logo-jabatan.png', nisbah: 325 / 256 },
+} as const
+
 export function LogoRasmi({
   saiz = 48,
+  varian = 'lambang',
   className,
   terang = false,
 }: {
+  /** Tinggi dalam piksel; lebar mengikut nisbah logo. */
   saiz?: number
+  varian?: keyof typeof FAIL
   className?: string
-  /** Versi untuk latar gelap. */
+  /** Lambang ganti untuk latar gelap jika fail logo tiada. */
   terang?: boolean
 }) {
   const [gagal, setGagal] = useState(false)
+  const f = FAIL[varian]
 
   if (!gagal) {
     return (
       <img
-        src={laluan('logo-jabatan.png')}
-        alt="Logo Jabatan Pendidikan Negeri Perak"
-        width={saiz}
+        src={laluan(f.src)}
+        alt="Logo Kementerian Pendidikan Malaysia"
         height={saiz}
+        width={Math.round(saiz * f.nisbah)}
         className={kelas('shrink-0 object-contain', className)}
-        style={{ width: saiz, height: saiz }}
+        style={{ height: saiz, width: Math.round(saiz * f.nisbah) }}
         onError={() => setGagal(true)}
       />
     )
   }
 
+  // Ganti neutral jika fail logo tidak dapat dimuatkan.
   return (
     <svg
       viewBox="0 0 64 64"

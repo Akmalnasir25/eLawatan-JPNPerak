@@ -115,7 +115,7 @@ export function KepalaJabatan({ kanan }: { kanan?: ReactNode }) {
     <div className="bg-white">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3.5 sm:px-6">
         <Link to="/" className="flex min-w-0 items-center gap-3">
-          <LogoRasmi saiz={52} />
+          <LogoRasmi saiz={56} />
           <div className="min-w-0 leading-tight">
             <p className="hidden text-xs font-medium text-slate-500 sm:block">
               {jabatan.kementerian}

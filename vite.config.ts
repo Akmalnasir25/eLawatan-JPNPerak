@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'logo-jabatan.png'],
+      includeAssets: ['favicon.png', 'logo-jabatan.png', 'logo-kpm.png'],
       // Enjin Postgres mod demo (±10 MB) dimuat turun terus, bukan dicache awal.
       workbox: { globIgnores: ['**/pglite*', '**/*.wasm', '**/*.data'] },
       manifest: {

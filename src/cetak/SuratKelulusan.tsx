@@ -103,14 +103,14 @@ export function CetakSuratKelulusan() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '78px 1fr auto',
+            gridTemplateColumns: 'auto 1fr auto',
             gap: 14,
             alignItems: 'center',
             paddingBottom: 8,
             borderBottom: '2.5px solid #000',
           }}
         >
-          <LogoRasmi saiz={74} />
+          <LogoRasmi varian="penuh" saiz={80} />
           <div>
             <div style={{ fontWeight: 700, fontSize: '13pt', letterSpacing: '0.02em', lineHeight: 1.2 }}>
               {pengeluar.nama}

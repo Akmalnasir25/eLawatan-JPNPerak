@@ -1363,11 +1363,15 @@ function EditorJabatan() {
           </div>
         </div>
         <p className="rounded-md bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
-          Logo pada kepala laman dan surat dibaca daripada fail{' '}
+          Logo Korporat KPM dibaca daripada{' '}
           <code className="rounded bg-white px-1 py-0.5 font-mono text-[0.7rem] ring-1 ring-slate-200">
             public/logo-jabatan.png
-          </code>
-          . Letakkan logo rasmi yang diluluskan di situ; sebelum itu, lambang neutral dipaparkan.
+          </code>{' '}
+          (lambang, untuk kepala dan kaki laman) dan{' '}
+          <code className="rounded bg-white px-1 py-0.5 font-mono text-[0.7rem] ring-1 ring-slate-200">
+            public/logo-kpm.png
+          </code>{' '}
+          (lambang dan tulisan, untuk kepala surat). Ganti kedua-dua fail jika logo dikemas kini.
         </p>
       </div>
       <div className="flex justify-end border-t border-slate-200 px-5 py-3">
