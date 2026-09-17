@@ -30,24 +30,31 @@ const PENGANGKUTAN: Pengangkutan[] = [
 
 export function CetakLampiranA() {
   const { id } = useParams<{ id: string }>()
-  const { bundel: b, ralat } = gunaCetak(id)
+  const { bundel: b, ralat, url } = gunaCetak(id)
 
   return (
     <BingkaiCetak tajuk="Lampiran A — Borang Permohonan Lawatan Murid Sekolah" ralat={ralat} sedia={!!b}>
-      {b && <Isi b={b} />}
+      {b && <Isi b={b} url={url} />}
     </BingkaiCetak>
   )
 }
 
-function Isi({ b }: { b: NonNullable<ReturnType<typeof gunaCetak>['bundel']> }) {
+type Url = ReturnType<typeof gunaCetak>['url']
+
+function Isi({ b, url }: { b: NonNullable<ReturnType<typeof gunaCetak>['bundel']>; url: Url }) {
   const p = b.permohonan
   const ketua = b.peserta.find((x) => x.kategori === 'KETUA_ROMBONGAN')
   const jumlahA =
     Number(p.kutipan_murid) + Number(p.kutipan_guru) + Number(p.sumber_lain)
   const jumlahB = b.penaja.reduce((n, x) => n + Number(x.jumlah), 0)
 
-  const kelulusanBagi = (bahagian: string) =>
-    b.kelulusan.find((k) => k.bahagian === bahagian && k.tindakan === 'SOKONG')
+  // Ambil sokongan TERKINI — permohonan yang dikembalikan dan dihantar
+  // semula mempunyai lebih daripada satu rekod bagi peringkat yang sama.
+  const terkini = (syarat: (k: (typeof b.kelulusan)[number]) => boolean) =>
+    [...b.kelulusan].reverse().find((k) => k.tindakan === 'SOKONG' && syarat(k))
+  const pengesahBagi = (bahagian: string) => terkini((k) => k.bahagian === bahagian)
+  const penyemakBagi = (peringkat: string) => terkini((k) => k.peringkat === peringkat)
+  const sudahDihantar = !!p.dihantar_pada
 
   return (
     <div className="borang-rasmi">
@@ -66,6 +73,9 @@ function Isi({ b }: { b: NonNullable<ReturnType<typeof gunaCetak>['bundel']> }) 
           <div style={{ fontSize: '9.5pt', marginTop: 6, fontWeight: 700 }}>
             No. Rujukan: {p.no_rujukan}
           </div>
+        )}
+        {p.nama_pemohon && (
+          <div style={{ fontSize: '9.5pt', marginTop: 2 }}>Pemohon: {p.nama_pemohon}</div>
         )}
       </div>
 
@@ -447,13 +457,17 @@ function Isi({ b }: { b: NonNullable<ReturnType<typeof gunaCetak>['bundel']> }) 
           <tr>
             <td style={{ height: 70 }}>
               <div style={{ marginBottom: 6 }}>
-                <Pangkah ditanda={false} /> Disokong &nbsp;&nbsp;&nbsp;
+                <Pangkah ditanda={sudahDihantar} /> Disokong &nbsp;&nbsp;&nbsp;
                 <Pangkah ditanda={false} /> Tidak disokong
               </div>
               <div style={{ fontSize: '9.5pt' }}>Ulasan:</div>
+              {/* Dibekukan semasa dihantar; sebelum itu, profil semasa sekolah */}
               <BlokTandatangan
-                nama={b.sekolah.nama_guru_besar}
+                nama={p.nama_guru_besar ?? b.sekolah.nama_guru_besar}
                 jawatan="Pengetua / Guru Besar"
+                tarikh={sudahDihantar ? formatTarikh(p.dihantar_pada) : undefined}
+                tandatangan={url(p.kunci_tandatangan_gb)}
+                cop={url(p.kunci_cop_sekolah)}
               />
             </td>
           </tr>
@@ -465,7 +479,9 @@ function Isi({ b }: { b: NonNullable<ReturnType<typeof gunaCetak>['bundel']> }) 
         kod="G"
         tajuk="G. Ulasan Penolong Pendaftar (Pegawai Pendidikan Daerah) — Lawatan Dalam Daerah"
         nota="Jika program dalam daerah, proses kelulusan tamat di sini."
-        kelulusan={kelulusanBagi('G')}
+        kelulusan={pengesahBagi('G')}
+        penyemak={penyemakBagi('MENUNGGU_PPD_SEMAK')}
+        url={url}
       />
 
       {/* ── Bahagian H ─────────────────────────────────────────── */}
@@ -473,7 +489,9 @@ function Isi({ b }: { b: NonNullable<ReturnType<typeof gunaCetak>['bundel']> }) 
         kod="H"
         tajuk="H. Ulasan Pendaftar (Pengarah Pendidikan Negeri) — Lawatan Antara Daerah / Antara Negeri"
         nota="Jika lawatan antara daerah atau antara negeri, proses kelulusan tamat di sini. Tidak perlu memanjangkan permohonan kepada KPM."
-        kelulusan={kelulusanBagi('H')}
+        kelulusan={pengesahBagi('H')}
+        penyemak={penyemakBagi('MENUNGGU_JPN_SEMAK')}
+        url={url}
       />
 
       {/* ── Bahagian I ─────────────────────────────────────────── */}
@@ -503,7 +521,8 @@ function Isi({ b }: { b: NonNullable<ReturnType<typeof gunaCetak>['bundel']> }) 
           kod="J"
           tajuk="J. Ulasan Ketua Bahagian — Lawatan Luar Negara"
           nota="Permohonan perlu diangkat kepada Ketua Pendaftar dengan mematuhi prosedur operasi standard yang sedang berkuat kuasa."
-          kelulusan={kelulusanBagi('J')}
+          kelulusan={pengesahBagi('J')}
+          url={url}
         />
       )}
 
@@ -518,32 +537,40 @@ function Isi({ b }: { b: NonNullable<ReturnType<typeof gunaCetak>['bundel']> }) 
   )
 }
 
+type RekodTindakan = {
+  nama_pegawai: string
+  jawatan_pegawai: string | null
+  catatan: string | null
+  tarikh_tindakan: string
+  kunci_tandatangan: string | null
+  kunci_cop: string | null
+  pintasan_admin: boolean
+}
+
 function BahagianPelulus({
   kod,
   tajuk,
   nota,
   kelulusan,
+  penyemak,
+  url,
 }: {
   kod: string
   tajuk: string
   nota: string
-  kelulusan:
-    | {
-        nama_pegawai: string
-        jawatan_pegawai: string | null
-        catatan: string | null
-        tarikh_tindakan: string
-      }
-    | undefined
+  kelulusan: RekodTindakan | undefined
+  penyemak?: RekodTindakan | undefined
+  url: Url
 }) {
   return (
     <table style={{ marginTop: 8 }} className="elak-pecah">
       <tbody>
         <tr>
-          <td className="tajuk-bahagian">{tajuk}</td>
+          <td className="tajuk-bahagian" colSpan={2}>{tajuk}</td>
         </tr>
         <tr>
-          <td style={{ height: 78 }}>
+          <td style={{ height: 78, width: penyemak !== undefined ? '62%' : undefined }}
+              colSpan={penyemak !== undefined ? 1 : 2}>
             <div style={{ marginBottom: 6 }}>
               <Pangkah ditanda={!!kelulusan} /> Disokong / Diluluskan
               &nbsp;&nbsp;&nbsp;
@@ -555,14 +582,33 @@ function BahagianPelulus({
             <BlokTandatangan
               nama={kelulusan?.nama_pegawai}
               jawatan={kelulusan?.jawatan_pegawai}
-              tarikh={
-                kelulusan ? formatTarikh(kelulusan.tarikh_tindakan) : undefined
-              }
+              tarikh={kelulusan ? formatTarikh(kelulusan.tarikh_tindakan) : undefined}
+              tandatangan={url(kelulusan?.kunci_tandatangan)}
+              cop={url(kelulusan?.kunci_cop)}
             />
+            {kelulusan?.pintasan_admin && (
+              <div style={{ fontSize: '8.5pt', fontStyle: 'italic' }}>
+                (Direkod oleh pentadbir sistem — tandatangan tidak dicetak)
+              </div>
+            )}
             <div style={{ fontSize: '8.5pt', marginTop: 6, fontStyle: 'italic' }}>
               Nota ({kod}): {nota}
             </div>
           </td>
+          {penyemak !== undefined && (
+            <td style={{ verticalAlign: 'top' }}>
+              <div style={{ fontSize: '9.5pt', fontWeight: 700 }}>Disemak oleh</div>
+              <BlokTandatangan
+                label="Penyemak"
+                nama={penyemak?.nama_pegawai}
+                jawatan={penyemak?.jawatan_pegawai}
+                tarikh={penyemak ? formatTarikh(penyemak.tarikh_tindakan) : undefined}
+                tandatangan={url(penyemak?.kunci_tandatangan)}
+                cop={url(penyemak?.kunci_cop)}
+                tanpaCop
+              />
+            </td>
+          )}
         </tr>
       </tbody>
     </table>

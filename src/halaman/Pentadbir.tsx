@@ -202,6 +202,7 @@ function TabPegawai() {
               <th>Peranan</th>
               <th>Skop</th>
               <th>Jawatan</th>
+              <th>Tandatangan / cop</th>
               <th>Log masuk</th>
               <th />
             </tr>
@@ -214,6 +215,15 @@ function TabPegawai() {
                 <td className="text-xs">{LABEL_PERANAN[p.peranan]}</td>
                 <td className="font-mono text-xs">{p.kod_skop ?? '—'}</td>
                 <td className="text-xs text-slate-500">{p.jawatan ?? '—'}</td>
+                <td className="whitespace-nowrap text-xs">
+                  <span className={p.kunci_tandatangan ? 'text-emerald-600' : 'text-slate-400'}>
+                    {p.kunci_tandatangan ? 'Tandatangan ✓' : 'Tiada tandatangan'}
+                  </span>
+                  <br />
+                  <span className={p.kunci_cop ? 'text-emerald-600' : 'text-slate-400'}>
+                    {p.kunci_cop ? 'Cop ✓' : 'Tiada cop'}
+                  </span>
+                </td>
                 <td className="text-xs">
                   {p.user_id ? (
                     <span className="text-emerald-600">Pernah</span>

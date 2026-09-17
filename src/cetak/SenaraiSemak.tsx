@@ -8,7 +8,7 @@ import type { JenisDokumen } from '@/lib/jenis'
 
 export function CetakSenaraiSemak() {
   const { id } = useParams<{ id: string }>()
-  const { bundel: b, ralat } = gunaCetak(id)
+  const { bundel: b, ralat, url } = gunaCetak(id)
   const [perlu, setPerlu] = useState<JenisDokumen[] | null>(null)
   const [tempoh, setTempoh] = useState<Record<string, number> | null>(null)
 
@@ -24,7 +24,7 @@ export function CetakSenaraiSemak() {
       ralat={ralat}
       sedia={!!b && !!perlu}
     >
-      {b && perlu && <Isi b={b} perlu={perlu} tempoh={tempoh} />}
+      {b && perlu && <Isi b={b} perlu={perlu} tempoh={tempoh} url={url} />}
     </BingkaiCetak>
   )
 }
@@ -33,7 +33,9 @@ function Isi({
   b,
   perlu,
   tempoh,
+  url,
 }: {
+  url: ReturnType<typeof gunaCetak>['url']
   b: NonNullable<ReturnType<typeof gunaCetak>['bundel']>
   perlu: JenisDokumen[]
   tempoh: Record<string, number> | null
@@ -53,6 +55,9 @@ function Isi({
       : (hariLagi(p.tarikh_mula) ?? 0)
 
   const kumpulan = [...new Set(perlu.map((d) => d.kumpulan))]
+  const pengesahPpd = [...b.kelulusan]
+    .reverse()
+    .find((k) => k.peringkat === 'MENUNGGU_PPD_SAH' && k.tindakan === 'SOKONG')
   let bil = 0
 
   return (
@@ -82,6 +87,12 @@ function Isi({
             <td style={{ width: '15%' }}>No. KP</td>
             <td>{ketua?.kp ?? ''}</td>
           </tr>
+          {p.nama_pemohon && (
+            <tr>
+              <td>Pemohon</td>
+              <td colSpan={3}>{p.nama_pemohon}</td>
+            </tr>
+          )}
           <tr>
             <td>No. telefon bimbit</td>
             <td colSpan={3}>{ketua?.telefon ?? ''}</td>
@@ -222,7 +233,13 @@ function Isi({
           </tr>
           <tr>
             <td style={{ height: 76 }}>
-              <BlokTandatangan jawatan="Pegawai Pendidikan Daerah" />
+              <BlokTandatangan
+                nama={pengesahPpd?.nama_pegawai}
+                jawatan={pengesahPpd?.jawatan_pegawai ?? 'Pegawai Pendidikan Daerah'}
+                tarikh={pengesahPpd ? formatTarikh(pengesahPpd.tarikh_tindakan) : undefined}
+                tandatangan={url(pengesahPpd?.kunci_tandatangan)}
+                cop={url(pengesahPpd?.kunci_cop)}
+              />
             </td>
           </tr>
         </tbody>

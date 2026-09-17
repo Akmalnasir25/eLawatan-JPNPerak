@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { BingkaiCetak, gunaCetak } from './rangka'
+import { BingkaiCetak, gunaCetak, ImejTandatangan } from './rangka'
 import { dapatTetapan } from '@/lib/api'
 import { URL_SISTEM } from '@/lib/supabase'
 import { LABEL_KATEGORI } from '@/lib/istilah'
@@ -9,7 +9,7 @@ import { formatTarikh } from '@/lib/guna'
 
 export function CetakSuratKelulusan() {
   const { id } = useParams<{ id: string }>()
-  const { bundel: b, jpn, ralat } = gunaCetak(id)
+  const { bundel: b, jpn, ralat, url } = gunaCetak(id)
   const [syarat, setSyarat] = useState<string[] | null>(null)
   const [qr, setQr] = useState<string | null>(null)
 
@@ -166,7 +166,7 @@ export function CetakSuratKelulusan() {
             3. Kelulusan ini adalah tertakluk kepada syarat-syarat berikut:
           </p>
 
-          <ol style={{ marginTop: 6, paddingLeft: 24 }}>
+          <ol style={{ marginTop: 6, paddingLeft: 24, listStyle: 'decimal' }}>
             {syarat.map((s, i) => (
               <li key={i} style={{ marginTop: 4, textAlign: 'justify' }}>
                 {s}
@@ -191,8 +191,12 @@ export function CetakSuratKelulusan() {
               .filter((k) => k.tindakan === 'SOKONG')
               .pop()
             return (
-              <div style={{ marginTop: 44 }}>
-                <div style={{ borderTop: '1px solid #000', width: '62%', paddingTop: 3 }}>
+              <div style={{ marginTop: 4, width: '62%' }}>
+                <ImejTandatangan
+                  tandatangan={url(akhir?.kunci_tandatangan)}
+                  cop={url(akhir?.kunci_cop)}
+                />
+                <div style={{ borderTop: '1px solid #000', paddingTop: 3 }}>
                   <div style={{ fontWeight: 700 }}>
                     {akhir?.nama_pegawai ?? '________________________'}
                   </div>

@@ -1,4 +1,10 @@
-import type { ReactNode } from 'react'
+import {
+  cloneElement,
+  isValidElement,
+  useId,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import { kelas } from '@/lib/guna'
 import { LABEL_STATUS, WARNA_STATUS } from '@/lib/istilah'
 import type { Status } from '@/lib/jenis'
@@ -87,13 +93,24 @@ export function Medan({
   perlu?: boolean
   children: ReactNode
 }) {
+  // Pautkan label kepada input tunggal supaya pembaca skrin mengenalinya
+  // dan klik pada label memfokuskan medan.
+  const idAuto = useId()
+  const kawalan =
+    isValidElement(children) &&
+    typeof children.type === 'string' &&
+    ['input', 'select', 'textarea'].includes(children.type)
+      ? (children as ReactElement<{ id?: string }>)
+      : null
+  const id = kawalan ? (kawalan.props.id ?? idAuto) : undefined
+
   return (
     <div>
-      <label className="label">
+      <label className="label" htmlFor={id}>
         {label}
         {perlu && <span className="ml-1 text-rose-600">*</span>}
       </label>
-      {children}
+      {kawalan ? cloneElement(kawalan, { id }) : children}
       {nota && <p className="nota">{nota}</p>}
     </div>
   )

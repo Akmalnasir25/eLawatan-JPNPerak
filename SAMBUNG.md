@@ -10,10 +10,11 @@ Baca `README.md` untuk cara pasang; fail ini hanya menyenaraikan
 
 | Lapisan | Keadaan |
 |---|---|
-| Skema, fungsi, RLS, data rujukan | **Dijalankan atas Postgres 18 sebenar** (PGlite) — 47 ujian aliran lulus |
-| Edge Functions (4) | Lulus `deno check`; tandatangan R2 lulus 4 ujian luar talian |
+| Skema, fungsi, RLS, data rujukan | **Dijalankan atas Postgres 18 sebenar** (PGlite) — 55 ujian aliran lulus |
+| Edge Functions (5) | Lulus `deno check`; tandatangan R2 lulus 4 ujian luar talian |
 | Antara muka React penuh | `tsc` lulus, `vite build` lulus |
 | Cetakan, panel pentadbir, laporan, pengesahan QR | Siap |
+| Profil, tandatangan digital & cop rasmi (migrasi 5) | Diuji dalam pelayar: muat naik, SVG ditolak, cetakan F/G/penyemak/surat/senarai semak, pembekuan selepas imej dibuang, naik taraf pangkalan demo lama |
 | Mod demo (`npm run demo`) | Diuji hujung-ke-hujung dalam Chrome tanpa kepala: OTP, borang, muat naik, kelulusan, cetakan, pentadbir, paparan telefon |
 
 Jalankan semua semakan: `npm run ujian`
@@ -30,6 +31,9 @@ Jalankan semua semakan: `npm run ujian`
 4. Borang baharu mencipta **dua** draf setiap kali dibuka (kesan React
    berjalan semula) — dikawal dengan ref.
 5. Kad permohonan melimpah keluar skrin telefon — `min-w-0` pada item grid.
+6. Label medan borang tidak dipautkan kepada input (kebolehcapaian) —
+   `Medan` kini menetapkan `htmlFor`/`id` secara automatik.
+7. Senarai syarat pada surat kelulusan hilang nombor — `listStyle: decimal`.
 
 ---
 

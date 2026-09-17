@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { dapatPermohonan, dapatTetapan, type BundelPermohonan } from '@/lib/api'
+import { imejCetak } from '@/lib/profil'
 import { Memuat, Mesej } from '@/komponen/ui'
 
 export type MaklumatJpn = {
@@ -13,6 +14,7 @@ export type MaklumatJpn = {
 /** Muatkan rekod penuh untuk halaman cetakan. */
 export function gunaCetak(id: string | undefined) {
   const [bundel, setBundel] = useState<BundelPermohonan | null>(null)
+  const [imej, setImej] = useState<Record<string, string>>({})
   const [jpn, setJpn] = useState<MaklumatJpn | null>(null)
   const [ralat, setRalat] = useState<string | null>(null)
 
@@ -22,11 +24,17 @@ export function gunaCetak(id: string | undefined) {
       .then(([b, m]) => {
         setBundel(b)
         setJpn(m)
+        // Imej gagal dimuat tidak menghalang cetakan — ruang kosong
+        // kekal untuk tandatangan basah.
+        imejCetak(b.permohonan.id).then(setImej).catch(() => setImej({}))
       })
       .catch((e) => setRalat(e instanceof Error ? e.message : 'Gagal memuatkan.'))
   }, [id])
 
-  return { bundel, jpn, ralat }
+  /** URL imej bagi kunci yang dibekukan, atau undefined. */
+  const url = (kunci: string | null | undefined) => (kunci ? imej[kunci] : undefined)
+
+  return { bundel, jpn, ralat, url }
 }
 
 /**
@@ -93,21 +101,76 @@ export function BlokTandatangan({
   jawatan,
   tarikh,
   label = 'Tandatangan',
+  tandatangan,
+  cop,
+  tanpaCop = false,
 }: {
   nama?: string | null
   jawatan?: string | null
   tarikh?: string | null
   label?: string
+  /** URL imej tandatangan yang dibekukan (jika ada). */
+  tandatangan?: string
+  /** URL imej cop rasmi yang dibekukan (jika ada). */
+  cop?: string
+  tanpaCop?: boolean
 }) {
   return (
-    <div className="elak-pecah" style={{ marginTop: 8 }}>
+    <div className="elak-pecah">
+      <ImejTandatangan tandatangan={tandatangan} cop={cop} />
       <div className="garis-tandatangan">
         {label}
         {nama ? `: ${nama}` : ''}
       </div>
       {jawatan && <div style={{ fontSize: '9.5pt' }}>{jawatan}</div>}
       <div style={{ fontSize: '9.5pt' }}>Tarikh: {tarikh ?? '________________'}</div>
-      <div style={{ fontSize: '9.5pt', marginTop: 2 }}>Cop rasmi:</div>
+      {!tanpaCop && !cop && (
+        <div style={{ fontSize: '9.5pt', marginTop: 2 }}>Cop rasmi:</div>
+      )}
+    </div>
+  )
+}
+
+/** Kawasan tandatangan dengan cop bertindih — dikongsi dengan cetakan. */
+export function ImejTandatangan({
+  tandatangan,
+  cop,
+}: {
+  tandatangan?: string
+  cop?: string
+}) {
+  return (
+    <div style={{ position: 'relative', height: 64, marginTop: 6 }}>
+      {tandatangan && (
+        <img
+          src={tandatangan}
+          alt="Tandatangan"
+          style={{
+            position: 'absolute',
+            left: 0,
+            bottom: 0,
+            maxHeight: 60,
+            maxWidth: 190,
+            objectFit: 'contain',
+          }}
+        />
+      )}
+      {cop && (
+        <img
+          src={cop}
+          alt="Cop rasmi"
+          style={{
+            position: 'absolute',
+            left: 120,
+            top: -14,
+            height: 86,
+            maxWidth: 150,
+            objectFit: 'contain',
+            opacity: 0.88,
+            mixBlendMode: 'multiply',
+          }}
+        />
+      )}
     </div>
   )
 }

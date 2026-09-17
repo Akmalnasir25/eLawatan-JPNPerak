@@ -5,7 +5,7 @@ import { formatTarikh } from '@/lib/guna'
 
 export function CetakLampiranG() {
   const { id } = useParams<{ id: string }>()
-  const { bundel: b, ralat } = gunaCetak(id)
+  const { bundel: b, ralat, url } = gunaCetak(id)
 
   return (
     <BingkaiCetak
@@ -186,8 +186,11 @@ export function CetakLampiranG() {
                 </td>
                 <td style={{ verticalAlign: 'top' }}>
                   <BlokTandatangan
-                    nama={b.sekolah.nama_guru_besar}
+                    nama={b.laporan?.nama_guru_besar ?? b.sekolah.nama_guru_besar}
                     jawatan="Pengetua / Guru Besar"
+                    tarikh={b.laporan ? formatTarikh(b.laporan.dihantar_pada) : undefined}
+                    tandatangan={url(b.laporan?.kunci_tandatangan_gb)}
+                    cop={url(b.laporan?.kunci_cop_sekolah)}
                   />
                 </td>
               </tr>

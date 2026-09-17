@@ -12,6 +12,7 @@ function pautanBagi(peranan: string): Pautan[] {
       { ke: '/', teks: 'Papan Pemuka' },
       { ke: '/permohonan/baharu', teks: 'Permohonan Baharu' },
       { ke: '/laporan', teks: 'Laporan' },
+      { ke: '/profil', teks: 'Profil' },
     ]
   }
   if (peranan === 'admin') {
@@ -20,12 +21,14 @@ function pautanBagi(peranan: string): Pautan[] {
       { ke: '/senarai', teks: 'Semua Permohonan' },
       { ke: '/laporan', teks: 'Laporan' },
       { ke: '/pentadbir', teks: 'Pentadbir' },
+      { ke: '/profil', teks: 'Profil' },
     ]
   }
   return [
     { ke: '/', teks: 'Peti Tindakan' },
     { ke: '/senarai', teks: 'Semua Permohonan' },
     { ke: '/laporan', teks: 'Laporan' },
+    { ke: '/profil', teks: 'Profil' },
   ]
 }
 
@@ -86,14 +89,18 @@ export function Rangka({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            <div className="hidden text-right sm:block">
+            <NavLink
+              to="/profil"
+              className="hidden rounded-lg px-2 py-1 text-right hover:bg-slate-100 sm:block"
+              title="Profil, tandatangan dan cop"
+            >
               <p className="text-sm font-medium leading-tight text-slate-800">
                 {pegawai.nama}
               </p>
               <p className="text-[11px] leading-tight text-slate-500">
                 {LABEL_PERANAN[pegawai.peranan]} · {skop}
               </p>
-            </div>
+            </NavLink>
             <button
               type="button"
               onClick={logKeluar}

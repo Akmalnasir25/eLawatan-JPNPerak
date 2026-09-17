@@ -27,16 +27,47 @@ export function pangkalan(): Promise<PGlite> {
   return janji
 }
 
+const namaFail = (laluan: string) => laluan.split('/').pop()!
+
 async function mula(): Promise<PGlite> {
   const db = await PGlite.create(NAMA_DB, { extensions: { pgcrypto } })
   const ada = await db.query<{ ada: string | null }>(
     `select to_regclass('public.permohonan')::text as ada`,
   )
-  if (!ada.rows[0]?.ada) {
-    await db.exec(tiruanSupabase)
-    for (const nama of Object.keys(migrasi).sort()) {
-      await db.exec(migrasi[nama])
+  const baharu = !ada.rows[0]?.ada
+  if (baharu) await db.exec(tiruanSupabase)
+
+  // Jejak migrasi supaya pangkalan demo sedia ada dalam pelayar menerima
+  // migrasi baharu tanpa perlu set semula.
+  await db.exec(`create schema if not exists demo;
+                 create table if not exists demo.migrasi (nama text primary key)`)
+  const sudah = new Set(
+    (await db.query<{ nama: string }>('select nama from demo.migrasi')).rows.map((r) => r.nama),
+  )
+  const semua = Object.keys(migrasi).sort()
+
+  if (!baharu && sudah.size === 0) {
+    // Pangkalan demo dicipta sebelum penjejakan wujud: empat migrasi asal
+    // sudah dijalankan ketika itu.
+    for (const laluan of semua) {
+      const n = namaFail(laluan)
+      if (n < '20260917') {
+        await db.query('insert into demo.migrasi values ($1)', [n])
+        sudah.add(n)
+      }
     }
+  }
+
+  for (const laluan of semua) {
+    const n = namaFail(laluan)
+    if (sudah.has(n)) continue
+    await db.transaction(async (tx) => {
+      await tx.exec(migrasi[laluan])
+      await tx.query('insert into demo.migrasi values ($1)', [n])
+    })
+  }
+
+  if (baharu) {
     await db.exec(seed)
     await isiContoh(db)
   }
@@ -106,6 +137,37 @@ endstream endobj
 trailer<</Root 1 0 R>>
 %%EOF`
 
+// Tandatangan dan cop contoh — SVG ringkas, hanya untuk demo.
+// Muat naik sebenar menolak SVG; lihat r2-tandatangan.
+
+const xml = (t: string) =>
+  t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
+
+function svgTandatangan(nama: string): Blob {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="120" viewBox="0 0 360 120">
+  <text x="18" y="80" font-family="'Segoe Script','Brush Script MT','Lucida Handwriting',cursive"
+        font-size="46" fill="#1e3a8a" transform="rotate(-5 180 60)">${xml(nama)}</text>
+  <path d="M24 98 C 110 86, 210 108, 336 90" stroke="#1e3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+</svg>`
+  return new Blob([svg], { type: 'image/svg+xml' })
+}
+
+function svgCop(atas: string, tengah: string, bawah: string): Blob {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <defs><path id="b" d="M120 120 m-86 0 a86 86 0 1 1 172 0 a86 86 0 1 1 -172 0"/></defs>
+  <g fill="none" stroke="#5b21b6" opacity="0.85">
+    <circle cx="120" cy="120" r="110" stroke-width="5"/>
+    <circle cx="120" cy="120" r="66" stroke-width="2"/>
+  </g>
+  <g fill="#5b21b6" opacity="0.85" font-family="Arial,Helvetica,sans-serif" font-weight="700" text-anchor="middle">
+    <text font-size="17" letter-spacing="1.5"><textPath href="#b" startOffset="25%">${xml(atas)}</textPath></text>
+    <text x="120" y="114" font-size="15">${xml(tengah)}</text>
+    <text x="120" y="136" font-size="11">${xml(bawah)}</text>
+  </g>
+</svg>`
+  return new Blob([svg], { type: 'image/svg+xml' })
+}
+
 async function isiContoh(db: PGlite) {
   const uid: Record<string, string> = {}
   for (const emel of [
@@ -121,6 +183,44 @@ async function isiContoh(db: PGlite) {
     )
     uid[emel] = r.rows[0].id
   }
+
+  // Selepas pengguna auth wujud — akaun sekolah hanya dicipta oleh pencetus
+  // pendaftaran, jadi profilnya mesti ditetapkan selepas langkah di atas.
+  // Profil contoh: tandatangan dan cop, supaya cetakan menunjukkan ciri ini.
+  const imej: [string, string, string | null, [string, string, string] | null][] = [
+    ['aba1234@moe-dl.edu.my', 'Zulkifli', 'Puan Rosnah binti Ali', ['SK SERI KINTA', 'GURU BESAR', 'IPOH, PERAK']],
+    ['ppd.ku.pegawai@moe.gov.my', 'Hafiz S.', null, null],
+    ['ppd.ku.ketua@moe.gov.my', 'M. Razali', null, ['PPD KINTA UTARA', 'PEGAWAI PENDIDIKAN', 'DAERAH']],
+    ['jpn.pegawai@moe.gov.my', 'Rohana A.', null, null],
+    ['jpn.pengarah@moe.gov.my', 'Ismail M.Z.', null, ['JPN PERAK', 'PENGARAH', 'PENDIDIKAN NEGERI']],
+    ['kpm.penyelaras@moe.gov.my', 'Shahrul N.', null, ['KEMENTERIAN PENDIDIKAN', 'KETUA BAHAGIAN', 'BSKK']],
+  ]
+  for (const [emel, ttd, gb, cop] of imej) {
+    const g = await db.query<{ id: string }>('select id from pegawai where emel = $1', [emel])
+    const id = g.rows[0]?.id
+    if (!id) continue
+    const kTtd = `profil/${id}/tandatangan/contoh.svg`
+    await simpanFail(kTtd, svgTandatangan(ttd))
+    let kCop: string | null = null
+    if (cop) {
+      kCop = `profil/${id}/cop/contoh.svg`
+      await simpanFail(kCop, svgCop(...cop))
+    }
+    await db.query(
+      `update pegawai set kunci_tandatangan = $1, kunci_cop = $2,
+              nama_pemohon = case when peranan = 'sekolah' then 'Cikgu Nurul Aini binti Hassan' end
+        where id = $3`,
+      [kTtd, kCop, id],
+    )
+    if (gb) {
+      await db.query(
+        `update sekolah set nama_guru_besar = $1
+          where kod_sekolah = (select kod_skop from pegawai where id = $2)`,
+        [gb, id],
+      )
+    }
+  }
+
   const sekolah = uid['aba1234@moe-dl.edu.my']
 
   const pdf = new Blob([PDF_CONTOH], { type: 'application/pdf' })

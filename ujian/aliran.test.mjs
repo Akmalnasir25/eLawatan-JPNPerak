@@ -662,3 +662,125 @@ describe('Pandangan v_permohonan_ringkas', () => {
     assert.equal(lain, 0)
   })
 })
+
+describe('Profil, tandatangan dan cop', () => {
+  const idPeg = async (uid) => (await satu(db, 'select id from pegawai where user_id = $1', [uid])).id
+  const kunci = (id, jenis, n = 1) => `profil/${id}/${jenis}/${n}.png`
+  const tetapkan = (uid, jenis, k) =>
+    sebagai(db, uid, () => db.query('select tetapkan_imej_profil($1, $2)', [jenis, k]))
+  const kemasProfil = (uid, p) =>
+    sebagai(db, uid, () =>
+      satu(db, 'select * from kemas_profil($1, $2, $3, $4, $5)', [
+        p.nama ?? null, p.jawatan ?? null, p.telefon ?? null, p.pemohon ?? null, p.gb ?? null,
+      ]),
+    )
+
+  test('sekolah mengemas kini Guru Besar dan pemohon, tetapi bukan nama sekolah', async () => {
+    const g = await kemasProfil(u.sekolah, {
+      nama: 'Nama Sekolah Palsu', gb: 'Puan Rosnah binti Ali', pemohon: 'Cikgu Faizal', telefon: '05-1112222',
+    })
+    assert.equal(g.nama, 'SK Seri Kinta')
+    assert.equal(g.nama_pemohon, 'Cikgu Faizal')
+    const s = await satu(db, `select nama_guru_besar from sekolah where kod_sekolah = 'ABA1234'`)
+    assert.equal(s.nama_guru_besar, 'Puan Rosnah binti Ali')
+  })
+
+  test('KPPD mengemas kini nama dan jawatan sendiri sahaja', async () => {
+    const g = await kemasProfil(u.ppdKetua, { nama: 'Tuan Haji Razali bin Yusof', jawatan: 'KPPD Kinta Utara' })
+    assert.equal(g.nama, 'Tuan Haji Razali bin Yusof')
+    assert.equal(g.peranan, 'ppd_ketua', 'peranan tidak boleh berubah melalui profil')
+    const lain = await satu(db, 'select nama from pegawai where user_id = $1', [u.ppdPegawai])
+    assert.notEqual(lain.nama, g.nama)
+  })
+
+  test('nama kosong ditolak', async () => {
+    await assert.rejects(kemasProfil(u.ppdKetua, { nama: ' ' }), /Nama penuh wajib/)
+    await assert.rejects(kemasProfil(u.sekolah, { gb: '' }), /Guru Besar/)
+  })
+
+  test('tidak boleh menunjuk kepada tandatangan orang lain', async () => {
+    const idKetua = await idPeg(u.ppdKetua)
+    await assert.rejects(tetapkan(u.ppdPegawai, 'tandatangan', kunci(idKetua, 'tandatangan')), /bukan milik/)
+    await assert.rejects(tetapkan(u.ppdPegawai, 'cop', 'permohonan/x/y.png'), /bukan milik/)
+    const idSendiri = await idPeg(u.ppdPegawai)
+    await assert.rejects(tetapkan(u.ppdPegawai, 'cop', kunci(idSendiri, 'tandatangan')), /bukan milik/)
+  })
+
+  test('tandatangan dan cop dibekukan pada setiap peringkat; pintasan tanpa tandatangan', async () => {
+    const [iS, iP, iK] = [await idPeg(u.sekolah), await idPeg(u.ppdPegawai), await idPeg(u.ppdKetua)]
+    await tetapkan(u.sekolah, 'tandatangan', kunci(iS, 'tandatangan'))
+    await tetapkan(u.sekolah, 'cop', kunci(iS, 'cop'))
+    await tetapkan(u.ppdPegawai, 'tandatangan', kunci(iP, 'tandatangan'))
+    await tetapkan(u.ppdKetua, 'tandatangan', kunci(iK, 'tandatangan'))
+    await tetapkan(u.ppdKetua, 'cop', kunci(iK, 'cop'))
+
+    const id = await ciptaLengkap()
+    await sebagai(db, u.sekolah, () => db.query(rpc('hantar_permohonan', [1]), [id]))
+    const f = await satu(db, 'select * from permohonan where id = $1', [id])
+    assert.equal(f.kunci_tandatangan_gb, kunci(iS, 'tandatangan'))
+    assert.equal(f.kunci_cop_sekolah, kunci(iS, 'cop'))
+    assert.equal(f.nama_guru_besar, 'Puan Rosnah binti Ali')
+    assert.equal(f.nama_pemohon, 'Cikgu Faizal')
+
+    await bertindak(u.ppdPegawai, id, 'SOKONG')
+    await bertindak(u.ppdKetua, id, 'SOKONG')
+
+    // Tukar tandatangan SELEPAS kelulusan — rekod lama mesti kekal
+    await tetapkan(u.ppdKetua, 'tandatangan', kunci(iK, 'tandatangan', 2))
+    await tetapkan(u.sekolah, 'tandatangan', null)
+
+    const k = await db.query(
+      `select peringkat, kunci_tandatangan, kunci_cop from kelulusan
+        where permohonan_id = $1 order by tarikh_tindakan`, [id])
+    assert.deepEqual(k.rows, [
+      { peringkat: 'MENUNGGU_PPD_SEMAK', kunci_tandatangan: kunci(iP, 'tandatangan'), kunci_cop: null },
+      { peringkat: 'MENUNGGU_PPD_SAH', kunci_tandatangan: kunci(iK, 'tandatangan'), kunci_cop: kunci(iK, 'cop') },
+    ])
+    const f2 = await satu(db, 'select kunci_tandatangan_gb from permohonan where id = $1', [id])
+    assert.equal(f2.kunci_tandatangan_gb, kunci(iS, 'tandatangan'), 'Bahagian F kekal')
+
+    // Pintasan pentadbir: tiada tandatangan
+    const id2 = await ciptaLengkap()
+    await sebagai(db, u.sekolah, () => db.query(rpc('hantar_permohonan', [1]), [id2]))
+    await bertindak(u.admin, id2, 'SOKONG')
+    const p = await satu(db, 'select kunci_tandatangan, kunci_cop from kelulusan where permohonan_id = $1', [id2])
+    assert.deepEqual(p, { kunci_tandatangan: null, kunci_cop: null })
+
+    // Kembalikan tidak ditandatangani
+    await bertindak(u.ppdKetua, id2, 'KEMBALI', 'Sila semak semula jadual tentatif.')
+    const r = await satu(
+      db, `select kunci_tandatangan from kelulusan where permohonan_id = $1 and tindakan = 'KEMBALI'`, [id2])
+    assert.equal(r.kunci_tandatangan, null)
+
+    // Senarai kunci untuk cetakan
+    const semua = (await db.query('select * from kunci_imej_permohonan($1)', [id])).rows.map((x) => x.kunci_imej_permohonan)
+    // tandatangan + cop sekolah, tandatangan penyemak, tandatangan + cop KPPD
+    assert.equal(semua.length, 5)
+  })
+
+  test('Lampiran G membekukan tandatangan Guru Besar semasa laporan dihantar', async () => {
+    const iS = await idPeg(u.sekolah)
+    await tetapkan(u.sekolah, 'tandatangan', kunci(iS, 'tandatangan', 3))
+    const id = await ciptaLengkap()
+    await sebagai(db, u.sekolah, () => db.query(rpc('hantar_permohonan', [1]), [id]))
+    await bertindak(u.ppdPegawai, id, 'SOKONG')
+    await bertindak(u.ppdKetua, id, 'SOKONG')
+    await sebagai(db, u.sekolah, () =>
+      db.query(rpc('hantar_laporan_pasca', [1, 2, 3, 4, 5, 6, 7]), [
+        id, 'Lawatan berjalan lancar dan objektif tercapai.', 30, 6, false, null, null,
+      ]))
+    const l = await satu(db, 'select kunci_tandatangan_gb, nama_guru_besar from laporan_pasca where permohonan_id = $1', [id])
+    assert.equal(l.kunci_tandatangan_gb, kunci(iS, 'tandatangan', 3))
+    assert.equal(l.nama_guru_besar, 'Puan Rosnah binti Ali')
+  })
+
+  test('fungsi kunci_imej_permohonan tidak boleh dipanggil terus oleh pengguna', async () => {
+    await sebagai(db, u.ppdLain, () =>
+      assert.rejects(db.query(`select kunci_imej_permohonan(gen_random_uuid())`), /permission denied/))
+  })
+
+  test('perubahan profil direkod dalam log audit', async () => {
+    const a = await satu(db, `select count(*)::int n from log_audit where peristiwa in ('PROFIL_DIKEMASKINI','IMEJ_PROFIL_DITUKAR')`)
+    assert.ok(a.n >= 5)
+  })
+})

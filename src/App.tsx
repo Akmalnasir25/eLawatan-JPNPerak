@@ -15,6 +15,7 @@ import { LaporanPascaLawatan } from '@/halaman/LaporanPascaLawatan'
 import { Laporan } from '@/halaman/Laporan'
 import { Pentadbir } from '@/halaman/Pentadbir'
 import { SahQr } from '@/halaman/SahQr'
+import { Profil } from '@/halaman/Profil'
 import { CetakLampiranA } from '@/cetak/LampiranA'
 import { CetakSenaraiSemak } from '@/cetak/SenaraiSemak'
 import { CetakSuratKelulusan } from '@/cetak/SuratKelulusan'
@@ -117,6 +118,10 @@ export function App() {
       <Route
         path="/laporan"
         element={<Lindung><Rangka><Laporan /></Rangka></Lindung>}
+      />
+      <Route
+        path="/profil"
+        element={<Lindung><Rangka><Profil /></Rangka></Lindung>}
       />
       <Route
         path="/pentadbir"

@@ -168,7 +168,7 @@ npm run dev              # http://localhost:5173
 Tabur Edge Functions:
 
 ```bash
-npm run fn:tabur         # menabur kesemua empat fungsi
+npm run fn:tabur         # menabur kesemua lima fungsi
 ```
 
 Bina untuk pengeluaran:
@@ -195,7 +195,7 @@ E-mel OTP setempat boleh dibaca di Inbucket, `http://localhost:54324`.
 
 ```bash
 npm run ujian            # kesemua di bawah
-npm run ujian:db         # 47 ujian aliran atas Postgres sebenar (PGlite)
+npm run ujian:db         # 55 ujian aliran atas Postgres sebenar (PGlite)
 npm run ujian:fn         # tandatangan pautan R2, tanpa rangkaian
 npm run semak:fn         # taip-semak Edge Functions dengan Deno
 ```
@@ -221,6 +221,9 @@ Deno dimuat turun automatik melalui npm pada kali pertama.
 | Log audit tidak boleh dipadam | Tiada dasar UPDATE atau DELETE pada `log_audit` |
 | Permohonan dikunci selepas hantar | Pencetus `halang_sunting_selepas_hantar` |
 | Domain e-mel KPM sahaja | `daftar-semak` + semakan pelayar |
+| Tandatangan dan cop dibekukan pada saat tindakan | `tindakan_kelulusan()`, `hantar_permohonan()`, `hantar_laporan_pasca()` |
+| Tiada sesiapa boleh guna tandatangan orang lain | `tetapkan_imej_profil()` — kunci mesti di bawah `profil/<id sendiri>/` |
+| Pintasan pentadbir tidak mencetak tandatangan | `tindakan_kelulusan()` |
 
 Antara muka memaparkan peraturan ini, tetapi **tidak** bergantung
 kepadanya untuk keselamatan. Setiap satu dikuatkuasakan semula di
@@ -246,7 +249,34 @@ Diambil daripada `00-INDEKS.md`, dan kekal terbuka:
 
 ---
 
-## 10. Had Yang Diketahui
+## 10. Profil, Tandatangan Digital dan Cop Rasmi
+
+Setiap akaun mempunyai halaman **Profil** (menu atas, atau klik nama di
+penjuru kanan).
+
+| Akaun | Boleh ubah | Tandatangan dicetak pada |
+|---|---|---|
+| Sekolah | Nama Guru Besar, nama pemohon, telefon | Bahagian F (semasa dihantar), Lampiran G |
+| Pegawai PPD / JPN (penyemak) | Nama, jawatan, telefon | "Disemak oleh" dalam Bahagian G / H |
+| KPPD | Nama, jawatan, telefon | Bahagian G, Senarai Semak, surat kelulusan Dalam Daerah |
+| Pengarah JPN | Nama, jawatan, telefon | Bahagian H, surat kelulusan Antara Daerah/Negeri |
+| Bahagian Penyelaras KPM | Nama, jawatan, telefon | Bahagian J, surat kelulusan Luar Negara |
+
+- Imej PNG, JPEG atau WebP, maksimum 1 MB. **SVG ditolak** kerana boleh
+  membawa skrip. PNG berlatar lutsinar memberi hasil terbaik.
+- Imej disimpan secara peribadi dalam R2 di bawah `profil/<id pegawai>/`
+  dan hanya dipaparkan melalui pautan bertandatangan yang tamat dalam
+  5–10 minit.
+- **Dibekukan pada saat tindakan.** Rekod kelulusan menyimpan kunci imej
+  yang digunakan ketika itu. Menukar tandatangan, membuangnya, atau menukar
+  pemegang jawatan tidak mengubah dokumen yang sudah ditandatangani.
+- Hanya tindakan **Sokong / Luluskan** ditandatangani. Kembalikan, Tolak dan
+  pintasan pentadbir tidak mencetak tandatangan sesiapa.
+- Nama sekolah dan kod sekolah kekal dikawal pentadbir (senarai rasmi JPN).
+
+---
+
+## 11. Had Yang Diketahui
 
 - **Google OIDC DELIMa dimatikan.** Log masuk menggunakan OTP e-mel.
   Hidupkan dalam `supabase/config.toml` apabila Client ID diperoleh, dan

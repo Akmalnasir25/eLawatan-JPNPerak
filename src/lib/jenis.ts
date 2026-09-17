@@ -90,6 +90,10 @@ export type Pegawai = {
   telefon: string | null
   aktif: boolean
   dicipta_pada: string
+  nama_pemohon: string | null
+  kunci_tandatangan: string | null
+  kunci_cop: string | null
+  profil_dikemaskini_pada: string | null
 }
 
 export type Permohonan = {
@@ -126,6 +130,11 @@ export type Permohonan = {
   diluluskan_pada: string | null
   dikemaskini_pada: string
   catatan_kembali: string | null
+  // Bahagian F — dibekukan semasa dihantar
+  nama_guru_besar: string | null
+  nama_pemohon: string | null
+  kunci_tandatangan_gb: string | null
+  kunci_cop_sekolah: string | null
 }
 
 export type Tempat = {
@@ -214,6 +223,8 @@ export type Kelulusan = {
   catatan: string | null
   pintasan_admin: boolean
   tarikh_tindakan: string
+  kunci_tandatangan: string | null
+  kunci_cop: string | null
 }
 
 export type LaporanPasca = {
@@ -226,6 +237,9 @@ export type LaporanPasca = {
   cadangan: string | null
   dihantar_oleh: string | null
   dihantar_pada: string
+  nama_guru_besar: string | null
+  kunci_tandatangan_gb: string | null
+  kunci_cop_sekolah: string | null
 }
 
 export type LogAudit = {

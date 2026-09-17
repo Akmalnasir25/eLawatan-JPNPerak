@@ -18,7 +18,7 @@
     "fn:tabur": "supabase functions deploy",
     "ujian:db": "node --test --test-concurrency=1 ujian/*.test.mjs",
     "ujian:fn": "npx --yes deno@2 test --allow-env --allow-net=esm.sh,jsr.io ujian/r2_presign_test.ts",
-    "semak:fn": "npx --yes deno@2 check supabase/functions/daftar-semak/index.ts supabase/functions/r2-naik/index.ts supabase/functions/r2-lihat/index.ts supabase/functions/r2-padam/index.ts",
+    "semak:fn": "npx --yes deno@2 check supabase/functions/daftar-semak/index.ts supabase/functions/r2-naik/index.ts supabase/functions/r2-lihat/index.ts supabase/functions/r2-padam/index.ts supabase/functions/r2-tandatangan/index.ts",
     "ujian": "npm run ujian:db && npm run ujian:fn && npm run semak:fn",
     "demo": "vite --mode demo"
   },

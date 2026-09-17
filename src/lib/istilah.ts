@@ -132,6 +132,8 @@ export const LABEL_PERISTIWA_AUDIT: Record<string, string> = {
   IMPORT_PUKAL: 'Import pukal',
   TETAPAN_DIUBAH: 'Tetapan diubah',
   LAPORAN_PASCA_DIHANTAR: 'Laporan pasca-lawatan dihantar',
+  PROFIL_DIKEMASKINI: 'Profil dikemas kini',
+  IMEJ_PROFIL_DITUKAR: 'Tandatangan / cop ditukar',
 }
 
 /** Kategori nisbah Lampiran C — label ringkas untuk pemilih borang. */
@@ -160,4 +162,56 @@ export function nisbahCadangan(jenisSekolah: string): string {
     default:
       return 'f'
   }
+}
+
+/**
+ * Label profil mengikut peranan. `nama` ialah pemegang jawatan yang
+ * menandatangani pada peringkat itu.
+ */
+export const LABEL_PROFIL: Record<
+  Peranan,
+  { nama: string; jawatan: string; tandatangan: string; cop: string }
+> = {
+  sekolah: {
+    nama: 'Nama Guru Besar / Pengetua',
+    jawatan: 'Guru Besar / Pengetua',
+    tandatangan: 'Tandatangan Guru Besar / Pengetua',
+    cop: 'Cop rasmi sekolah',
+  },
+  ppd_pegawai: {
+    nama: 'Nama Pegawai PPD',
+    jawatan: 'Jawatan',
+    tandatangan: 'Tandatangan pegawai penyemak',
+    cop: 'Cop rasmi unit (pilihan)',
+  },
+  ppd_ketua: {
+    nama: 'Nama Pegawai Pendidikan Daerah (KPPD)',
+    jawatan: 'Jawatan',
+    tandatangan: 'Tandatangan KPPD',
+    cop: 'Cop rasmi PPD',
+  },
+  jpn_pegawai: {
+    nama: 'Nama Pegawai JPN',
+    jawatan: 'Jawatan',
+    tandatangan: 'Tandatangan pegawai penyemak',
+    cop: 'Cop rasmi sektor (pilihan)',
+  },
+  jpn_pengarah: {
+    nama: 'Nama Pengarah Pendidikan Negeri',
+    jawatan: 'Jawatan',
+    tandatangan: 'Tandatangan Pengarah',
+    cop: 'Cop rasmi JPN',
+  },
+  kpm: {
+    nama: 'Nama Ketua Bahagian',
+    jawatan: 'Jawatan',
+    tandatangan: 'Tandatangan Ketua Bahagian',
+    cop: 'Cop rasmi Bahagian',
+  },
+  admin: {
+    nama: 'Nama',
+    jawatan: 'Jawatan',
+    tandatangan: 'Tandatangan',
+    cop: 'Cop rasmi',
+  },
 }

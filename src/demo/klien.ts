@@ -339,6 +339,25 @@ const DOMAIN = (import.meta.env.VITE_DOMAIN_DIBENARKAN ?? 'moe-dl.edu.my,moe.gov
   .split(',')
   .map((d: string) => d.trim().toLowerCase())
 
+// URL blob dicache supaya imej yang sama tidak dicipta berulang kali.
+const cacheImej = new Map<string, string>()
+
+async function urlImej(kunci: string[]): Promise<Record<string, string>> {
+  const { bacaFail } = await import('./stor-fail')
+  const hasil: Record<string, string> = {}
+  for (const k of new Set(kunci)) {
+    let u = cacheImej.get(k)
+    if (!u) {
+      const blob = await bacaFail(k)
+      if (!blob) continue
+      u = URL.createObjectURL(blob)
+      cacheImej.set(k, u)
+    }
+    hasil[k] = u
+  }
+  return hasil
+}
+
 const fungsi: Record<string, (b: any) => Promise<unknown>> = {
   async 'daftar-semak'({ emel }: { emel: string }) {
     const { sebagaiPelayan } = await enjin()
@@ -439,6 +458,53 @@ const fungsi: Record<string, (b: any) => Promise<unknown>> = {
         },
       }
     })
+  },
+
+  async 'r2-tandatangan'(
+    b:
+      | { tujuan: 'naik'; jenis: string; jenis_mime: string; saiz: number }
+      | { tujuan: 'profil' }
+      | { tujuan: 'cetak'; permohonan_id: string },
+  ) {
+    const g = await pegawaiSemasa()
+    if (!g) return { ralat: 'Tidak dibenarkan.' }
+    const { sebagaiPelayan } = await enjin()
+
+    if (b.tujuan === 'naik') {
+      const ext = ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' } as Record<string, string>)[
+        b.jenis_mime
+      ]
+      if (b.jenis !== 'tandatangan' && b.jenis !== 'cop') return { ralat: 'Jenis imej tidak sah.' }
+      if (!ext) return { ralat: 'Hanya imej PNG, JPEG atau WebP diterima.' }
+      if (!(b.saiz > 0) || b.saiz > 1024 * 1024) return { ralat: 'Saiz imej mesti tidak melebihi 1 MB.' }
+      const kunci = `profil/${g.id}/${b.jenis}/${crypto.randomUUID()}.${ext}`
+      return { url: `demo://${kunci}`, kunci_r2: kunci }
+    }
+
+    let kunci: string[] = []
+    if (b.tujuan === 'profil') {
+      const r = await sebagaiPelayan((tx) =>
+        tx.query<{ t: string | null; c: string | null }>(
+          'select kunci_tandatangan t, kunci_cop c from pegawai where id = $1',
+          [g.id],
+        ),
+      )
+      kunci = [r.rows[0]?.t, r.rows[0]?.c].filter((x): x is string => !!x)
+    } else if (b.tujuan === 'cetak') {
+      const r = await sebagaiPelayan(async (tx) => {
+        const boleh = await tx.query<{ b: boolean }>(
+          'select boleh_lihat_permohonan_bagi($1, $2) as b',
+          [b.permohonan_id, g.id],
+        )
+        if (!boleh.rows[0]?.b) return null
+        return tx.query<{ k: string }>('select k from kunci_imej_permohonan($1) k', [b.permohonan_id])
+      })
+      if (!r) return { ralat: 'Permohonan ini di luar skop capaian anda.' }
+      kunci = r.rows.map((x) => x.k)
+    } else {
+      return { ralat: 'Tujuan permintaan tidak dikenali.' }
+    }
+    return { imej: await urlImej(kunci) }
   },
 
   async 'r2-padam'({ dokumen_id }: { dokumen_id: string }) {
