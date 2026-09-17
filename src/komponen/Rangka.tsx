@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   BarChart3,
@@ -313,6 +313,7 @@ export function KakiLaman() {
 // ── Rangka aplikasi ─────────────────────────────────────────────────
 
 export function Rangka({ children }: { children: ReactNode }) {
+  const lokasi = useLocation()
   const { pegawai } = gunaAuth()
   const [menuBuka, setMenuBuka] = useState(false)
 
@@ -387,7 +388,10 @@ export function Rangka({ children }: { children: ReactNode }) {
         {!menuBuka && <div className="h-1 lg:hidden" />}
       </nav>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+      <main
+        key={lokasi.pathname}
+        className="halaman-masuk mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8"
+      >
         {children}
       </main>
 

@@ -162,7 +162,7 @@ export function Masuk() {
         />
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:py-16">
           {/* ── Lajur maklumat ───────────────────────────────── */}
-          <div className="text-white">
+          <div className="text-white" data-animasi="kiri">
             <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-biru-200">
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
               SPI KPM Bil. 9 Tahun 2023
@@ -184,7 +184,7 @@ export function Masuk() {
                 { ikon: Route, tajuk: 'Kelulusan berperingkat', nota: 'PPD, JPN dan KPM mengikut kategori' },
                 { ikon: BadgeCheck, tajuk: 'Surat kelulusan', nota: 'Berkod QR, boleh disemak awam' },
               ].map((l, i) => (
-                <li key={l.tajuk} className="rounded-lg border border-white/10 bg-white/5 p-4">
+                <li key={l.tajuk} data-animasi="zum" className="rounded-lg border border-white/10 bg-white/5 p-4">
                   <div className="flex items-center gap-2">
                     <span className="grid h-6 w-6 place-items-center rounded-full bg-biru-500 text-xs font-bold text-white">
                       {i + 1}
@@ -199,7 +199,7 @@ export function Masuk() {
           </div>
 
           {/* ── Kad log masuk ───────────────────────────────── */}
-          <div className="w-full max-w-md justify-self-center lg:justify-self-end">
+          <div className="w-full max-w-md justify-self-center lg:justify-self-end" data-animasi="kanan">
             <div className="overflow-hidden rounded-kad bg-white shadow-2xl">
               <div className="flex items-center gap-3 border-b border-slate-100 bg-white px-6 py-4">
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-jata-900 text-white">

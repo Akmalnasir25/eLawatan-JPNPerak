@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { PembekalAuth } from '@/lib/auth'
 import { App } from './App'
 import { BanerDemo } from '@/komponen/BanerDemo'
+import { pasangAnimasiTatal } from '@/lib/gerakan'
 import '@fontsource/manrope/latin-400.css'
 import '@fontsource/manrope/latin-500.css'
 import '@fontsource/manrope/latin-600.css'
@@ -21,3 +22,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </React.StrictMode>,
 )
+
+pasangAnimasiTatal()

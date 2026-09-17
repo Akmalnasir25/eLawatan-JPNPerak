@@ -1,7 +1,10 @@
 import {
   cloneElement,
   isValidElement,
+  useEffect,
   useId,
+  useRef,
+  useState,
   type ReactElement,
   type ReactNode,
 } from 'react'
@@ -14,6 +17,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { kelas } from '@/lib/guna'
+import { kurangkanGerakan } from '@/lib/gerakan'
 import { LABEL_STATUS, WARNA_STATUS } from '@/lib/istilah'
 import type { Status } from '@/lib/jenis'
 
@@ -71,16 +75,62 @@ export function KadStatistik({
   nota?: string
 }) {
   return (
-    <div className="kad flex items-center gap-4 px-4 py-3.5 sm:px-5 sm:py-4">
+    <div className="kad kad-hidup flex items-center gap-4 px-4 py-3.5 sm:px-5 sm:py-4">
       <span className={kelas('hidden h-12 w-12 shrink-0 place-items-center rounded-lg ring-1 ring-inset sm:grid', NADA_STATISTIK[nada])}>
         <Ikon className="h-6 w-6" aria-hidden />
       </span>
       <div className="min-w-0">
-        <p className="text-2xl font-bold tabular-nums leading-none text-jata-900">{nilai}</p>
+        <p className="text-2xl font-bold tabular-nums leading-none text-jata-900">
+          {typeof nilai === 'number' ? <NomborNaik nilai={nilai} /> : nilai}
+        </p>
         <p className="mt-1.5 text-xs font-medium text-slate-600">{label}</p>
         {nota && <p className="text-[0.7rem] text-slate-400">{nota}</p>}
       </div>
     </div>
+  )
+}
+
+/** Nombor mengira dari 0 apabila mula kelihatan di skrin. */
+export function NomborNaik({ nilai, tempoh = 900 }: { nilai: number; tempoh?: number }) {
+  const [papar, setPapar] = useState(kurangkanGerakan() ? nilai : 0)
+  const ref = useRef<HTMLSpanElement>(null)
+  const dari = useRef(0)
+
+  useEffect(() => {
+    if (kurangkanGerakan() || typeof IntersectionObserver === 'undefined') {
+      setPapar(nilai)
+      return
+    }
+    let bingkai = 0
+    const mula = () => {
+      const awal = dari.current
+      const t0 = performance.now()
+      const langkah = (t: number) => {
+        const k = Math.min(1, (t - t0) / tempoh)
+        const lega = 1 - Math.pow(1 - k, 3)
+        setPapar(Math.round(awal + (nilai - awal) * lega))
+        if (k < 1) bingkai = requestAnimationFrame(langkah)
+        else dari.current = nilai
+      }
+      bingkai = requestAnimationFrame(langkah)
+    }
+    const pemerhati = new IntersectionObserver((e) => {
+      if (e.some((x) => x.isIntersecting)) {
+        pemerhati.disconnect()
+        mula()
+      }
+    })
+    if (ref.current) pemerhati.observe(ref.current)
+    return () => {
+      pemerhati.disconnect()
+      cancelAnimationFrame(bingkai)
+    }
+  }, [nilai, tempoh])
+
+  return (
+    <span ref={ref} aria-label={String(nilai)}>
+      {papar.toLocaleString('ms-MY')}
+    </span>
   )
 }
 

@@ -106,6 +106,79 @@
   }
 }
 
+/* ── Gerakan semasa tatal (lihat src/lib/gerakan.ts) ─────────────── */
+[data-muncul='sedia'] {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+}
+[data-muncul='sedia'][data-animasi='kiri'] {
+  transform: translate3d(-24px, 0, 0);
+}
+[data-muncul='sedia'][data-animasi='kanan'] {
+  transform: translate3d(24px, 0, 0);
+}
+[data-muncul='sedia'][data-animasi='zum'] {
+  transform: scale(0.94);
+}
+tr[data-muncul='sedia'] {
+  transform: translate3d(0, 8px, 0);
+}
+[data-muncul='ya'] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1) var(--tunda, 0ms),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--tunda, 0ms),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+/* Kad boleh klik terangkat sedikit semasa hover */
+.kad-hidup {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.kad-hidup:hover {
+  transform: translateY(-3px);
+}
+[data-muncul='ya'].kad-hidup {
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1) var(--tunda, 0ms),
+    transform 0.25s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+/* Peralihan halaman */
+@keyframes halaman-masuk {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: none; }
+}
+.halaman-masuk {
+  animation: halaman-masuk 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-muncul] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .kad-hidup:hover {
+    transform: none;
+  }
+  .halaman-masuk,
+  .animate-\[pulse_2\.5s_ease-in-out_infinite\] {
+    animation: none !important;
+  }
+}
+
+@media print {
+  [data-muncul] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 /* ── Mod kontras tinggi (bar utiliti) ─────────────────────────────── */
 .kontras-tinggi body {
   background: #fff;

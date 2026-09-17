@@ -131,7 +131,7 @@ export function RantaianKelulusan({
         const akhir = i === nod.length - 1
         const garisSiap = n.keadaan === 'selesai'
         return (
-          <li key={i} className="relative flex gap-3 pb-6 md:flex-1 md:flex-col md:items-center md:gap-2 md:pb-0 md:text-center">
+          <li key={i} data-animasi="zum" className="relative flex gap-3 pb-6 md:flex-1 md:flex-col md:items-center md:gap-2 md:pb-0 md:text-center">
             {/* Garis penyambung */}
             {!akhir && (
               <>
