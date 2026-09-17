@@ -300,3 +300,25 @@ tr[data-muncul='sedia'] {
   padding-top: 3px;
   font-size: 9.5pt;
 }
+/* Panel semakan kekal dalam tab; dialog native mengurus fokus dan Escape. */
+.panel-dokumen {
+  position: fixed;
+  inset: 0;
+  width: min(1440px, 96vw);
+  height: 94dvh;
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  color: #1e293b;
+  background: white;
+  box-shadow: 0 24px 60px rgb(15 23 42 / 25%);
+}
+.panel-dokumen::backdrop { background: rgb(15 23 42 / 60%); }
+.panel-dokumen-kawalan { max-height: 48%; }
+@media (max-width: 640px) {
+  .panel-dokumen { width: 100vw; height: 100dvh; border-radius: 0; padding-bottom: env(safe-area-inset-bottom); }
+  .panel-dokumen-kawalan { max-height: 55%; }
+}

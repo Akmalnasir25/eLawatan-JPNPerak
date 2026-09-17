@@ -8,7 +8,7 @@ import {
   type BundelPermohonan,
 } from '@/lib/api'
 import { gunaAuth } from '@/lib/auth'
-import { lihatDokumen } from '@/lib/r2'
+import { SemakanDokumen } from '@/komponen/SemakanDokumen'
 import {
   BAHAGIAN_PELULUS,
   LABEL_KATEGORI,
@@ -41,7 +41,6 @@ import {
   CheckCircle2,
   ClipboardCheck,
   FileText,
-  Files,
   History,
   MapPinned,
   PencilLine,
@@ -67,6 +66,7 @@ export function PaparPermohonan() {
   const [catatan, setCatatan] = useState('')
   const [sibuk, setSibuk] = useState(false)
   const [dokPapar, setDokPapar] = useState<Dokumen | null>(null)
+  const [dokSemak, setDokSemak] = useState<Dokumen | null>(null)
   const [itemSemakan, setItemSemakan] = useState<ItemSemakan[]>([])
   const [ditanda, setDitanda] = useState<string[]>([])
   const [paparPenuh, setPaparPenuh] = useState(false)
@@ -135,13 +135,9 @@ export function PaparPermohonan() {
     }
   }
 
-  async function bukaDokumen(d: Dokumen) {
-    try {
-      const hasil = await lihatDokumen(d.id)
-      window.open(hasil.url, '_blank', 'noopener')
-    } catch (e) {
-      setRalat(e instanceof Error ? e.message : 'Gagal membuka dokumen.')
-    }
+  function bukaDokumen(d: Dokumen) {
+    setDokPapar(null)
+    setDokSemak(d)
   }
 
   return (
@@ -494,52 +490,9 @@ export function PaparPermohonan() {
             </div>
           </section>
 
-          {/* Dokumen */}
-          <section className="kad">
-            <TajukKad ikon={Files}>Dokumen Sokongan ({b.dokumen.length})</TajukKad>
-            <div className="kad-isi">
-              {b.dokumen.length === 0 ? (
-                <p className="text-sm text-slate-500">
-                  Tiada dokumen dimuat naik.
-                </p>
-              ) : (
-                <ul className="divide-y divide-slate-100">
-                  {b.dokumen.map((d) => (
-                    <li
-                      key={d.id}
-                      className="flex flex-wrap items-center justify-between gap-3 py-2.5"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm text-slate-800">
-                          {d.nama_fail}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {formatSaiz(d.saiz)} ·{' '}
-                          {formatMasa(d.dimuat_naik_pada)}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          className="btn-kedua px-3 py-1.5 text-xs"
-                          onClick={() => setDokPapar(d)}
-                        >
-                          Butiran
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-utama px-3 py-1.5 text-xs"
-                          onClick={() => bukaDokumen(d)}
-                        >
-                          Lihat
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </section>
+          <SemakanDokumen permohonanId={p.id} dokumen={b.dokumen} pegawai={pegawai!}
+            bolehSemak={bolehBertindak && tahapSemak} dipilih={dokSemak}
+            pilih={setDokSemak} butiran={setDokPapar} />
         </div>
 
         {/* ── Lajur sisi ───────────────────────────────────────── */}
