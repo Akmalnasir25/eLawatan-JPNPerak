@@ -1,5 +1,20 @@
 # Semakan Dokumen Sokongan
 
+## Paparan pengesah — 18 September 2026
+
+- Pengesah PPD membaca status/warna penyemak PPD; Pengarah JPN membaca
+  status/warna penyemak JPN. Penyemak kekal melihat keputusan sendiri.
+- Ringkasan pada senarai dan panel menunjukkan nama penyemak, peranan,
+  masa serta catatan. Pembukaan pengesah hanya menambah log, bukan keputusan.
+- Keputusan terkini penyemak peringkat berkenaan dipilih untuk ID dan
+  cincangan fail yang sama. Pembukaan kemudian tidak menggantikan keputusan;
+  fail gantian tidak mewarisi warna. Semakan PPD tidak dikira sebagai semakan JPN.
+- Tiada perubahan kebenaran, giliran kelulusan atau migrasi pangkalan data.
+- Build dan 19 ujian berkaitan lulus (7 paparan peranan + 12 semakan DB).
+  Semakan Chrome desktop mengesahkan ringkasan penyemak dan panel baca sahaja
+  pada akaun pengesah PPD. Kes warna/versi/JPN disahkan melalui ujian automatik;
+  telefon sebenar dan paparan semua keadaan belum diuji secara visual.
+
 ## Kemas kini log bersama
 
 - Keputusan kekal mengikut giliran semakan (dipersetujui CikguIK). Pilihan

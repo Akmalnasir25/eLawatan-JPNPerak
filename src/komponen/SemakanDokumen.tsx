@@ -5,7 +5,7 @@ import type { Dokumen, Pegawai } from '@/lib/jenis'
 import { formatMasa, formatSaiz, kelas } from '@/lib/guna'
 import { LABEL_PERANAN } from '@/lib/istilah'
 import { lihatDokumen } from '@/lib/r2'
-import { LABEL_SEMAKAN, rekodSemakanDokumen, semakanSendiri, senaraiSemakanDokumen, type SemakanDokumen as Rekod, type StatusSemakan } from '@/lib/semakan-dokumen'
+import { LABEL_SEMAKAN, rekodSemakanDokumen, semakanSendiri, semakanUntukPaparan, penyemakBagiPengesah, senaraiSemakanDokumen, type SemakanDokumen as Rekod, type StatusSemakan } from '@/lib/semakan-dokumen'
 import { Berputar, Mesej } from './ui'
 
 const WARNA = {
@@ -43,23 +43,27 @@ export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, not
       .sort((a, b) => b.masa.localeCompare(a.masa) || a.id.localeCompare(b.id)))
   }, [permohonanId])
   const tambah = (r: Rekod) => setRekod((lama) => [r, ...lama.filter((x) => x.id !== r.id)])
+  const penyemak = penyemakBagiPengesah(pegawai.peranan)
+  const labelPenyemak = penyemak === 'ppd_pegawai' ? 'penyemak PPD' : 'penyemak JPN'
   const selesai = dokumen.filter((d) => {
-    const s = semakanSendiri(rekod, d, pegawai.id)?.status
+    const s = semakanUntukPaparan(rekod, d, pegawai)?.status
     return s === 'PATUH' || s === 'PEMBETULAN'
   }).length
   return <section className="kad">
     <div className="kad-tajuk flex flex-wrap items-center justify-between gap-2">
       <h2 className="flex items-center gap-2"><Files className="h-4 w-4" aria-hidden />Dokumen Sokongan ({dokumen.length})</h2>
-      {!ralat && !memuat && <span className="text-xs font-normal">Semakan anda: {selesai}/{dokumen.length} selesai</span>}
+      {!ralat && !memuat && <span className="text-xs font-normal">{penyemak ? `Semakan ${labelPenyemak}` : 'Semakan anda'}: {selesai}/{dokumen.length} mempunyai keputusan</span>}
     </div>
     <div className="kad-isi">
-      <p className="mb-4 text-sm text-slate-600">Buka dokumen untuk membaca dan menyemak. Keputusan serta catatan disimpan bagi setiap fail.</p>
+      <p className="mb-4 text-sm text-slate-600">{penyemak
+        ? `Warna dan catatan merujuk semakan ${labelPenyemak}. Pembukaan oleh pengesah hanya direkodkan dalam Log bersama.`
+        : 'Buka dokumen untuk membaca dan menyemak. Keputusan serta catatan disimpan bagi setiap fail.'}</p>
       {!bolehSemak && <p className="mb-4 text-sm text-slate-600">{notaSemakan}</p>}
       {ralat && <div className="mb-3"><Mesej jenis="ralat">{ralat} <button type="button" onClick={() => void muat()} className="underline">Cuba lagi</button></Mesej></div>}
       {!dokumen.length && <p className="text-sm text-slate-600">Tiada dokumen dimuat naik.</p>}
       <ul className="space-y-3">
         {dokumen.map((d) => {
-          const s = semakanSendiri(rekod, d, pegawai.id)
+          const s = semakanUntukPaparan(rekod, d, pegawai)
           const pembukaan = rekod.filter((r) => r.dokumen_id === d.id &&
             r.cincangan_sha256 === d.cincangan_sha256 && r.status === 'DIBUKA')
           const terakhir = pembukaan[0]
@@ -70,8 +74,11 @@ export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, not
                 <p className="break-words text-sm font-semibold">{d.nama_fail}</p>
                 <p className="mt-1 text-xs">{formatSaiz(d.saiz)} · {formatMasa(d.dimuat_naik_pada)}</p>
                 <p className="mt-2 flex items-center gap-1.5 text-xs font-medium"><Ikon className="h-4 w-4 shrink-0" aria-hidden />
-                  {memuat ? 'Memuatkan status…' : ralat ? 'Status belum tersedia' : s ? LABEL_SEMAKAN[s.status] : 'Belum dibuka oleh anda'}
+                  {memuat ? 'Memuatkan status…' : ralat ? 'Status belum tersedia' : s ? LABEL_SEMAKAN[s.status] : penyemak ? `Belum ada rekod semakan ${labelPenyemak}` : 'Belum dibuka oleh anda'}
                 </p>
+                {!memuat && !ralat && penyemak && s && <p className="mt-1 text-xs">
+                  {s.status === 'DIBUKA' ? 'Dibuka' : 'Disemak'} oleh {s.nama_pegawai} · {LABEL_PERANAN[s.peranan]} · {formatMasa(s.masa)}
+                </p>}
                 {!memuat && !ralat && terakhir && <p className="mt-2 text-xs">
                   Dibuka oleh {new Set(pembukaan.map((r) => r.pegawai_id)).size} pengguna · Terakhir: {terakhir.nama_pegawai} ({LABEL_PERANAN[terakhir.peranan]}) · {formatMasa(terakhir.masa)}
                 </p>}
@@ -81,7 +88,7 @@ export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, not
                 <button type="button" disabled={memuat} className="btn-utama min-h-11 px-4 text-xs" onClick={() => pilih(d)}>{bolehSemak ? 'Semak' : 'Lihat'}</button>
               </div>
             </div>
-            {s?.catatan && <p className="mt-3 whitespace-pre-wrap break-words border-t border-current/10 pt-2 text-sm">Catatan anda: {s.catatan}</p>}
+            {s?.catatan && <p className="mt-3 whitespace-pre-wrap break-words border-t border-current/10 pt-2 text-sm">{penyemak ? 'Catatan penyemak' : 'Catatan anda'}: {s.catatan}</p>}
           </li>
         })}
       </ul>
@@ -101,6 +108,8 @@ function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, notaSem
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const asal = semakanSendiri(rekod, d, pegawai.id)
+  const penyemak = penyemakBagiPengesah(pegawai.peranan)
+  const semakanPenyemak = semakanUntukPaparan(rekod, d, pegawai)
   const [keputusan, setKeputusan] = useState<StatusSemakan | ''>(asal?.status === 'DIBUKA' ? '' : asal?.status ?? '')
   const [catatan, setCatatan] = useState(asal?.catatan ?? '')
   const [kotor, setKotor] = useState(false)
@@ -212,6 +221,13 @@ function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, notaSem
         <button type="button" className="btn-kedua min-h-11 min-w-11 shrink-0 px-2" onClick={() => beralih(null)} disabled={sibuk} aria-label="Tutup panel dokumen"><X className="h-5 w-5" /></button>
       </header>
       <div className="panel-dokumen-kawalan shrink-0 overflow-y-auto border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+        {penyemak && <div className={kelas('mb-3 rounded-md border p-3 text-sm', semakanPenyemak ? WARNA[semakanPenyemak.status] : 'border-slate-200 text-slate-700')}>
+          <p className="font-semibold">Semakan {penyemak === 'ppd_pegawai' ? 'penyemak PPD' : 'penyemak JPN'}: {semakanPenyemak ? LABEL_SEMAKAN[semakanPenyemak.status] : 'Belum ada rekod'}</p>
+          {semakanPenyemak && <>
+            <p className="mt-1 text-xs">{semakanPenyemak.nama_pegawai} · {LABEL_PERANAN[semakanPenyemak.peranan]} · {formatMasa(semakanPenyemak.masa)}</p>
+            {semakanPenyemak.catatan && <p className="mt-2 whitespace-pre-wrap break-words">Catatan penyemak: {semakanPenyemak.catatan}</p>}
+          </>}
+        </div>}
         {bolehSemak ? <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
           <div>
             <label htmlFor="catatan-dokumen" className="mb-1 block text-sm font-medium text-slate-800">Catatan {keputusan === 'PEMBETULAN' ? '(wajib)' : '(pilihan)'}</label>

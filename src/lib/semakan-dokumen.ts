@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Dokumen, Peranan } from './jenis'
+import type { Dokumen, Pegawai, Peranan } from './jenis'
 
 export type StatusSemakan = 'DIBUKA' | 'PATUH' | 'PEMBETULAN'
 export type SemakanDokumen = {
@@ -48,4 +48,22 @@ export function semakanSendiri(rekod: SemakanDokumen[], d: Dokumen, pegawaiId: s
   const sendiri = rekod.filter((r) => r.dokumen_id === d.id &&
     r.cincangan_sha256 === d.cincangan_sha256 && r.pegawai_id === pegawaiId)
   return sendiri.find((r) => r.status !== 'DIBUKA') ?? sendiri[0]
+}
+
+export function penyemakBagiPengesah(peranan: Peranan) {
+  if (peranan === 'ppd_ketua') return 'ppd_pegawai'
+  if (peranan === 'jpn_pengarah') return 'jpn_pegawai'
+  return null
+}
+
+/** Pengesah membaca keputusan penyemak peringkatnya, bukan status dirinya.
+ * Pembukaan selepas keputusan tidak menukar warna; versi fail mesti sepadan.
+ */
+export function semakanUntukPaparan(rekod: SemakanDokumen[], d: Dokumen, pegawai: Pick<Pegawai, 'id' | 'peranan'>) {
+  const peranan = penyemakBagiPengesah(pegawai.peranan)
+  if (!peranan) return semakanSendiri(rekod, d, pegawai.id)
+  const sepadan = rekod.filter((r) => r.dokumen_id === d.id &&
+    r.cincangan_sha256 === d.cincangan_sha256 && r.peranan === peranan)
+    .sort((a, b) => b.masa.localeCompare(a.masa) || a.id.localeCompare(b.id))
+  return sepadan.find((r) => r.status !== 'DIBUKA') ?? sepadan[0]
 }
