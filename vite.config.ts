@@ -8,23 +8,19 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.png', 'logo-jabatan.png'],
       manifest: {
         name: 'eLAWATAN Perak',
         short_name: 'eLAWATAN',
         description: 'Sistem Permohonan dan Kelulusan Lawatan Murid Sekolah',
-        theme_color: '#0f4c81',
-        background_color: '#f8fafc',
+        theme_color: '#22326e',
+        background_color: '#f6f8fb',
         display: 'standalone',
         lang: 'ms',
         start_url: '/',
         icons: [
-          {
-            src: 'favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
-          },
+          { src: 'ikon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'ikon-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
     }),

@@ -149,7 +149,7 @@ export function Masuk() {
 
   return (
     <RangkaAwam>
-      <div className="relative overflow-hidden bg-jata-900">
+      <div className="relative overflow-hidden bg-jata-700">
         {/* Corak latar halus */}
         <div
           aria-hidden
@@ -163,14 +163,14 @@ export function Masuk() {
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:py-16">
           {/* ── Lajur maklumat ───────────────────────────────── */}
           <div className="text-white">
-            <p className="inline-flex items-center gap-2 rounded-full border border-emas-400/40 bg-emas-400/10 px-3 py-1 text-xs font-semibold text-emas-300">
+            <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-biru-200">
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
               SPI KPM Bil. 9 Tahun 2023
             </p>
-            <h1 className="mt-5 text-3xl font-bold leading-tight text-white sm:text-4xl">
+            <h1 className="mt-5 text-3xl font-extrabold leading-tight text-white sm:text-4xl">
               Permohonan dan Kelulusan
               <br />
-              <span className="text-emas-300">Lawatan Murid Sekolah</span>
+              <span className="text-biru-300">Lawatan Murid Sekolah</span>
             </h1>
             <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-jata-100">
               Satu saluran rasmi untuk sekolah, Pejabat Pendidikan Daerah dan
@@ -186,10 +186,10 @@ export function Masuk() {
               ].map((l, i) => (
                 <li key={l.tajuk} className="rounded-lg border border-white/10 bg-white/5 p-4">
                   <div className="flex items-center gap-2">
-                    <span className="grid h-6 w-6 place-items-center rounded-full bg-emas-400 text-xs font-bold text-jata-950">
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-biru-500 text-xs font-bold text-white">
                       {i + 1}
                     </span>
-                    <l.ikon className="h-4 w-4 text-emas-300" aria-hidden />
+                    <l.ikon className="h-4 w-4 text-biru-300" aria-hidden />
                   </div>
                   <p className="mt-3 text-sm font-semibold text-white">{l.tajuk}</p>
                   <p className="mt-0.5 text-xs leading-snug text-jata-200">{l.nota}</p>
@@ -200,9 +200,9 @@ export function Masuk() {
 
           {/* ── Kad log masuk ───────────────────────────────── */}
           <div className="w-full max-w-md justify-self-center lg:justify-self-end">
-            <div className="overflow-hidden rounded-lg bg-white shadow-2xl">
-              <div className="flex items-center gap-3 border-b-2 border-emas-400 bg-jata-50 px-6 py-4">
-                <span className="grid h-10 w-10 place-items-center rounded-lg bg-jata-700 text-white">
+            <div className="overflow-hidden rounded-kad bg-white shadow-2xl">
+              <div className="flex items-center gap-3 border-b border-slate-100 bg-white px-6 py-4">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-jata-900 text-white">
                   <IkonKad className="h-5 w-5" aria-hidden />
                 </span>
                 <div>

@@ -241,14 +241,14 @@ export function BorangPermohonan() {
         {/* ── Penanda langkah ─────────────────────────────────── */}
         <aside className="lg:sticky lg:top-20 lg:self-start">
           <div className="kad overflow-hidden">
-            <div className="border-b border-slate-200 bg-jata-800 px-4 py-3 text-white">
+            <div className="border-b border-slate-200 bg-jata-700 px-4 py-3 text-white">
               <p className="text-xs font-semibold uppercase tracking-wider text-jata-200">Kemajuan borang</p>
               <p className="mt-0.5 text-sm font-semibold">
                 {bilLengkap} daripada {LANGKAH.length} langkah lengkap
               </p>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/15">
                 <div
-                  className="h-full rounded-full bg-emas-400 transition-all"
+                  className="h-full rounded-full bg-biru-400 transition-all"
                   style={{ width: `${(bilLengkap / LANGKAH.length) * 100}%` }}
                 />
               </div>

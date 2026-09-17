@@ -18,7 +18,7 @@ export function KadPermohonan({
   return (
     <Link
       to={`/permohonan/${p.id}`}
-      className="kad group block min-w-0 border-l-4 border-l-jata-600 transition hover:border-l-emas-400 hover:shadow-timbul"
+      className="kad group block min-w-0 border-l-4 border-l-jata-700 transition hover:border-l-biru-500 hover:shadow-timbul"
     >
       <div className="px-4 py-3.5">
         <div className="flex items-start justify-between gap-3">

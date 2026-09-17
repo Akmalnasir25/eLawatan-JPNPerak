@@ -80,7 +80,7 @@ export function Pentadbir() {
               className={kelas(
                 '-mb-px border-b-[3px] px-4 py-3 text-sm font-semibold transition',
                 tab === t.kod
-                  ? 'border-emas-400 text-jata-900'
+                  ? 'border-biru-500 text-jata-900'
                   : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-jata-800',
               )}
             >

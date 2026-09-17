@@ -100,7 +100,7 @@ export function PapanPemuka() {
         <div className="min-w-0 space-y-8">
           <section>
             <h2 className="tajuk-seksyen">
-              <span className="h-4 w-1 rounded bg-emas-400" aria-hidden />
+              <span className="h-4 w-1 rounded bg-biru-500" aria-hidden />
               {adalahSekolah ? 'Perlu tindakan sekolah' : 'Menunggu tindakan anda'}
               {perlu.length > 0 && (
                 <span className="rounded-full bg-emas-100 px-2 py-0.5 text-[0.65rem] text-emas-700">

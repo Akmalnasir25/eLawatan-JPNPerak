@@ -49,8 +49,8 @@ export function SahQr() {
 
   return (
     <RangkaAwam>
-      <div className="bg-jata-900 px-4 py-10 text-center text-white">
-        <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emas-400 text-jata-950">
+      <div className="bg-jata-700 px-4 py-10 text-center text-white">
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-biru-500 text-white">
           <QrCode className="h-7 w-7" aria-hidden />
         </span>
         <h1 className="mt-4 text-2xl font-bold text-white">Pengesahan Surat Kelulusan</h1>

@@ -236,8 +236,8 @@ export function Modal({
       aria-modal="true"
       aria-label={tajuk}
     >
-      <div className={kelas('w-full overflow-hidden rounded-lg bg-white shadow-2xl', lebar)}>
-        <div className="flex items-center justify-between border-b-2 border-emas-400 bg-jata-800 px-5 py-3.5">
+      <div className={kelas('w-full overflow-hidden rounded-kad bg-white shadow-2xl', lebar)}>
+        <div className="flex items-center justify-between bg-jata-700 px-5 py-3.5">
           <h2 className="text-base font-semibold text-white">{tajuk}</h2>
           <button
             type="button"

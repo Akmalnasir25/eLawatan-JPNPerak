@@ -61,18 +61,18 @@ export function BarUtiliti() {
   ]
 
   return (
-    <div className="tanpa-cetak bg-jata-950 text-[0.72rem] text-jata-100">
+    <div className="tanpa-cetak bg-jata-700 text-[0.72rem] text-white/85">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-1.5 sm:px-6">
         <p className="flex items-center gap-1.5">
-          <ShieldCheck className="h-3.5 w-3.5 text-emas-400" aria-hidden />
+          <ShieldCheck className="h-3.5 w-3.5 text-biru-300" aria-hidden />
           <span>Sistem rasmi {jabatan.nama}</span>
-          <span className="hidden text-jata-300 sm:inline">
+          <span className="hidden text-white/60 sm:inline">
             · {formatHari(kini)}, {formatTarikh(kini)}
           </span>
         </p>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-0.5" role="group" aria-label="Saiz teks">
-            <span className="mr-1 hidden text-jata-300 sm:inline">Saiz teks</span>
+            <span className="mr-1 hidden text-white/60 sm:inline">Saiz teks</span>
             {pilihanSaiz.map((p) => (
               <button
                 key={p.s}
@@ -81,8 +81,8 @@ export function BarUtiliti() {
                 aria-pressed={saiz === p.s}
                 onClick={() => setSaiz(p.s)}
                 className={kelas(
-                  'min-w-[1.75rem] rounded px-1.5 py-0.5 font-semibold transition',
-                  saiz === p.s ? 'bg-emas-400 text-jata-950' : 'hover:bg-white/10',
+                  'min-w-[1.75rem] rounded-full px-1.5 py-0.5 font-semibold transition',
+                  saiz === p.s ? 'bg-white text-jata-900' : 'hover:bg-white/10',
                 )}
               >
                 {p.label}
@@ -94,8 +94,8 @@ export function BarUtiliti() {
             onClick={togolKontras}
             aria-pressed={kontras}
             className={kelas(
-              'flex items-center gap-1 rounded px-2 py-0.5 font-semibold transition',
-              kontras ? 'bg-emas-400 text-jata-950' : 'hover:bg-white/10',
+              'flex items-center gap-1 rounded-full px-2.5 py-0.5 font-semibold transition',
+              kontras ? 'bg-white text-jata-900' : 'hover:bg-white/10',
             )}
           >
             <Contrast className="h-3.5 w-3.5" aria-hidden />
@@ -112,20 +112,20 @@ export function BarUtiliti() {
 export function KepalaJabatan({ kanan }: { kanan?: ReactNode }) {
   const { jabatan } = gunaJabatan()
   return (
-    <div className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
+    <div className="bg-white">
+      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3.5 sm:px-6">
         <Link to="/" className="flex min-w-0 items-center gap-3">
           <LogoRasmi saiz={52} />
           <div className="min-w-0 leading-tight">
-            <p className="hidden text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:block">
+            <p className="hidden text-xs font-medium text-slate-500 sm:block">
               {jabatan.kementerian}
             </p>
-            <p className="truncate text-sm font-bold uppercase tracking-wide text-jata-900 sm:text-base">
+            <p className="truncate text-sm font-extrabold uppercase text-jata-900 sm:text-lg">
               <span className="sm:hidden">{jabatan.nama_ringkas || jabatan.nama}</span>
               <span className="hidden sm:inline">{jabatan.nama}</span>
             </p>
             <p className="truncate text-xs text-slate-600">
-              <span className="font-bold text-jata-700">eLAWATAN</span>
+              <span className="font-bold text-biru-500">eLAWATAN</span>
               <span className="hidden sm:inline">
                 {' '}· Sistem Permohonan dan Kelulusan Lawatan Murid Sekolah
               </span>
@@ -181,9 +181,9 @@ function MenuPengguna() {
         onClick={() => setBuka((b) => !b)}
         aria-expanded={buka}
         aria-haspopup="menu"
-        className="flex items-center gap-2.5 rounded-lg border border-transparent px-2 py-1.5 text-left transition hover:border-slate-200 hover:bg-slate-50"
+        className="flex items-center gap-2.5 rounded-full border border-transparent py-1 pl-1 pr-3 text-left transition hover:border-slate-200 hover:bg-latar"
       >
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-jata-700 text-xs font-bold text-white ring-2 ring-emas-300">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-jata-900 text-xs font-bold text-white ring-2 ring-biru-200">
           {inisial || <UserRound className="h-4 w-4" />}
         </span>
         <span className="hidden max-w-[220px] leading-tight md:block">
@@ -198,7 +198,7 @@ function MenuPengguna() {
       {buka && (
         <div
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-timbul"
+          className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-kad border border-slate-100 bg-white shadow-timbul"
         >
           <div className="border-b border-slate-100 bg-jata-50/60 px-4 py-3">
             <p className="truncate text-sm font-semibold text-jata-900">{pegawai.nama}</p>
@@ -210,7 +210,7 @@ function MenuPengguna() {
             onClick={() => setBuka(false)}
             className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
           >
-            <UserRound className="h-4 w-4 text-jata-600" aria-hidden />
+            <UserRound className="h-4 w-4 text-biru-500" aria-hidden />
             Profil, tandatangan &amp; cop
           </Link>
           <button
@@ -237,34 +237,33 @@ export function KakiLaman() {
   const { jabatan } = gunaJabatan()
   const tahun = new Date().getFullYear()
   return (
-    <footer className="app-kaki tanpa-cetak mt-12 bg-jata-950 text-jata-100">
-      <div className="h-1 bg-gradient-to-r from-emas-500 via-emas-300 to-emas-500" />
+    <footer className="app-kaki tanpa-cetak mt-12 bg-jata-700 text-white/85">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-3">
             <LogoRasmi saiz={44} terang />
             <div className="leading-tight">
-              <p className="font-bold uppercase tracking-wide text-white">{jabatan.nama}</p>
-              <p className="text-xs text-jata-300">{jabatan.sektor}</p>
+              <p className="font-bold text-white">{jabatan.nama}</p>
+              <p className="text-xs text-white/60">{jabatan.sektor}</p>
             </div>
           </div>
-          <ul className="mt-5 space-y-2 text-[0.8rem] text-jata-200">
+          <ul className="mt-5 space-y-2.5 text-[0.85rem] text-white/85">
             {jabatan.alamat && (
               <li className="flex gap-2">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emas-400" aria-hidden />
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-white/70" aria-hidden />
                 {jabatan.alamat}
               </li>
             )}
             {jabatan.telefon && (
               <li className="flex gap-2">
-                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-emas-400" aria-hidden />
+                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-white/70" aria-hidden />
                 {jabatan.telefon}
                 {jabatan.faks && ` · Faks ${jabatan.faks}`}
               </li>
             )}
             {jabatan.emel && (
               <li className="flex gap-2">
-                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-emas-400" aria-hidden />
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-white/70" aria-hidden />
                 {jabatan.emel}
               </li>
             )}
@@ -272,8 +271,8 @@ export function KakiLaman() {
         </div>
 
         <div>
-          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-emas-300">Pautan</p>
-          <ul className="space-y-2 text-[0.8rem]">
+          <p className="mb-3 text-sm font-bold text-white">Pautan</p>
+          <ul className="divide-y divide-white/10 text-[0.85rem] [&>li]:py-2 [&>li:first-child]:pt-0">
             <li><Link to="/" className="hover:text-white hover:underline">Laman utama sistem</Link></li>
             <li><Link to="/sah" className="hover:text-white hover:underline">Semak kesahihan surat kelulusan</Link></li>
             <li><Link to="/profil" className="hover:text-white hover:underline">Profil pengguna</Link></li>
@@ -294,8 +293,8 @@ export function KakiLaman() {
         </div>
 
         <div>
-          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-emas-300">Rujukan dasar</p>
-          <ul className="space-y-2 text-[0.8rem] text-jata-200">
+          <p className="mb-3 text-sm font-bold text-white">Rujukan dasar</p>
+          <ul className="divide-y divide-white/10 text-[0.85rem] text-white/85 [&>li]:py-2 [&>li:first-child]:pt-0">
             <li>Surat Pekeliling Ikhtisas KPM Bil. 9 Tahun 2023</li>
             <li>Peraturan Lawatan Sekolah 1957</li>
             <li>Senarai Semak BSS Pin.1/2023</li>
@@ -303,7 +302,7 @@ export function KakiLaman() {
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-[0.72rem] text-jata-300 sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-[0.72rem] text-white/60 sm:px-6">
           <p>Hak Cipta Terpelihara © {tahun} {jabatan.nama}</p>
           <p>Paparan terbaik: Google Chrome, Microsoft Edge atau Mozilla Firefox versi terkini</p>
         </div>
@@ -331,7 +330,7 @@ export function Rangka({ children }: { children: ReactNode }) {
               <MenuPengguna />
               <button
                 type="button"
-                className="rounded-md p-2 text-jata-800 hover:bg-slate-100 lg:hidden"
+                className="rounded-full p-2 text-jata-900 hover:bg-latar lg:hidden"
                 onClick={() => setMenuBuka((b) => !b)}
                 aria-label={menuBuka ? 'Tutup menu' : 'Buka menu'}
                 aria-expanded={menuBuka}
@@ -343,7 +342,7 @@ export function Rangka({ children }: { children: ReactNode }) {
         />
       </header>
 
-      <nav className="app-nav tanpa-cetak sticky top-0 z-30 bg-jata-800 shadow-md" aria-label="Navigasi utama">
+      <nav className="app-nav tanpa-cetak sticky top-0 z-30 border-t border-slate-100 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.08)]" aria-label="Navigasi utama">
         <div className="mx-auto hidden max-w-7xl items-stretch px-4 sm:px-6 lg:flex">
           {pautan.map((p) => (
             <NavLink
@@ -352,10 +351,10 @@ export function Rangka({ children }: { children: ReactNode }) {
               end={p.ke === '/'}
               className={({ isActive }) =>
                 kelas(
-                  'flex items-center gap-2 border-b-[3px] px-4 py-3 text-sm font-medium transition',
+                  'flex items-center gap-2 border-b-[3px] px-4 py-3 text-sm font-bold transition',
                   isActive
-                    ? 'border-emas-400 bg-jata-900/60 text-white'
-                    : 'border-transparent text-jata-100 hover:bg-jata-700 hover:text-white',
+                    ? 'border-biru-500 text-biru-500'
+                    : 'border-transparent text-jata-900 hover:text-biru-500',
                 )
               }
             >
@@ -366,7 +365,7 @@ export function Rangka({ children }: { children: ReactNode }) {
         </div>
 
         {menuBuka && (
-          <div className="border-t border-white/10 px-2 py-2 lg:hidden">
+          <div className="border-t border-slate-100 px-2 py-2 lg:hidden">
             {[...pautan, { ke: '/profil', teks: 'Profil', ikon: UserRound }].map((p) => (
               <NavLink
                 key={p.ke}
@@ -375,8 +374,8 @@ export function Rangka({ children }: { children: ReactNode }) {
                 onClick={() => setMenuBuka(false)}
                 className={({ isActive }) =>
                   kelas(
-                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium',
-                    isActive ? 'bg-jata-900 text-white' : 'text-jata-100',
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold',
+                    isActive ? 'bg-biru-50 text-biru-600' : 'text-jata-900',
                   )
                 }
               >
@@ -421,13 +420,13 @@ export function TajukHalaman({
       <nav aria-label="Jejak halaman" className="mb-3">
         <ol className="flex flex-wrap items-center gap-1 text-xs text-slate-500">
           <li>
-            <Link to="/" className="hover:text-jata-700 hover:underline">Utama</Link>
+            <Link to="/" className="hover:text-biru-500 hover:underline">Utama</Link>
           </li>
           {jejak.map((j, i) => (
             <li key={i} className="flex items-center gap-1">
               <ChevronRight className="h-3 w-3 text-slate-400" aria-hidden />
               {j.ke ? (
-                <Link to={j.ke} className="hover:text-jata-700 hover:underline">{j.teks}</Link>
+                <Link to={j.ke} className="hover:text-biru-500 hover:underline">{j.teks}</Link>
               ) : (
                 <span className="font-medium text-slate-700">{j.teks}</span>
               )}
@@ -439,12 +438,12 @@ export function TajukHalaman({
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
         <div className="flex min-w-0 items-start gap-3">
           {Ikon && (
-            <span className="mt-0.5 hidden h-11 w-11 shrink-0 place-items-center rounded-lg bg-jata-700 text-white shadow-sm sm:grid">
+            <span className="mt-0.5 hidden h-11 w-11 shrink-0 place-items-center rounded-xl bg-jata-900 text-white shadow-sm sm:grid">
               <Ikon className="h-5 w-5" aria-hidden />
             </span>
           )}
-          <div className="min-w-0 border-l-4 border-emas-400 pl-3 sm:border-0 sm:pl-0">
-            <h1 className="break-words text-xl font-bold tracking-tight text-jata-900 sm:text-2xl">
+          <div className="min-w-0 border-l-4 border-biru-500 pl-3 sm:border-0 sm:pl-0">
+            <h1 className="break-words text-xl font-extrabold tracking-tight text-jata-900 sm:text-2xl">
               {tajuk}
             </h1>
             {nota && <p className="mt-1 text-sm text-slate-600">{nota}</p>}
@@ -459,11 +458,11 @@ export function TajukHalaman({
 /** Rangka untuk halaman sebelum log masuk. */
 export function RangkaAwam({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-slate-100">
+    <div className="flex min-h-screen flex-col bg-latar">
       <header className="tanpa-cetak">
         <BarUtiliti />
         <KepalaJabatan />
-        <div className="h-1 bg-jata-800" />
+        <div className="h-px bg-slate-200" />
       </header>
       <main className="flex-1">{children}</main>
       <KakiLaman />
