@@ -67,6 +67,7 @@ class Pembina implements PromiseLike<Hasil> {
   private param: unknown[] = []
   private susunan: string[] = []
   private had: number | null = null
+  private ofset = 0
   private tunggal: 'wajib' | 'mungkin' | null = null
   private nilai: Record<string, unknown>[] = []
   private konflik: string | null = null
@@ -139,6 +140,11 @@ class Pembina implements PromiseLike<Hasil> {
     this.had = n
     return this
   }
+  range(dari: number, hingga: number) {
+    this.ofset = dari
+    this.had = hingga - dari + 1
+    return this
+  }
   single() {
     this.tunggal = 'wajib'
     return this
@@ -157,7 +163,8 @@ class Pembina implements PromiseLike<Hasil> {
         this.lajur.trim() === '*' ? '*' : this.lajur.split(',').map((c) => pengenal(c.trim())).join(', ')
       const order = this.susunan.length ? ` order by ${this.susunan.join(', ')}` : ''
       const limit = this.had ? ` limit ${Math.floor(this.had)}` : ''
-      return `select to_jsonb(x) as r from (select ${lajur} from ${t}${where}${order}${limit}) x`
+      const offset = this.ofset ? ` offset ${Math.floor(this.ofset)}` : ''
+      return `select to_jsonb(x) as r from (select ${lajur} from ${t}${where}${order}${limit}${offset}) x`
     }
 
     let ubah: string

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { senaraiPermohonan } from '@/lib/api'
+import { semuaPermohonan } from '@/lib/api'
 import { gunaAuth } from '@/lib/auth'
 import { LABEL_KATEGORI, LABEL_STATUS } from '@/lib/istilah'
-import { formatTarikh, keCsv, muatTurun } from '@/lib/guna'
+import { keCsv, muatTurun, kelas } from '@/lib/guna'
+import { hariMalaysia, paparanTarikhLawatan, susunTarikhLawatan } from '@/lib/tarikh-lawatan'
 import { LencanaStatus, Kosong, Memuat, Mesej } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
 import { Download, Files, Search } from 'lucide-react'
@@ -19,9 +20,22 @@ export function SenaraiPermohonan() {
   const [carian, setCarian] = useState('')
   const [tapisStatus, setTapisStatus] = useState<Status | ''>('')
   const [tapisKategori, setTapisKategori] = useState('')
+  const [hariIni, setHariIni] = useState(hariMalaysia)
 
   useEffect(() => {
-    senaraiPermohonan({ had: 500 })
+    const segar = () => setHariIni(hariMalaysia())
+    const sela = window.setInterval(segar, 60000)
+    window.addEventListener('focus', segar)
+    document.addEventListener('visibilitychange', segar)
+    return () => {
+      window.clearInterval(sela)
+      window.removeEventListener('focus', segar)
+      document.removeEventListener('visibilitychange', segar)
+    }
+  }, [])
+
+  useEffect(() => {
+    semuaPermohonan()
       .then(setSenarai)
       .catch((e) => setRalat(e.message))
   }, [])
@@ -29,15 +43,15 @@ export function SenaraiPermohonan() {
   const ditapis = useMemo(() => {
     if (!senarai) return []
     const c = carian.trim().toLowerCase()
-    return senarai.filter((p) => {
+    return susunTarikhLawatan(senarai.filter((p) => {
       if (tapisStatus && p.status !== tapisStatus) return false
       if (tapisKategori && p.kategori !== tapisKategori) return false
       if (!c) return true
       return [p.no_rujukan, p.tujuan, p.nama_sekolah, p.kod_sekolah]
         .filter(Boolean)
         .some((n) => String(n).toLowerCase().includes(c))
-    })
-  }, [senarai, carian, tapisStatus, tapisKategori])
+    }), hariIni)
+  }, [senarai, carian, tapisStatus, tapisKategori, hariIni])
 
   function eksport() {
     muatTurun(
@@ -129,6 +143,7 @@ export function SenaraiPermohonan() {
         </div>
       </div>
 
+      <p className="mb-3 text-sm text-slate-600">Disusun mengikut tarikh lawatan paling hampir. Lawatan sedang berlangsung didahulukan; tarikh yang telah berlalu di bawah.</p>
       {ditapis.length === 0 ? (
         <Kosong
           tajuk="Tiada rekod sepadan"
@@ -143,13 +158,15 @@ export function SenaraiPermohonan() {
                 {pegawai?.peranan !== 'sekolah' && <th>Sekolah</th>}
                 <th>Tujuan</th>
                 <th>Kategori</th>
-                <th>Tarikh</th>
+                <th>Tarikh Lawatan</th>
                 <th className="text-right">Peserta</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {ditapis.map((p) => (
+              {ditapis.map((p) => {
+                const tarikh = paparanTarikhLawatan(p, hariIni)
+                return (
                 <tr key={p.id} className="hover:bg-slate-50">
                   <td className="whitespace-nowrap">
                     <Link
@@ -178,7 +195,10 @@ export function SenaraiPermohonan() {
                     {p.kategori ? LABEL_KATEGORI[p.kategori] : '—'}
                   </td>
                   <td className="whitespace-nowrap text-xs">
-                    {formatTarikh(p.tarikh_mula)}
+                    <span className="block">{tarikh.tarikh}</span>
+                    {tarikh.kiraan && <span className={kelas('mt-1 block text-xs font-medium', tarikh.mendesak ? 'text-amber-800' : 'text-slate-600')}>
+                      {tarikh.kiraan}
+                    </span>}
                   </td>
                   <td className="whitespace-nowrap text-right tabular-nums">
                     {p.bil_murid + p.bil_guru + p.bil_bukan_guru}
@@ -187,7 +207,8 @@ export function SenaraiPermohonan() {
                     <LencanaStatus status={p.status} />
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

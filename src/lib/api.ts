@@ -53,6 +53,21 @@ export async function senaraiPermohonan(tapis?: {
   return semak(data, error) as PermohonanRingkas[]
 }
 
+/** Semua Permohonan: ambil semua halaman sebelum tapis/susun tarikh di UI.
+ * RLS masih menentukan rekod yang boleh dibaca. Dashboard kekal menggunakan hadnya.
+ */
+export async function semuaPermohonan(): Promise<PermohonanRingkas[]> {
+  const semua: PermohonanRingkas[] = []
+  const saiz = 500
+  for (let mula = 0; ; mula += saiz) {
+    const { data, error } = await supabase.from('v_permohonan_ringkas').select('*')
+      .order('id', { ascending: true }).range(mula, mula + saiz - 1)
+    const halaman = semak(data, error) as PermohonanRingkas[]
+    semua.push(...halaman)
+    if (halaman.length < saiz) return semua
+  }
+}
+
 export type BundelPermohonan = {
   permohonan: Permohonan
   sekolah: Sekolah

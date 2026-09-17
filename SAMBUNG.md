@@ -4,6 +4,23 @@ Kemas kini terakhir: 17 September 2026.
 Baca `README.md` untuk cara pasang; fail ini hanya menyenaraikan
 **apa yang tinggal**.
 
+## Kemas kini Semua Permohonan — Tarikh Lawatan
+
+- Lajur Tarikh kini Tarikh Lawatan, termasuk julat untuk lawatan beberapa hari.
+- Susunan automatik: sedang berlangsung/hari ini, akan datang paling hampir,
+  tarikh lepas paling terkini, kemudian tanpa tarikh. Carian, penapis dan eksport
+  CSV menggunakan susunan yang sama.
+- Kiraan hari menggunakan tarikh kalendar Asia/Kuala_Lumpur: Hari ini, Esok,
+  N hari lagi, Sedang berlangsung atau Tarikh telah berlalu. Status ditolak,
+  batal dan selesai tidak memaparkan countdown. Jingga hanya untuk permohonan
+  menunggu dengan baki 0–7 hari.
+- Halaman mengambil rekod berhalaman sebelum menyusun; tidak lagi terhad pada
+  500 rekod paling baru dikemas kini. Skop capaian tetap ditentukan oleh RLS.
+  Dashboard dan aliran kelulusan tidak berubah; tiada migrasi diperlukan.
+- Build lulus; 81/81 ujian pada kandungan commit lulus, termasuk 9 ujian
+  tarikh/pagination. Ujian visual pelayar belum dibuat.
+  Cuba dengan refresh demo pada port 5500.
+
 ---
 
 ## Siap dan disahkan
