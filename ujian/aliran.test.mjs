@@ -801,5 +801,8 @@ describe('Identiti korporat (migrasi 6)', () => {
     const m = await satu(db, `select nilai from tetapan where kunci = 'maklumat_jpn'`)
     assert.equal(m.nilai.laman_web, 'https://jpnperak.moe.gov.my')
     assert.equal(m.nilai.nama, 'Jabatan Pendidikan Negeri Perak')
+    assert.equal(m.nilai.telefon, '05-525 6000')
+    assert.equal(m.nilai.emel, 'jpn.perak@moe.gov.my')
+    assert.match(m.nilai.alamat, /Persiaran Meru Utama.*30020 Ipoh/)
   })
 })
