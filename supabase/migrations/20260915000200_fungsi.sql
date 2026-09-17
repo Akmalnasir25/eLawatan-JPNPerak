@@ -245,25 +245,28 @@ begin
                               array['Permohonan tidak dijumpai']);
   end if;
 
+  -- Nota: guna array_append, bukan `v_ralat || 'teks'`. Literal tanpa jenis
+  -- ditafsir sebagai text[] dan gagal dengan "malformed array literal".
+
   -- Bahagian B1
   if p.kategori is null then
-    v_ralat := v_ralat || 'Kategori lawatan belum ditentukan.';
+    v_ralat := array_append(v_ralat, 'Kategori lawatan belum ditentukan.');
   end if;
   if coalesce(length(trim(p.tujuan)), 0) < 10 then
-    v_ralat := v_ralat || 'Tujuan lawatan mesti sekurang-kurangnya 10 aksara.';
+    v_ralat := array_append(v_ralat, 'Tujuan lawatan mesti sekurang-kurangnya 10 aksara.');
   end if;
   if array_length(p.pengangkutan, 1) is null then
-    v_ralat := v_ralat || 'Jenis pengangkutan belum dipilih.';
+    v_ralat := array_append(v_ralat, 'Jenis pengangkutan belum dipilih.');
   end if;
   if p.anjuran_pihak_luar and coalesce(trim(p.nama_penganjur_luar), '') = '' then
-    v_ralat := v_ralat || 'Nama penganjur luar wajib diisi.';
+    v_ralat := array_append(v_ralat, 'Nama penganjur luar wajib diisi.');
   end if;
 
   -- Tempat dan tarikh
   select count(*) into v_bil_tempat
     from permohonan_tempat where permohonan_id = p.id;
   if v_bil_tempat = 0 then
-    v_ralat := v_ralat || 'Sekurang-kurangnya satu tempat lawatan perlu diisi.';
+    v_ralat := array_append(v_ralat, 'Sekurang-kurangnya satu tempat lawatan perlu diisi.');
   end if;
 
   -- Tempoh minimum mengikut kategori (Lampiran E dan F)
@@ -272,47 +275,46 @@ begin
       from tetapan where kunci = 'tempoh_minimum';
     v_hari := p.tarikh_mula - current_date;
     if v_hari < v_tempoh_min then
-      v_ralat := v_ralat || format(
+      v_ralat := array_append(v_ralat, format(
         'Permohonan %s perlu dihantar sekurang-kurangnya %s hari sebelum lawatan. Tinggal %s hari.',
-        replace(p.kategori::text, '_', ' '), v_tempoh_min, v_hari);
+        replace(p.kategori::text, '_', ' '), v_tempoh_min, v_hari));
     end if;
   end if;
 
   -- Peserta
   if p.bil_murid <= 0 then
-    v_ralat := v_ralat || 'Bilangan murid belum diisi.';
+    v_ralat := array_append(v_ralat, 'Bilangan murid belum diisi.');
   end if;
   if p.bil_guru <= 0 then
-    v_ralat := v_ralat || 'Bilangan guru pengiring belum diisi.';
+    v_ralat := array_append(v_ralat, 'Bilangan guru pengiring belum diisi.');
   end if;
 
   select * into v_ketua from peserta
    where permohonan_id = p.id and kategori = 'KETUA_ROMBONGAN' limit 1;
   if not found then
-    v_ralat := v_ralat || 'Ketua rombongan belum ditetapkan.';
+    v_ralat := array_append(v_ralat, 'Ketua rombongan belum ditetapkan.');
   else
     if coalesce(trim(v_ketua.kp), '') = '' then
-      v_ralat := v_ralat || 'No. kad pengenalan ketua rombongan wajib diisi.';
+      v_ralat := array_append(v_ralat, 'No. kad pengenalan ketua rombongan wajib diisi.');
     end if;
     if coalesce(trim(v_ketua.telefon), '') = '' then
-      v_ralat := v_ralat || 'No. telefon ketua rombongan wajib diisi.';
+      v_ralat := array_append(v_ralat, 'No. telefon ketua rombongan wajib diisi.');
     end if;
     if p.kategori = 'LUAR_NEGARA' and coalesce(trim(v_ketua.pasport), '') = '' then
-      v_ralat := v_ralat || 'No. pasport ketua rombongan wajib bagi lawatan luar negara.';
+      v_ralat := array_append(v_ralat, 'No. pasport ketua rombongan wajib bagi lawatan luar negara.');
     end if;
   end if;
 
   -- Nisbah pengiring (Lampiran C)
   v_nisbah := kira_nisbah(p.nisbah_kategori, p.bil_murid, p.bil_guru);
   if (v_nisbah ->> 'disekat')::boolean then
-    v_ralat := v_ralat || format(
+    v_ralat := array_append(v_ralat, format(
       'Nisbah pengiring tidak mencukupi. Diperlukan %s pengiring (%s); had pengecualian terendah %s. Ada %s.',
       v_nisbah ->> 'perlu', v_nisbah ->> 'nisbah',
-      v_nisbah ->> 'had_terendah', v_nisbah ->> 'ada');
+      v_nisbah ->> 'had_terendah', v_nisbah ->> 'ada'));
   elsif (v_nisbah ->> 'perlu_justifikasi')::boolean
         and coalesce(length(trim(p.justifikasi_nisbah)), 0) < 20 then
-    v_ralat := v_ralat ||
-      'Justifikasi pengecualian nisbah (Bahagian I) wajib diisi sekurang-kurangnya 20 aksara.';
+    v_ralat := array_append(v_ralat, 'Justifikasi pengecualian nisbah (Bahagian I) wajib diisi sekurang-kurangnya 20 aksara.');
   end if;
 
   -- Dokumen wajib
@@ -322,19 +324,17 @@ begin
    where not exists (select 1 from dokumen dk
                       where dk.permohonan_id = p.id and dk.jenis_dokumen = d.kod);
   if coalesce(v_bil_dok, 0) > 0 then
-    v_ralat := v_ralat || format('Dokumen belum dimuat naik: %s',
-                                 array_to_string(v_kurang, '; '));
+    v_ralat := array_append(v_ralat, format('Dokumen belum dimuat naik: %s',
+                                 array_to_string(v_kurang, '; ')));
   end if;
 
   -- Amaran (tidak menyekat)
   if p.tarikh_mula is not null
      and extract(isodow from p.tarikh_mula) between 1 and 5 then
-    v_amaran := v_amaran ||
-      'Tarikh lawatan jatuh pada hari persekolahan — rujuk SPI Bil. 5/2002.';
+    v_amaran := array_append(v_amaran, 'Tarikh lawatan jatuh pada hari persekolahan — rujuk SPI Bil. 5/2002.');
   end if;
   if (v_nisbah ->> 'perlu_justifikasi')::boolean then
-    v_amaran := v_amaran ||
-      'Nisbah pengiring di bawah keperluan tetapi dalam had pengecualian — Bahagian I terpakai.';
+    v_amaran := array_append(v_amaran, 'Nisbah pengiring di bawah keperluan tetapi dalam had pengecualian — Bahagian I terpakai.');
   end if;
 
   return jsonb_build_object(

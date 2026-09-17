@@ -113,6 +113,11 @@ Deno.serve(async (req) => {
       })
     }
 
+    // PostgREST memulangkan objek bagi hubungan banyak-ke-satu, tetapi
+    // klien tanpa jenis menganggapnya tatasusunan. Terima kedua-duanya.
+    const embed = sekolah.ppd as unknown as { nama: string } | { nama: string }[] | null
+    const namaPpd = (Array.isArray(embed) ? embed[0]?.nama : embed?.nama) ?? sekolah.kod_ppd
+
     // Langkah 5 — papar padanan; sekolah tidak boleh mengubahnya
     return jawapan({
       status: 'PADANAN_DIJUMPAI',
@@ -122,7 +127,7 @@ Deno.serve(async (req) => {
         nama: sekolah.nama,
         jenis: sekolah.jenis,
         kod_ppd: sekolah.kod_ppd,
-        nama_ppd: (sekolah.ppd as { nama: string } | null)?.nama ?? sekolah.kod_ppd,
+        nama_ppd: namaPpd,
         kod_jpn: sekolah.kod_jpn,
         negeri: sekolah.negeri,
       },

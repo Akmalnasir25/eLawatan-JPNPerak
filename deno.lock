@@ -1,0 +1,48 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@std/assert@1": "1.0.19",
+    "jsr:@std/internal@^1.0.12": "1.0.14"
+  },
+  "jsr": {
+    "@std/assert@1.0.19": {
+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
+    "@std/internal@1.0.14": {
+      "integrity": "291516b3d4c35024d6ffbc0a9df5bf4c64116e05b50012cf846710152d2ffdf7"
+    }
+  },
+  "remote": {
+    "https://esm.sh/@supabase/supabase-js@2.58.0": "7dabd2478b8ee4e38a36544ae38af5f437d745f55bc52d6cb0841e57b21c32a4",
+    "https://esm.sh/aws4fetch@1.0.20": "72c2789ab2e7a037ed00c4230574ccc31a0c0cebc7ebd19a2c9da574e3133bc7",
+    "https://esm.sh/aws4fetch@1.0.20/denonext/aws4fetch.mjs": "f4388406bca44e08c07822b0f26c093603a2947538e7c20320670c600587c707"
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@electric-sql/pglite@~0.5.8",
+        "npm:@supabase/supabase-js@^2.58.0",
+        "npm:@types/node@^22.10.0",
+        "npm:@types/qrcode@^1.5.5",
+        "npm:@types/react-dom@^18.3.5",
+        "npm:@types/react@^18.3.18",
+        "npm:@vitejs/plugin-react@^4.3.4",
+        "npm:autoprefixer@^10.4.20",
+        "npm:date-fns@^4.1.0",
+        "npm:postcss@^8.5.1",
+        "npm:qrcode@^1.5.4",
+        "npm:react-dom@^18.3.1",
+        "npm:react-router-dom@^6.30.0",
+        "npm:react@^18.3.1",
+        "npm:tailwindcss@^3.4.17",
+        "npm:typescript@^5.7.3",
+        "npm:vite-plugin-pwa@~0.21.1",
+        "npm:vite@^6.0.11",
+        "npm:zustand@^5.0.8"
+      ]
+    }
+  }
+}

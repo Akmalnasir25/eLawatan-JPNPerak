@@ -15,7 +15,11 @@
     "db:set-semula": "supabase db reset",
     "db:jenis": "supabase gen types typescript --local > src/lib/jenis-db.ts",
     "fn:hidang": "supabase functions serve --env-file supabase/functions/.env",
-    "fn:tabur": "supabase functions deploy"
+    "fn:tabur": "supabase functions deploy",
+    "ujian:db": "node --test --test-concurrency=1 ujian/*.test.mjs",
+    "ujian:fn": "npx --yes deno@2 test --allow-env --allow-net=esm.sh,jsr.io ujian/r2_presign_test.ts",
+    "semak:fn": "npx --yes deno@2 check supabase/functions/daftar-semak/index.ts supabase/functions/r2-naik/index.ts supabase/functions/r2-lihat/index.ts supabase/functions/r2-padam/index.ts",
+    "ujian": "npm run ujian:db && npm run ujian:fn && npm run semak:fn"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
@@ -27,6 +31,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@types/node": "^22.10.0",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18.3.18",

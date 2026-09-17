@@ -1,6 +1,6 @@
 # Nota Sambung Kerja
 
-Checkpoint: commit `bc26b9f` — 15 September 2026.
+Kemas kini terakhir: 17 September 2026.
 Baca `README.md` untuk cara pasang; fail ini hanya menyenaraikan
 **apa yang tinggal**.
 
@@ -10,45 +10,42 @@ Baca `README.md` untuk cara pasang; fail ini hanya menyenaraikan
 
 | Lapisan | Keadaan |
 |---|---|
-| Skema Postgres (18 jadual, enum, indeks) | Siap · sintaks lulus parser Postgres |
-| Enjin peraturan SQL (25 fungsi plpgsql) | Siap · lulus parser plpgsql |
-| Row Level Security semua jadual | Siap |
-| Data rujukan Lampiran C, D, Senarai Semak | Siap |
-| Edge Functions (4) | Siap · **belum ditaip-semak** (Deno tiada pada mesin) |
-| Antara muka React penuh | Siap · `tsc` lulus, `vite build` lulus |
-| Cetakan Lampiran A, Senarai Semak, Surat QR, Lampiran G | Siap |
-| Panel pentadbir 6 tab, laporan, pengesahan QR awam | Siap |
+| Skema, fungsi, RLS, data rujukan | **Dijalankan atas Postgres 18 sebenar** (PGlite) — 47 ujian aliran lulus |
+| Edge Functions (4) | Lulus `deno check`; tandatangan R2 lulus 4 ujian luar talian |
+| Antara muka React penuh | `tsc` lulus, `vite build` lulus |
+| Cetakan, panel pentadbir, laporan, pengesahan QR | Siap |
+
+Jalankan semua semakan: `npm run ujian`
+
+### Pepijat yang dijumpai oleh ujian Postgres sebenar
+
+1. `semak_kelengkapan` — `v_ralat || 'teks'` ditafsir sebagai gabungan dua
+   tatasusunan dan meletup dengan *malformed array literal*. Setiap draf
+   yang tidak lengkap akan gagal dan bukannya memaparkan senarai ralat.
+   Diganti dengan `array_append` (17 tempat).
+2. `selaras_tarikh_permohonan` — merujuk `new` pada DELETE (dibetulkan
+   sebelum checkpoint pertama, kini disahkan oleh ujian).
+3. `daftar-semak` — ralat jenis pada data `ppd` yang dibenamkan.
 
 ---
 
 ## Belum dibuat — mula di sini
 
-1. **Jalankan terhadap Postgres sebenar.** Belum pernah berlaku. Mesin ini
-   tiada Docker, jadi `supabase start` tidak dapat dijalankan. Langkah
-   pertama sesi seterusnya: pasang Docker Desktop, kemudian
+1. **Sambung ke projek Supabase sebenar.** Ikut README bahagian 3.
+   Ujian PGlite meniru Supabase, bukan Supabase itu sendiri — perkara
+   yang belum diuji: templat e-mel OTP, had kadar Auth, dan pemanggilan
+   Edge Functions melalui gerbang Supabase.
 
-   ```bash
-   npm run db:mula
-   npm run db:set-semula
-   ```
-
-   Ini akan mendedahkan sebarang ralat semantik yang parser tidak dapat
-   tangkap — nama lajur tersalah, jenis tidak padan, susunan pencetus.
-
-2. **Ujian hujung-ke-hujung aliran kelulusan.** Log masuk sebagai
-   `aba1234@moe-dl.edu.my` (sekolah), hantar permohonan, kemudian
-   `ppd.ku.pegawai@moe.gov.my` → `ppd.ku.ketua@moe.gov.my`. Baca kod OTP
-   di Inbucket, `http://localhost:54324`.
-
-3. **Uji muat naik R2 sebenar.** Perlu bucket dan token sebenar. Titik
+2. **Uji muat naik R2 sebenar.** Perlu bucket dan token sebenar. Titik
    paling mungkin gagal ialah tetapan CORS bucket — lihat
    `infra/r2-cors.json`.
 
-4. **Taip-semak Edge Functions** dengan Deno:
-   `deno check supabase/functions/**/*.ts`
+3. **Ujian hujung-ke-hujung dalam pelayar.** Log masuk sebagai
+   `aba1234@moe-dl.edu.my`, isi borang enam langkah, hantar, kemudian
+   luluskan sebagai `ppd.ku.pegawai@moe.gov.my` → `ppd.ku.ketua@moe.gov.my`.
 
-5. **Notifikasi e-mel dan peringatan tarikh tutup** — Fasa 4 blueprint,
-   belum disentuh langsung.
+4. **Notifikasi e-mel dan peringatan tarikh tutup** — Fasa 4 blueprint,
+   belum disentuh.
 
 ---
 

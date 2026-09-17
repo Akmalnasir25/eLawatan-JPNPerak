@@ -168,6 +168,20 @@ npm run fn:hidang        # Edge Functions setempat
 
 E-mel OTP setempat boleh dibaca di Inbucket, `http://localhost:54324`.
 
+### Ujian (tanpa Docker)
+
+```bash
+npm run ujian            # kesemua di bawah
+npm run ujian:db         # 47 ujian aliran atas Postgres sebenar (PGlite)
+npm run ujian:fn         # tandatangan pautan R2, tanpa rangkaian
+npm run semak:fn         # taip-semak Edge Functions dengan Deno
+```
+
+`ujian:db` menjalankan migrasi dan `seed.sql` sebenar ke dalam Postgres
+yang dikompil ke WASM, meniru skema `auth` Supabase, kemudian bertindak
+sebagai setiap peranan dengan RLS berkuat kuasa. Tiada Docker diperlukan.
+Deno dimuat turun automatik melalui npm pada kali pertama.
+
 ---
 
 ## 7. Cara Sistem Menguatkuasakan Dasar
