@@ -12,6 +12,7 @@ import { formatMasa, formatTarikh, kelas } from '@/lib/guna'
 import { Baris, Berputar, Medan, Mesej } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
 import { ImejTandatangan } from '@/cetak/rangka'
+import { UserRound } from 'lucide-react'
 
 export function Profil() {
   const { pegawai, sekolah, muatSemula } = gunaAuth()
@@ -72,7 +73,9 @@ export function Profil() {
   return (
     <>
       <TajukHalaman
-        tajuk="Profil"
+        ikon={UserRound}
+        jejak={[{ teks: 'Profil' }]}
+        tajuk="Profil Pengguna"
         nota="Maklumat ini dicetak pada borang rasmi apabila anda menyokong atau meluluskan permohonan."
       />
 
@@ -81,7 +84,7 @@ export function Profil() {
           {/* ── Akaun ───────────────────────────────────────────── */}
           <section className="kad">
             <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">Akaun</h2>
+              <h2>Akaun</h2>
             </div>
             <div className="kad-isi">
               <dl>
@@ -106,7 +109,7 @@ export function Profil() {
           {/* ── Maklumat penandatangan ─────────────────────────── */}
           <form onSubmit={simpan} className="kad">
             <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2>
                 {adalahSekolah ? 'Maklumat Sekolah' : 'Maklumat Pegawai'}
               </h2>
             </div>
@@ -192,10 +195,10 @@ export function Profil() {
           {/* ── Tandatangan & cop ──────────────────────────────── */}
           <section className="kad">
             <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2>
                 Tandatangan Digital &amp; Cop Rasmi
               </h2>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="-mt-1 basis-full text-xs text-slate-500">
                 PNG berlatar lutsinar paling sesuai. Maksimum 1 MB setiap imej.
               </p>
             </div>
@@ -222,7 +225,7 @@ export function Profil() {
         <div className="lg:col-span-2">
           <section className="kad lg:sticky lg:top-24">
             <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2>
                 Pratonton pada borang
               </h2>
             </div>

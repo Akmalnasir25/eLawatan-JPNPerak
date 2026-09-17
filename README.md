@@ -195,7 +195,7 @@ E-mel OTP setempat boleh dibaca di Inbucket, `http://localhost:54324`.
 
 ```bash
 npm run ujian            # kesemua di bawah
-npm run ujian:db         # 55 ujian aliran atas Postgres sebenar (PGlite)
+npm run ujian:db         # 57 ujian aliran atas Postgres sebenar (PGlite)
 npm run ujian:fn         # tandatangan pautan R2, tanpa rangkaian
 npm run semak:fn         # taip-semak Edge Functions dengan Deno
 ```
@@ -276,7 +276,29 @@ penjuru kanan).
 
 ---
 
-## 11. Had Yang Diketahui
+## 11. Identiti Korporat
+
+Reka bentuk mengikut kelaziman portal sektor awam: bar utiliti (tarikh,
+saiz teks, kontras tinggi), kepala jabatan, navigasi biru tua dengan
+aksen emas, jejak halaman, dan kaki laman korporat.
+
+- **Logo.** Letakkan logo rasmi yang diluluskan di
+  `public/logo-jabatan.png`. Ia dipaparkan pada kepala laman, kaki laman
+  dan kepala surat. Sebelum fail itu wujud, lambang neutral dipaparkan —
+  sistem ini **tidak** melukis semula Jata Negara atau logo agensi.
+- **Maklumat jabatan dan slogan surat** dikemas kini di
+  *Pentadbiran → Tetapan & Surat*. Alamat, telefon dan e-mel yang ada
+  sekarang adalah **nilai sementara** dan mesti disahkan dengan JPN Perak.
+- **Surat kelulusan** mengikut format surat rasmi: kepala surat berlogo,
+  Ruj. Kami dan Tarikh, perenggan bernombor, slogan, tandatangan dan cop,
+  serta s.k. Lawatan Dalam Daerah dikeluarkan atas nama PPD; selainnya
+  atas nama JPN.
+- **Fon Inter** di-hos sendiri (`@fontsource/inter`) — tiada panggilan ke
+  pelayan fon luar.
+
+---
+
+## 12. Had Yang Diketahui
 
 - **Google OIDC DELIMa dimatikan.** Log masuk menggunakan OTP e-mel.
   Hidupkan dalam `supabase/config.toml` apabila Client ID diperoleh, dan

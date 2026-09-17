@@ -29,23 +29,25 @@ import {
   Modal,
 } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
-import type { Dokumen, LogAudit, Status, Tindakan } from '@/lib/jenis'
-
-const RANTAIAN: Record<string, Status[]> = {
-  DALAM_DAERAH: ['MENUNGGU_PPD_SEMAK', 'MENUNGGU_PPD_SAH'],
-  ANTARA_DAERAH: [
-    'MENUNGGU_PPD_SEMAK', 'MENUNGGU_PPD_SAH',
-    'MENUNGGU_JPN_SEMAK', 'MENUNGGU_JPN_SAH',
-  ],
-  ANTARA_NEGERI: [
-    'MENUNGGU_PPD_SEMAK', 'MENUNGGU_PPD_SAH',
-    'MENUNGGU_JPN_SEMAK', 'MENUNGGU_JPN_SAH',
-  ],
-  LUAR_NEGARA: [
-    'MENUNGGU_PPD_SEMAK', 'MENUNGGU_PPD_SAH',
-    'MENUNGGU_JPN_SEMAK', 'MENUNGGU_JPN_SAH', 'MENUNGGU_KPM',
-  ],
-}
+import { RantaianKelulusan } from '@/komponen/RantaianKelulusan'
+import {
+  Banknote,
+  CheckCircle2,
+  ClipboardCheck,
+  FileText,
+  Files,
+  History,
+  MapPinned,
+  PencilLine,
+  Printer,
+  RotateCcw,
+  School,
+  ShieldAlert,
+  Users,
+  XCircle,
+  type LucideIcon,
+} from 'lucide-react'
+import type { Dokumen, LogAudit, Tindakan } from '@/lib/jenis'
 
 export function PaparPermohonan() {
   const { id } = useParams<{ id: string }>()
@@ -121,39 +123,37 @@ export function PaparPermohonan() {
   return (
     <>
       <TajukHalaman
-        tajuk={p.no_rujukan ?? 'Draf permohonan'}
-        nota={`${b.sekolah.nama} · ${b.ppd?.nama ?? p.kod_ppd}`}
+        ikon={FileText}
+        jejak={[
+          { teks: 'Permohonan', ke: '/senarai' },
+          { teks: p.no_rujukan ?? 'Draf' },
+        ]}
+        tajuk={p.no_rujukan ?? 'Draf Permohonan'}
+        nota={
+          <span className="flex flex-wrap items-center gap-2">
+            <LencanaStatus status={p.status} />
+            <span>{b.sekolah.nama} · {b.ppd?.nama ?? p.kod_ppd}</span>
+          </span>
+        }
         aksi={
           <>
-            <LencanaStatus status={p.status} />
             {bolehSunting && (
-              <Link to={`/permohonan/${p.id}/sunting`} className="btn-kedua">
+              <Link to={`/permohonan/${p.id}/sunting`} className="btn-utama">
+                <PencilLine className="h-4 w-4" aria-hidden />
                 Sunting
               </Link>
             )}
-            <a
-              href={`/cetak/lampiran-a/${p.id}`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-kedua"
-            >
+            <a href={`/cetak/lampiran-a/${p.id}`} target="_blank" rel="noreferrer" className="btn-kedua">
+              <Printer className="h-4 w-4" aria-hidden />
               Lampiran A
             </a>
-            <a
-              href={`/cetak/senarai-semak/${p.id}`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-kedua"
-            >
+            <a href={`/cetak/senarai-semak/${p.id}`} target="_blank" rel="noreferrer" className="btn-kedua">
+              <Printer className="h-4 w-4" aria-hidden />
               Senarai Semak
             </a>
             {(p.status === 'DILULUSKAN' || p.status === 'SELESAI') && (
-              <a
-                href={`/cetak/surat-kelulusan/${p.id}`}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-hijau"
-              >
+              <a href={`/cetak/surat-kelulusan/${p.id}`} target="_blank" rel="noreferrer" className="btn-hijau">
+                <Printer className="h-4 w-4" aria-hidden />
                 Surat Kelulusan
               </a>
             )}
@@ -182,92 +182,64 @@ export function PaparPermohonan() {
         </div>
       )}
 
-      {/* ── Rantaian kelulusan ─────────────────────────────────── */}
+      {/* ── Aliran kelulusan ──────────────────────────────────── */}
       {p.kategori && (
         <section className="kad mb-6">
+          <div className="kad-tajuk">
+            <h2 className="flex items-center gap-2">
+              <History className="h-4 w-4 text-jata-600" aria-hidden />
+              Aliran Kelulusan
+            </h2>
+            <span className="text-xs text-slate-500">
+              {LABEL_KATEGORI[p.kategori]} · Pelulus akhir: {BAHAGIAN_PELULUS[p.kategori]}
+            </span>
+          </div>
           <div className="kad-isi">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Rantaian kelulusan — {LABEL_KATEGORI[p.kategori]}
-            </p>
-            <ol className="flex flex-wrap items-center gap-x-1 gap-y-2">
-              <Nod teks="Sekolah" keadaan="selesai" />
-              {RANTAIAN[p.kategori].map((s) => {
-                const indeks = RANTAIAN[p.kategori!].indexOf(s)
-                const indeksSemasa = RANTAIAN[p.kategori!].indexOf(p.status)
-                const selesaiSemua =
-                  p.status === 'DILULUSKAN' || p.status === 'SELESAI'
-                const keadaan = selesaiSemua
-                  ? 'selesai'
-                  : indeksSemasa === -1
-                    ? 'menunggu'
-                    : indeks < indeksSemasa
-                      ? 'selesai'
-                      : indeks === indeksSemasa
-                        ? 'semasa'
-                        : 'menunggu'
-                return <Nod key={s} teks={LABEL_STATUS[s]} keadaan={keadaan} />
-              })}
-              <Nod
-                teks="Diluluskan"
-                keadaan={
-                  p.status === 'DILULUSKAN' || p.status === 'SELESAI'
-                    ? 'selesai'
-                    : 'menunggu'
-                }
-              />
-            </ol>
-            <p className="mt-3 text-xs text-slate-500">
-              Pelulus akhir: {BAHAGIAN_PELULUS[p.kategori]}. Permohonan wajib
-              melalui PPD — tiada laluan pintas.
-            </p>
+            <RantaianKelulusan permohonan={p} kelulusan={b.kelulusan} />
           </div>
         </section>
       )}
 
       {/* ── Panel tindakan ─────────────────────────────────────── */}
       {bolehBertindak && (
-        <section className="kad mb-6 border-2 border-jata-300">
-          <div className="kad-tajuk bg-jata-50">
-            <h2 className="text-sm font-semibold text-jata-800">
-              {pintasan
-                ? 'Pintasan pentadbir — tindakan bagi pihak peringkat semasa'
-                : `Tindakan anda diperlukan — ${LABEL_PERANAN[peranan]}`}
-            </h2>
-          </div>
-          <div className="kad-isi">
-            {pintasan && (
-              <div className="mb-4">
-                <Mesej jenis="amaran" tajuk="Amaran">
-                  Peringkat ini sepatutnya ditindak oleh{' '}
-                  {LABEL_PERANAN[peranPerlu!]}. Tindakan anda akan direkodkan
-                  dalam log audit dan ditandakan sebagai pintasan pentadbir.
-                </Mesej>
+        <section className="mb-6 overflow-hidden rounded-lg border-2 border-emas-400 bg-white shadow-timbul">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-emas-50 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-emas-400 text-jata-950">
+                {pintasan ? <ShieldAlert className="h-5 w-5" /> : <ClipboardCheck className="h-5 w-5" />}
+              </span>
+              <div>
+                <h2 className="text-base font-bold text-jata-900">
+                  {pintasan ? 'Pintasan pentadbir' : 'Tindakan anda diperlukan'}
+                </h2>
+                <p className="text-xs text-slate-600">
+                  {pintasan
+                    ? `Peringkat ini sepatutnya ditindak oleh ${LABEL_PERANAN[peranPerlu!]}`
+                    : `${LABEL_PERANAN[peranan]} · ${LABEL_STATUS[p.status]}`}
+                </p>
               </div>
-            )}
+            </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="btn-hijau"
-                onClick={() => setTindakan('SOKONG')}
-              >
+              <button type="button" className="btn-hijau" onClick={() => setTindakan('SOKONG')}>
+                <CheckCircle2 className="h-4 w-4" aria-hidden />
                 {LABEL_TINDAKAN.SOKONG}
               </button>
-              <button
-                type="button"
-                className="btn-jingga"
-                onClick={() => setTindakan('KEMBALI')}
-              >
+              <button type="button" className="btn-jingga" onClick={() => setTindakan('KEMBALI')}>
+                <RotateCcw className="h-4 w-4" aria-hidden />
                 {LABEL_TINDAKAN.KEMBALI}
               </button>
-              <button
-                type="button"
-                className="btn-merah"
-                onClick={() => setTindakan('TOLAK')}
-              >
+              <button type="button" className="btn-merah" onClick={() => setTindakan('TOLAK')}>
+                <XCircle className="h-4 w-4" aria-hidden />
                 {LABEL_TINDAKAN.TOLAK}
               </button>
             </div>
           </div>
+          {pintasan && (
+            <p className="border-t border-emas-200 px-5 py-2.5 text-xs text-amber-900">
+              Tindakan anda direkodkan dalam log audit sebagai pintasan pentadbir dan tidak
+              membawa tandatangan sesiapa.
+            </p>
+          )}
         </section>
       )}
 
@@ -291,11 +263,7 @@ export function PaparPermohonan() {
         <div className="space-y-6 lg:col-span-2">
           {/* Bahagian A & B1 */}
           <section className="kad">
-            <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Bahagian A &amp; B1 — Sekolah dan Lawatan
-              </h2>
-            </div>
+            <TajukKad ikon={School} bahagian="A · B1">Sekolah dan Lawatan</TajukKad>
             <div className="kad-isi">
               <dl>
                 <Baris label="Sekolah">
@@ -334,11 +302,7 @@ export function PaparPermohonan() {
 
           {/* Bahagian B1.4 */}
           <section className="kad">
-            <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Bahagian B1.4 — Tempat Dilawati
-              </h2>
-            </div>
+            <TajukKad ikon={MapPinned} bahagian="B1.4">Tempat Dilawati</TajukKad>
             <div className="kad-isi overflow-x-auto">
               {b.tempat.length === 0 ? (
                 <p className="text-sm text-slate-500">Tiada tempat direkodkan.</p>
@@ -377,11 +341,7 @@ export function PaparPermohonan() {
 
           {/* Bahagian D & E */}
           <section className="kad">
-            <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Bahagian D &amp; E — Anggota Rombongan
-              </h2>
-            </div>
+            <TajukKad ikon={Users} bahagian="D · E">Anggota Rombongan</TajukKad>
             <div className="kad-isi space-y-4">
               <dl>
                 <Baris label="Ketua rombongan">
@@ -436,11 +396,7 @@ export function PaparPermohonan() {
 
           {/* Dokumen */}
           <section className="kad">
-            <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Dokumen Sokongan ({b.dokumen.length})
-              </h2>
-            </div>
+            <TajukKad ikon={Files}>Dokumen Sokongan ({b.dokumen.length})</TajukKad>
             <div className="kad-isi">
               {b.dokumen.length === 0 ? (
                 <p className="text-sm text-slate-500">
@@ -489,11 +445,7 @@ export function PaparPermohonan() {
         {/* ── Lajur sisi ───────────────────────────────────────── */}
         <div className="space-y-6">
           <section className="kad">
-            <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Bahagian C — Kewangan
-              </h2>
-            </div>
+            <TajukKad ikon={Banknote} bahagian="C">Kewangan</TajukKad>
             <div className="kad-isi space-y-2 text-sm">
               <Wang label="Kutipan murid" nilai={Number(p.kutipan_murid)} />
               <Wang label="Kutipan guru" nilai={Number(p.kutipan_guru)} />
@@ -514,11 +466,7 @@ export function PaparPermohonan() {
 
           {p.justifikasi_nisbah && (
             <section className="kad">
-              <div className="kad-tajuk">
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Bahagian I — Pengecualian Nisbah
-                </h2>
-              </div>
+              <TajukKad ikon={ShieldAlert} bahagian="I">Pengecualian Nisbah</TajukKad>
               <div className="kad-isi text-sm leading-relaxed text-slate-700">
                 {p.justifikasi_nisbah}
               </div>
@@ -526,11 +474,7 @@ export function PaparPermohonan() {
           )}
 
           <section className="kad">
-            <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Rekod Kelulusan
-              </h2>
-            </div>
+            <TajukKad ikon={ClipboardCheck}>Rekod Tindakan</TajukKad>
             <div className="kad-isi">
               {b.kelulusan.length === 0 ? (
                 <p className="text-sm text-slate-500">Belum ada tindakan.</p>
@@ -587,12 +531,11 @@ export function PaparPermohonan() {
           {peranan !== 'sekolah' && audit.length > 0 && (
             <section className="kad">
               <div className="kad-tajuk">
-                <h2 className="text-sm font-semibold text-slate-900">
+                <h2 className="flex items-center gap-2">
+                  <History className="h-4 w-4 text-jata-600" aria-hidden />
                   Log Audit
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Tambah sahaja — tidak boleh dipadam oleh mana-mana peranan.
-                </p>
+                <span className="text-[0.7rem] text-slate-500">Tambah sahaja</span>
               </div>
               <div className="kad-isi max-h-80 overflow-y-auto">
                 <ul className="space-y-2.5 text-xs">
@@ -720,37 +663,35 @@ export function PaparPermohonan() {
   )
 }
 
-function Nod({
-  teks,
-  keadaan,
-}: {
-  teks: string
-  keadaan: 'selesai' | 'semasa' | 'menunggu'
-}) {
-  return (
-    <li className="flex items-center gap-1">
-      <span
-        className={kelas(
-          'rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset',
-          keadaan === 'selesai'
-            ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-            : keadaan === 'semasa'
-              ? 'bg-jata-600 text-white ring-jata-600'
-              : 'bg-slate-50 text-slate-400 ring-slate-200',
-        )}
-      >
-        {teks}
-      </span>
-      <span className="text-slate-300">›</span>
-    </li>
-  )
-}
-
 function Wang({ label, nilai }: { label: string; nilai: number }) {
   return (
     <div className="flex justify-between text-slate-600">
       <span>{label}</span>
       <span className="tabular-nums">{formatWang(nilai)}</span>
+    </div>
+  )
+}
+
+function TajukKad({
+  ikon: Ikon,
+  bahagian,
+  children,
+}: {
+  ikon: LucideIcon
+  bahagian?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="kad-tajuk">
+      <h2 className="flex items-center gap-2">
+        <Ikon className="h-4 w-4 text-jata-600" aria-hidden />
+        {children}
+      </h2>
+      {bahagian && (
+        <span className="rounded bg-jata-50 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-jata-700">
+          Bhg. {bahagian}
+        </span>
+      )}
     </div>
   )
 }

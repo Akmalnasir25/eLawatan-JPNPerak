@@ -19,9 +19,12 @@ function Baner({ d }: { d: typeof JenisDemo }) {
   const [otp, setOtp] = useState<{ emel: string; kod: string } | null>(null)
   const [sibuk, setSibuk] = useState(false)
   const [kecil, setKecil] = useState(false)
+  const [gagal, setGagal] = useState<string | null>(null)
 
   useEffect(() => {
-    d.sedia().then(() => setSedia(true))
+    d.sedia()
+      .then(() => setSedia(true))
+      .catch((e: unknown) => setGagal(e instanceof Error ? e.message : String(e)))
     const dengar = (e: Event) => setOtp((e as CustomEvent).detail)
     window.addEventListener('elawatan-demo-otp', dengar)
     return () => window.removeEventListener('elawatan-demo-otp', dengar)
@@ -70,9 +73,11 @@ function Baner({ d }: { d: typeof JenisDemo }) {
           </span>
           {!kecil && (
             <span className="text-amber-900">
-              {sedia
-                ? 'Postgres berjalan dalam pelayar ini. Data tidak dihantar ke mana-mana.'
-                : 'Menyediakan pangkalan data demo… (kali pertama mengambil beberapa saat)'}
+              {gagal
+                ? `Pangkalan demo gagal disediakan: ${gagal} — tekan Set semula.`
+                : sedia
+                  ? 'Postgres berjalan dalam pelayar ini. Data tidak dihantar ke mana-mana.'
+                  : 'Menyediakan pangkalan data demo… (kali pertama mengambil beberapa saat)'}
             </span>
           )}
           <div className="ml-auto flex flex-wrap items-center gap-2">

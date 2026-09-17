@@ -784,3 +784,22 @@ describe('Profil, tandatangan dan cop', () => {
     assert.ok(a.n >= 5)
   })
 })
+
+describe('Identiti korporat (migrasi 6)', () => {
+  test('maklumat jabatan dan slogan boleh dibaca tanpa log masuk; tetapan lain tidak', async () => {
+    const r = await sebagai(db, null, () => db.query('select kunci from tetapan order by kunci'))
+    assert.deepEqual(r.rows.map((x) => x.kunci), ['maklumat_jpn', 'slogan_surat'])
+  })
+
+  test('slogan surat boleh dikemas kini pentadbir sahaja', async () => {
+    const a = await sebagai(db, u.admin, () =>
+      db.query(`update tetapan set nilai = '["BERKHIDMAT UNTUK NEGARA"]' where kunci = 'slogan_surat'`))
+    assert.equal(a.affectedRows, 1)
+    const b = await sebagai(db, u.ppdKetua, () =>
+      db.query(`update tetapan set nilai = '[]' where kunci = 'slogan_surat'`))
+    assert.equal(b.affectedRows, 0)
+    const m = await satu(db, `select nilai from tetapan where kunci = 'maklumat_jpn'`)
+    assert.equal(m.nilai.laman_web, 'https://jpnperak.moe.gov.my')
+    assert.equal(m.nilai.nama, 'Jabatan Pendidikan Negeri Perak')
+  })
+})

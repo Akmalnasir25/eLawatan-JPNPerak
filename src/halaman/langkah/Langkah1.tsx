@@ -53,8 +53,8 @@ export function Langkah1({ bundel, simpan }: PropLangkah) {
     <>
       {/* ── Bahagian A ─────────────────────────────────────────── */}
       <section className="kad">
-        <div className="kad-tajuk flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">
+        <div className="kad-tajuk">
+          <h2>
             Bahagian A — Maklumat Sekolah
           </h2>
           <span className="text-xs text-slate-400">Diisi automatik</span>
@@ -93,7 +93,7 @@ export function Langkah1({ bundel, simpan }: PropLangkah) {
       {/* ── Bahagian B1 ────────────────────────────────────────── */}
       <section className="kad">
         <div className="kad-tajuk">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2>
             Bahagian B1 — Maklumat Lawatan
           </h2>
         </div>

@@ -6,6 +6,8 @@ import { LABEL_KATEGORI, LABEL_STATUS } from '@/lib/istilah'
 import { formatTarikh, keCsv, muatTurun } from '@/lib/guna'
 import { LencanaStatus, Kosong, Memuat, Mesej } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
+import { Download, Files, Search } from 'lucide-react'
+import { NoRujukan } from '@/komponen/JadualPermohonan'
 import type { PermohonanRingkas, Status } from '@/lib/jenis'
 
 const SEMUA_STATUS = Object.keys(LABEL_STATUS) as Status[]
@@ -69,7 +71,9 @@ export function SenaraiPermohonan() {
   return (
     <>
       <TajukHalaman
-        tajuk="Semua Permohonan"
+        ikon={Files}
+        jejak={[{ teks: 'Permohonan' }]}
+        tajuk={pegawai?.peranan === 'sekolah' ? 'Senarai Permohonan' : 'Semua Permohonan'}
         nota={`${ditapis.length} daripada ${senarai.length} rekod dalam skop capaian anda`}
         aksi={
           <button
@@ -78,6 +82,7 @@ export function SenaraiPermohonan() {
             onClick={eksport}
             disabled={ditapis.length === 0}
           >
+            <Download className="h-4 w-4" aria-hidden />
             Eksport CSV
           </button>
         }
@@ -85,13 +90,18 @@ export function SenaraiPermohonan() {
 
       <div className="kad mb-5">
         <div className="kad-isi grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
+          <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
           <input
-            className="medan"
+            className="medan pl-9"
+            aria-label="Carian"
             placeholder="Cari nombor rujukan, tujuan atau sekolah…"
             value={carian}
             onChange={(e) => setCarian(e.target.value)}
           />
+          </div>
           <select
+            aria-label="Tapis status"
             className="medan"
             value={tapisStatus}
             onChange={(e) => setTapisStatus(e.target.value as Status | '')}
@@ -104,6 +114,7 @@ export function SenaraiPermohonan() {
             ))}
           </select>
           <select
+            aria-label="Tapis kategori"
             className="medan"
             value={tapisKategori}
             onChange={(e) => setTapisKategori(e.target.value)}
@@ -143,9 +154,9 @@ export function SenaraiPermohonan() {
                   <td className="whitespace-nowrap">
                     <Link
                       to={`/permohonan/${p.id}`}
-                      className="font-mono text-xs font-medium text-jata-600 hover:underline"
+                      className="block font-mono text-[0.7rem] leading-snug text-jata-700 hover:underline"
                     >
-                      {p.no_rujukan ?? 'Draf'}
+                      <NoRujukan no={p.no_rujukan} />
                     </Link>
                   </td>
                   {pegawai?.peranan !== 'sekolah' && (

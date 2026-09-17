@@ -49,7 +49,7 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
       {/* ── Bilangan peserta ─────────────────────────────────────── */}
       <section className="kad">
         <div className="kad-tajuk">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2>
             Bilangan Peserta
           </h2>
         </div>
@@ -113,7 +113,7 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
       {/* ── Bahagian D1 ──────────────────────────────────────────── */}
       <section className="kad">
         <div className="kad-tajuk">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2>
             Bahagian D1 — Ketua Rombongan
           </h2>
         </div>
@@ -271,10 +271,10 @@ function SenaraiAnggota({
 
   return (
     <section className="kad">
-      <div className="kad-tajuk flex flex-wrap items-center justify-between gap-2">
+      <div className="kad-tajuk">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">{tajuk}</h2>
-          {nota && <p className="mt-0.5 text-xs text-slate-500">{nota}</p>}
+          <h2>{tajuk}</h2>
+          {nota && <p className="-mt-1 basis-full text-xs text-slate-500">{nota}</p>}
         </div>
         <button
           type="button"

@@ -4,6 +4,8 @@ import { sahLawatan } from '@/lib/api'
 import { LABEL_KATEGORI, LABEL_STATUS } from '@/lib/istilah'
 import { formatMasa, formatTarikh } from '@/lib/guna'
 import { Berputar, Memuat, Mesej } from '@/komponen/ui'
+import { RangkaAwam } from '@/komponen/Rangka'
+import { BadgeCheck, QrCode, SearchCheck } from 'lucide-react'
 import type { Kategori, Status } from '@/lib/jenis'
 
 type Hasil = {
@@ -46,20 +48,19 @@ export function SahQr() {
   }, [kod])
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <div className="flex flex-1 items-center justify-center px-4 py-10">
-        <div className="w-full max-w-lg">
-          <div className="mb-8 text-center">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-jata-600 text-sm font-bold text-white">
-              eL
-            </div>
-            <h1 className="mt-4 text-xl font-bold tracking-tight text-jata-700">
-              Pengesahan Surat Kelulusan
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              eLAWATAN · Jabatan Pendidikan Negeri Perak
-            </p>
-          </div>
+    <RangkaAwam>
+      <div className="bg-jata-900 px-4 py-10 text-center text-white">
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emas-400 text-jata-950">
+          <QrCode className="h-7 w-7" aria-hidden />
+        </span>
+        <h1 className="mt-4 text-2xl font-bold text-white">Pengesahan Surat Kelulusan</h1>
+        <p className="mx-auto mt-2 max-w-xl text-sm text-jata-200">
+          Imbas kod QR pada surat, atau masukkan kod pengesahan yang tercetak di
+          bawah kod QR untuk memastikan surat itu dikeluarkan oleh sistem ini.
+        </p>
+      </div>
+      <div className="flex justify-center px-4 py-10">
+        <div className="-mt-16 w-full max-w-xl">
 
           <div className="kad">
             <div className="kad-isi space-y-4">
@@ -71,13 +72,14 @@ export function SahQr() {
                 className="flex gap-2"
               >
                 <input
-                  className="medan font-mono uppercase"
+                  aria-label="Kod pengesahan"
+                  className="medan font-mono uppercase tracking-widest"
                   placeholder="Kod pengesahan pada surat"
                   value={masukan}
                   onChange={(e) => setMasukan(e.target.value.toUpperCase())}
                 />
                 <button type="submit" className="btn-utama" disabled={sibuk}>
-                  {sibuk ? <Berputar /> : null}
+                  {sibuk ? <Berputar /> : <SearchCheck className="h-4 w-4" aria-hidden />}
                   Semak
                 </button>
               </form>
@@ -96,10 +98,15 @@ export function SahQr() {
 
               {hasil?.sah && (
                 <>
-                  <Mesej jenis="berjaya" tajuk="Surat kelulusan sah">
-                    Permohonan ini telah diluluskan dan direkodkan dalam sistem
-                    eLAWATAN.
-                  </Mesej>
+                  <div className="flex items-center gap-3 rounded-lg border-2 border-emerald-500 bg-emerald-50 px-4 py-4">
+                    <BadgeCheck className="h-10 w-10 shrink-0 text-emerald-600" aria-hidden />
+                    <div>
+                      <p className="text-base font-bold text-emerald-900">Surat kelulusan SAH</p>
+                      <p className="text-sm text-emerald-800">
+                        Permohonan ini telah diluluskan dan direkodkan dalam sistem eLAWATAN.
+                      </p>
+                    </div>
+                  </div>
                   <dl className="divide-y divide-slate-100 rounded-lg border border-slate-200 px-4">
                     {[
                       ['Nombor rujukan', hasil.no_rujukan],
@@ -138,12 +145,12 @@ export function SahQr() {
             </div>
           </div>
 
-          <p className="mt-6 text-center text-xs leading-relaxed text-slate-400">
+          <p className="mt-6 text-center text-xs leading-relaxed text-slate-500">
             Halaman ini terbuka kepada umum dan hanya memaparkan butiran minimum
             bagi tujuan pengesahan. Maklumat peribadi murid tidak didedahkan.
           </p>
         </div>
       </div>
-    </div>
+    </RangkaAwam>
   )
 }

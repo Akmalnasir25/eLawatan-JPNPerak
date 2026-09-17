@@ -4,6 +4,7 @@ import { dapatPermohonan, hantarLaporanPasca, type BundelPermohonan } from '@/li
 import { formatTarikh, hariLagi } from '@/lib/guna'
 import { Berputar, Medan, Memuat, Mesej, Petak } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
+import { ClipboardPen, Printer } from 'lucide-react'
 
 export function LaporanPascaLawatan() {
   const { id } = useParams<{ id: string }>()
@@ -73,7 +74,13 @@ export function LaporanPascaLawatan() {
   return (
     <>
       <TajukHalaman
-        tajuk="Lampiran G — Laporan Lawatan Murid Sekolah"
+        ikon={ClipboardPen}
+        jejak={[
+          { teks: 'Permohonan', ke: '/senarai' },
+          { teks: p.no_rujukan ?? 'Draf', ke: `/permohonan/${p.id}` },
+          { teks: 'Laporan Lampiran G' },
+        ]}
+        tajuk="Laporan Pasca-Lawatan (Lampiran G)"
         nota={`${p.no_rujukan ?? 'Tanpa rujukan'} · ${b.sekolah.nama}`}
         aksi={
           b.laporan && (
@@ -83,6 +90,7 @@ export function LaporanPascaLawatan() {
               rel="noreferrer"
               className="btn-kedua"
             >
+              <Printer className="h-4 w-4" aria-hidden />
               Cetak laporan
             </a>
           )
@@ -116,7 +124,7 @@ export function LaporanPascaLawatan() {
       <div className="space-y-6">
         <section className="kad">
           <div className="kad-tajuk">
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2>
               Kehadiran Sebenar
             </h2>
           </div>
@@ -150,7 +158,7 @@ export function LaporanPascaLawatan() {
 
         <section className="kad">
           <div className="kad-tajuk">
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2>
               Ringkasan Pelaksanaan
             </h2>
           </div>

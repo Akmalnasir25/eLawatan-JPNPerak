@@ -10,11 +10,12 @@ Baca `README.md` untuk cara pasang; fail ini hanya menyenaraikan
 
 | Lapisan | Keadaan |
 |---|---|
-| Skema, fungsi, RLS, data rujukan | **Dijalankan atas Postgres 18 sebenar** (PGlite) — 55 ujian aliran lulus |
+| Skema, fungsi, RLS, data rujukan | **Dijalankan atas Postgres 18 sebenar** (PGlite) — 57 ujian aliran lulus |
 | Edge Functions (5) | Lulus `deno check`; tandatangan R2 lulus 4 ujian luar talian |
 | Antara muka React penuh | `tsc` lulus, `vite build` lulus |
 | Cetakan, panel pentadbir, laporan, pengesahan QR | Siap |
 | Profil, tandatangan digital & cop rasmi (migrasi 5) | Diuji dalam pelayar: muat naik, SVG ditolak, cetakan F/G/penyemak/surat/senarai semak, pembekuan selepas imej dibuang, naik taraf pangkalan demo lama |
+| Reka bentuk korporat sektor awam (migrasi 6) | Diuji dalam pelayar pada desktop dan telefon: log masuk, papan pemuka, borang, garis masa kelulusan, surat rasmi, pengesahan QR |
 | Mod demo (`npm run demo`) | Diuji hujung-ke-hujung dalam Chrome tanpa kepala: OTP, borang, muat naik, kelulusan, cetakan, pentadbir, paparan telefon |
 
 Jalankan semua semakan: `npm run ujian`
@@ -54,6 +55,10 @@ Jalankan semua semakan: `npm run ujian`
 
 4. **Notifikasi e-mel dan peringatan tarikh tutup** — Fasa 4 blueprint,
    belum disentuh.
+
+5. **Logo rasmi dan maklumat jabatan.** Letak `public/logo-jabatan.png`
+   dan sahkan alamat/telefon/e-mel JPN di Pentadbiran → Tetapan & Surat.
+   Nilai sekarang adalah sementara.
 
 ---
 

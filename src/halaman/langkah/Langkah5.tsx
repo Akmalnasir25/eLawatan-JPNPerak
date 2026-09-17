@@ -14,10 +14,10 @@ export function Langkah5({ bundel, simpan, kelengkapan }: PropLangkah) {
     <>
       <section className="kad">
         <div className="kad-tajuk">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2>
             Lampiran C — Nisbah Pengiring Murid Kepada Murid
           </h2>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="-mt-1 basis-full text-xs text-slate-500">
             Nisbah ini terikat SPI Bil. 9/2023 dan tidak boleh diubah dalam
             sistem. Pilih kategori murid yang menyertai lawatan ini.
           </p>
@@ -53,7 +53,7 @@ export function Langkah5({ bundel, simpan, kelengkapan }: PropLangkah) {
           )}
         >
           <div className="kad-tajuk">
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2>
               Kiraan Nisbah
             </h2>
           </div>
@@ -106,10 +106,10 @@ export function Langkah5({ bundel, simpan, kelengkapan }: PropLangkah) {
       {n?.perlu_justifikasi && (
         <section className="kad">
           <div className="kad-tajuk">
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2>
               Bahagian I — Pengecualian Pelulus Berkaitan Nisbah
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="-mt-1 basis-full text-xs text-slate-500">
               &ldquo;Pelulus boleh menentukan had pengecualian nisbah pengiring
               murid kepada murid berdasarkan Jadual Keempat sekiranya difikirkan
               wajar dan suai manfaat.&rdquo; — Lampiran C, SPI Bil. 9/2023

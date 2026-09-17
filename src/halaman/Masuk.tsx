@@ -4,6 +4,16 @@ import { DOMAIN_DIBENARKAN, panggilFungsi, supabase } from '@/lib/supabase'
 import { gunaAuth } from '@/lib/auth'
 import { LABEL_PERANAN } from '@/lib/istilah'
 import { Berputar, Mesej } from '@/komponen/ui'
+import { RangkaAwam } from '@/komponen/Rangka'
+import {
+  ArrowRight,
+  BadgeCheck,
+  FileSignature,
+  KeyRound,
+  Mail,
+  Route,
+  ShieldCheck,
+} from 'lucide-react'
 import type { Peranan } from '@/lib/jenis'
 
 type Semakan = {
@@ -132,26 +142,81 @@ export function Masuk() {
     navigate('/', { replace: true })
   }
 
+  const tajukKad =
+    fasa === 'emel' ? 'Log Masuk' : fasa === 'padanan' ? 'Sahkan Maklumat Sekolah' : 'Kod Pengesahan'
+  const ikonKad = fasa === 'emel' ? Mail : fasa === 'padanan' ? BadgeCheck : KeyRound
+  const IkonKad = ikonKad
+
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <div className="flex flex-1 items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <div className="mx-auto grid h-14 w-14 place-items-center rounded-xl bg-jata-600 text-lg font-bold text-white">
-              eL
-            </div>
-            <h1 className="mt-4 text-2xl font-bold tracking-tight text-jata-700">
-              eLAWATAN
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Permohonan dan Kelulusan Lawatan Murid Sekolah
-              <br />
-              Jabatan Pendidikan Negeri Perak
+    <RangkaAwam>
+      <div className="relative overflow-hidden bg-jata-900">
+        {/* Corak latar halus */}
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)',
+            backgroundSize: '22px 22px',
+          }}
+        />
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:py-16">
+          {/* ── Lajur maklumat ───────────────────────────────── */}
+          <div className="text-white">
+            <p className="inline-flex items-center gap-2 rounded-full border border-emas-400/40 bg-emas-400/10 px-3 py-1 text-xs font-semibold text-emas-300">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+              SPI KPM Bil. 9 Tahun 2023
             </p>
+            <h1 className="mt-5 text-3xl font-bold leading-tight text-white sm:text-4xl">
+              Permohonan dan Kelulusan
+              <br />
+              <span className="text-emas-300">Lawatan Murid Sekolah</span>
+            </h1>
+            <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-jata-100">
+              Satu saluran rasmi untuk sekolah, Pejabat Pendidikan Daerah dan
+              Jabatan Pendidikan Negeri Perak — dari permohonan hingga surat
+              kelulusan berkod QR.
+            </p>
+
+            <ol className="mt-8 grid max-w-xl gap-3 sm:grid-cols-3">
+              {[
+                { ikon: FileSignature, tajuk: 'Isi borang', nota: 'Lampiran A digital, enam langkah' },
+                { ikon: Route, tajuk: 'Kelulusan berperingkat', nota: 'PPD, JPN dan KPM mengikut kategori' },
+                { ikon: BadgeCheck, tajuk: 'Surat kelulusan', nota: 'Berkod QR, boleh disemak awam' },
+              ].map((l, i) => (
+                <li key={l.tajuk} className="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-emas-400 text-xs font-bold text-jata-950">
+                      {i + 1}
+                    </span>
+                    <l.ikon className="h-4 w-4 text-emas-300" aria-hidden />
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-white">{l.tajuk}</p>
+                  <p className="mt-0.5 text-xs leading-snug text-jata-200">{l.nota}</p>
+                </li>
+              ))}
+            </ol>
           </div>
 
-          <div className="kad">
-            <div className="kad-isi space-y-5">
+          {/* ── Kad log masuk ───────────────────────────────── */}
+          <div className="w-full max-w-md justify-self-center lg:justify-self-end">
+            <div className="overflow-hidden rounded-lg bg-white shadow-2xl">
+              <div className="flex items-center gap-3 border-b-2 border-emas-400 bg-jata-50 px-6 py-4">
+                <span className="grid h-10 w-10 place-items-center rounded-lg bg-jata-700 text-white">
+                  <IkonKad className="h-5 w-5" aria-hidden />
+                </span>
+                <div>
+                  <h2 className="text-lg font-bold text-jata-900">{tajukKad}</h2>
+                  <p className="text-xs text-slate-500">
+                    {fasa === 'emel'
+                      ? 'Sekolah dan pegawai menggunakan pintu yang sama'
+                      : fasa === 'padanan'
+                        ? 'Langkah 2 daripada 3'
+                        : 'Langkah 3 daripada 3'}
+                  </p>
+                </div>
+              </div>
+            <div className="space-y-5 px-6 py-6">
               {ralat && <Mesej jenis="ralat">{ralat}</Mesej>}
 
               {/* ── Langkah 1: e-mel ─────────────────────────────── */}
@@ -179,11 +244,12 @@ export function Masuk() {
                   </div>
                   <button
                     type="submit"
-                    className="btn-utama w-full"
+                    className="btn-utama w-full py-3"
                     disabled={sibuk || !emel.includes('@')}
                   >
                     {sibuk ? <Berputar /> : null}
                     Teruskan
+                    {!sibuk && <ArrowRight className="h-4 w-4" aria-hidden />}
                   </button>
                 </form>
               )}
@@ -273,7 +339,7 @@ export function Masuk() {
                   </div>
                   <button
                     type="submit"
-                    className="btn-utama w-full"
+                    className="btn-utama w-full py-3"
                     disabled={sibuk || kod.length !== 6}
                   >
                     {sibuk ? <Berputar /> : null}
@@ -305,15 +371,29 @@ export function Masuk() {
                 </form>
               )}
             </div>
-          </div>
 
-          <p className="mt-6 text-center text-xs leading-relaxed text-slate-400">
-            Peringkat capaian ditentukan oleh e-mel yang log masuk.
-            <br />
-            Pengguna tidak memilih peranan sendiri.
-          </p>
+            <div className="border-t border-slate-100 bg-slate-50 px-6 py-3 text-[0.7rem] leading-relaxed text-slate-500">
+              Peringkat capaian ditentukan oleh e-mel yang log masuk — pengguna
+              tidak memilih peranan sendiri. Sekolah kali pertama didaftarkan
+              automatik jika e-mel ada dalam senarai JPN.
+            </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      <div className="mx-auto grid max-w-7xl gap-4 px-4 py-10 sm:px-6 md:grid-cols-3">
+        {[
+          { tajuk: 'Siapa boleh log masuk?', teks: 'E-mel rasmi sekolah (moe-dl.edu.my) dan pegawai KPM (moe.gov.my) yang didaftarkan oleh pentadbir JPN.' },
+          { tajuk: 'Tiada kata laluan', teks: 'Kod pengesahan sekali guna dihantar ke e-mel anda setiap kali log masuk. Kod sah selama 10 minit.' },
+          { tajuk: 'Semak surat kelulusan', teks: 'Ibu bapa dan pihak luar boleh mengesahkan surat melalui kod QR tanpa log masuk.' },
+        ].map((k) => (
+          <div key={k.tajuk} className="kad px-5 py-4">
+            <p className="text-sm font-semibold text-jata-900">{k.tajuk}</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600">{k.teks}</p>
+          </div>
+        ))}
+      </div>
+    </RangkaAwam>
   )
 }

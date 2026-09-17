@@ -35,6 +35,8 @@ import {
   Modal,
 } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
+import { segarJabatan, type MaklumatJabatan, MAKLUMAT_LALAI } from '@/lib/jabatan'
+import { Settings } from 'lucide-react'
 import type {
   LogAudit,
   Pegawai,
@@ -49,7 +51,7 @@ const TAB = [
   { kod: 'pegawai', teks: 'Pegawai & Peranan' },
   { kod: 'import', teks: 'Import Akaun' },
   { kod: 'sekolah', teks: 'Profil Sekolah' },
-  { kod: 'kategori', teks: 'Kategori & Tempoh' },
+  { kod: 'kategori', teks: 'Tetapan & Surat' },
   { kod: 'permohonan', teks: 'Semua Permohonan' },
   { kod: 'sistem', teks: 'Sistem' },
 ] as const
@@ -62,22 +64,24 @@ export function Pentadbir() {
   return (
     <>
       <TajukHalaman
+        ikon={Settings}
+        jejak={[{ teks: 'Pentadbiran' }]}
         tajuk="Panel Pentadbir"
         nota="Setiap tindakan pentadbir direkodkan dalam log audit."
       />
 
       <div className="mb-6 overflow-x-auto border-b border-slate-200">
-        <nav className="flex min-w-max gap-1">
+        <nav className="flex min-w-max gap-1" role="tablist">
           {TAB.map((t) => (
             <button
               key={t.kod}
               type="button"
               onClick={() => setTab(t.kod)}
               className={kelas(
-                '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition',
+                '-mb-px border-b-[3px] px-4 py-3 text-sm font-semibold transition',
                 tab === t.kod
-                  ? 'border-jata-600 text-jata-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-800',
+                  ? 'border-emas-400 text-jata-900'
+                  : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-jata-800',
               )}
             >
               {t.teks}
@@ -478,10 +482,10 @@ function TabImport() {
 
       <section className="kad">
         <div className="kad-tajuk">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2>
             Tampal CSV
           </h2>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="-mt-1 basis-full text-xs text-slate-500">
             Baris pertama mesti kepala lajur. Lajur dijangka:{' '}
             <span className="font-mono">{lajurJangka.join(', ')}</span>. Lajur
             wajib: <span className="font-mono">{lajurPerlu.join(', ')}</span>.
@@ -516,8 +520,8 @@ function TabImport() {
 
       {isi.length > 0 && (
         <section className="kad">
-          <div className="kad-tajuk flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">
+          <div className="kad-tajuk">
+            <h2>
               Pratonton — {sah.length} daripada {isi.length} baris sah
             </h2>
             <button
@@ -891,10 +895,10 @@ function TabKategori() {
 
       <section className="kad">
         <div className="kad-tajuk">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2>
             Tempoh Minimum Permohonan
           </h2>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="-mt-1 basis-full text-xs text-slate-500">
             Bilangan hari sebelum tarikh lawatan. Asal: Lampiran E dan F,
             SPI Bil. 9/2023.
           </p>
@@ -932,9 +936,11 @@ function TabKategori() {
         </div>
       </section>
 
+      <EditorJabatan />
+
       <section className="kad">
-        <div className="kad-tajuk flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-slate-900">
+        <div className="kad-tajuk justify-start">
+          <h2>
             Laluan Kelulusan &amp; Nisbah Lampiran C
           </h2>
           <span className="lencana bg-slate-100 text-slate-600 ring-slate-200">
@@ -1201,7 +1207,7 @@ function TabSistem() {
 
       <section className="kad">
         <div className="kad-tajuk">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2>
             Kuasa Pentadbir Sistem
           </h2>
         </div>
@@ -1225,8 +1231,8 @@ function TabSistem() {
       </section>
 
       <section className="kad">
-        <div className="kad-tajuk flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">
+        <div className="kad-tajuk">
+          <h2>
             Log Audit Terkini
           </h2>
           <button type="button" className="btn-kedua px-3 py-1.5 text-xs" onClick={eksportJson}>
@@ -1265,5 +1271,111 @@ function TabSistem() {
         </div>
       </section>
     </div>
+  )
+}
+
+// ── Maklumat jabatan dan slogan surat ───────────────────────────────
+
+const MEDAN_JABATAN: { kunci: keyof MaklumatJabatan; label: string; lebar?: boolean }[] = [
+  { kunci: 'nama', label: 'Nama jabatan', lebar: true },
+  { kunci: 'nama_ringkas', label: 'Nama ringkas' },
+  { kunci: 'kementerian', label: 'Kementerian' },
+  { kunci: 'sektor', label: 'Sektor / unit pengeluar surat', lebar: true },
+  { kunci: 'alamat', label: 'Alamat penuh', lebar: true },
+  { kunci: 'telefon', label: 'Telefon' },
+  { kunci: 'faks', label: 'Faks' },
+  { kunci: 'emel', label: 'E-mel' },
+  { kunci: 'laman_web', label: 'Laman web' },
+]
+
+function EditorJabatan() {
+  const { pegawai: saya } = gunaAuth()
+  const [jabatan, setJabatan] = useState<MaklumatJabatan | null>(null)
+  const [slogan, setSlogan] = useState('')
+  const [mesej, setMesej] = useState<{ jenis: 'berjaya' | 'ralat'; teks: string } | null>(null)
+  const [sibuk, setSibuk] = useState(false)
+
+  useEffect(() => {
+    semuaTetapan().then((t) => {
+      const j = t.find((x) => x.kunci === 'maklumat_jpn')?.nilai as Partial<MaklumatJabatan> | undefined
+      const s = t.find((x) => x.kunci === 'slogan_surat')?.nilai as string[] | undefined
+      setJabatan({ ...MAKLUMAT_LALAI, ...(j ?? {}) })
+      setSlogan((s ?? []).join('\n'))
+    })
+  }, [])
+
+  async function simpan() {
+    if (!jabatan) return
+    setSibuk(true)
+    setMesej(null)
+    try {
+      const senaraiSlogan = slogan.split('\n').map((x) => x.trim()).filter(Boolean)
+      await simpanTetapan('maklumat_jpn', jabatan)
+      await simpanTetapan('slogan_surat', senaraiSlogan)
+      await catatAudit('TETAPAN_DIUBAH', saya?.id ?? null, {
+        kunci: 'maklumat_jpn, slogan_surat',
+      })
+      segarJabatan()
+      setMesej({ jenis: 'berjaya', teks: 'Maklumat jabatan dan slogan disimpan. Muat semula halaman untuk melihat kepala laman baharu.' })
+    } catch (e) {
+      setMesej({ jenis: 'ralat', teks: e instanceof Error ? e.message : 'Gagal menyimpan.' })
+    } finally {
+      setSibuk(false)
+    }
+  }
+
+  if (!jabatan) return <Memuat />
+
+  return (
+    <section className="kad">
+      <div className="kad-tajuk">
+        <h2>Maklumat Jabatan &amp; Surat Rasmi</h2>
+        <p className="-mt-1 basis-full text-xs text-slate-500">
+          Dipaparkan pada kepala laman, kaki laman, dan kepala surat kelulusan.
+          Sahkan setiap medan dengan pejabat JPN sebelum pelancaran.
+        </p>
+      </div>
+      <div className="kad-isi space-y-4">
+        {mesej && <Mesej jenis={mesej.jenis}>{mesej.teks}</Mesej>}
+        <div className="grid gap-4 sm:grid-cols-2">
+          {MEDAN_JABATAN.map((m) => (
+            <div key={m.kunci} className={m.lebar ? 'sm:col-span-2' : undefined}>
+              <Medan label={m.label}>
+                <input
+                  className="medan"
+                  value={jabatan[m.kunci]}
+                  onChange={(e) => setJabatan({ ...jabatan, [m.kunci]: e.target.value })}
+                />
+              </Medan>
+            </div>
+          ))}
+          <div className="sm:col-span-2">
+            <Medan
+              label="Slogan surat rasmi"
+              nota="Satu slogan setiap baris. Dicetak dalam tanda petik sebelum 'Saya yang menjalankan amanah'."
+            >
+              <textarea
+                className="medan min-h-[80px] font-semibold uppercase"
+                value={slogan}
+                onChange={(e) => setSlogan(e.target.value)}
+              />
+            </Medan>
+          </div>
+        </div>
+        <p className="rounded-md bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
+          Logo pada kepala laman dan surat dibaca daripada fail{' '}
+          <code className="rounded bg-white px-1 py-0.5 font-mono text-[0.7rem] ring-1 ring-slate-200">
+            public/logo-jabatan.png
+          </code>
+          . Letakkan logo rasmi yang diluluskan di situ; sebelum itu, lambang neutral dipaparkan.
+        </p>
+      </div>
+      <div className="flex justify-end border-t border-slate-200 px-5 py-3">
+        <button type="button" className="btn-utama" onClick={simpan} disabled={sibuk}>
+          {sibuk ? <Berputar /> : null}
+          Simpan maklumat jabatan
+        </button>
+      </div>
+    </section>
   )
 }

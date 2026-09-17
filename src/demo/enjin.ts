@@ -23,7 +23,11 @@ export const NAMA_DB = 'idb://elawatan-demo'
 let janji: Promise<PGlite> | null = null
 
 export function pangkalan(): Promise<PGlite> {
-  janji ??= mula()
+  // Jika penyediaan gagal, benarkan cubaan semula dan Set semula.
+  janji ??= mula().catch((e) => {
+    janji = null
+    throw e
+  })
   return janji
 }
 

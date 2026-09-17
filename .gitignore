@@ -12,3 +12,6 @@ supabase/.branches
 supabase/functions/.env
 .vscode/*
 !.vscode/extensions.json
+
+# Cache binaan TypeScript
+*.tsbuildinfo

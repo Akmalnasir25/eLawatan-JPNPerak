@@ -54,10 +54,10 @@ export function Langkah6({ bundel, muatSemula, kelengkapan }: PropLangkah) {
 
       <section className="kad">
         <div className="kad-tajuk">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2>
             Dokumen Sokongan
           </h2>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="-mt-1 basis-full text-xs text-slate-500">
             Senarai Semak Permohonan Lawatan Murid Sekolah, BSS Pin.1/2023.
             Senarai berubah mengikut jenis pengangkutan, kategori dan ciri
             lawatan yang dipilih.
@@ -108,7 +108,7 @@ export function Langkah6({ bundel, muatSemula, kelengkapan }: PropLangkah) {
       {/* ── Semakan akhir ────────────────────────────────────────── */}
       <section className="kad">
         <div className="kad-tajuk">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2>
             Semakan Akhir Sebelum Hantar
           </h2>
         </div>

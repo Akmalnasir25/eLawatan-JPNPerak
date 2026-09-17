@@ -81,8 +81,8 @@ export function Langkah2({ bundel, muatSemula }: PropLangkah) {
       )}
 
       <section className="kad">
-        <div className="kad-tajuk flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-slate-900">
+        <div className="kad-tajuk">
+          <h2>
             Bahagian B1.4 — Tempat Dilawati dan Penginapan
           </h2>
           <button
@@ -247,8 +247,8 @@ export function Langkah2({ bundel, muatSemula }: PropLangkah) {
 
       {p.lawatan_berperingkat && (
         <section className="kad">
-          <div className="kad-tajuk flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-900">
+          <div className="kad-tajuk">
+            <h2>
               Bahagian B2 — Maklumat Lawatan Berperingkat
             </h2>
             <button

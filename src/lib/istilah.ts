@@ -49,17 +49,17 @@ export const LABEL_STATUS: Record<Status, string> = {
 }
 
 export const WARNA_STATUS: Record<Status, string> = {
-  DRAF: 'bg-slate-100 text-slate-700 ring-slate-200',
-  MENUNGGU_PPD_SEMAK: 'bg-amber-50 text-amber-800 ring-amber-200',
-  MENUNGGU_PPD_SAH: 'bg-amber-50 text-amber-800 ring-amber-200',
-  MENUNGGU_JPN_SEMAK: 'bg-sky-50 text-sky-800 ring-sky-200',
-  MENUNGGU_JPN_SAH: 'bg-sky-50 text-sky-800 ring-sky-200',
+  DRAF: 'bg-slate-100 text-slate-700 ring-slate-300',
+  MENUNGGU_PPD_SEMAK: 'bg-amber-50 text-amber-800 ring-amber-300',
+  MENUNGGU_PPD_SAH: 'bg-amber-50 text-amber-800 ring-amber-300',
+  MENUNGGU_JPN_SEMAK: 'bg-jata-50 text-jata-800 ring-jata-200',
+  MENUNGGU_JPN_SAH: 'bg-jata-50 text-jata-800 ring-jata-200',
   MENUNGGU_KPM: 'bg-violet-50 text-violet-800 ring-violet-200',
-  DIKEMBALIKAN: 'bg-orange-50 text-orange-800 ring-orange-200',
-  DITOLAK: 'bg-rose-50 text-rose-800 ring-rose-200',
-  DILULUSKAN: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
-  SELESAI: 'bg-teal-50 text-teal-800 ring-teal-200',
-  BATAL: 'bg-slate-100 text-slate-500 ring-slate-200',
+  DIKEMBALIKAN: 'bg-orange-50 text-orange-800 ring-orange-300',
+  DITOLAK: 'bg-rose-50 text-rose-800 ring-rose-300',
+  DILULUSKAN: 'bg-emerald-50 text-emerald-800 ring-emerald-300',
+  SELESAI: 'bg-teal-50 text-teal-800 ring-teal-300',
+  BATAL: 'bg-slate-100 text-slate-500 ring-slate-300',
 }
 
 /** Peranan yang perlu bertindak pada setiap status menunggu. */

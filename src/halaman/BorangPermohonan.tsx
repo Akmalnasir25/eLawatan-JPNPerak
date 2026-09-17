@@ -12,6 +12,19 @@ import { nisbahCadangan } from '@/lib/istilah'
 import { kelas } from '@/lib/guna'
 import { Memuat, Mesej } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
+import {
+  Banknote,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  FilePlus2,
+  FileUp,
+  MapPinned,
+  Scale,
+  School,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
 import type { Kelengkapan, Permohonan } from '@/lib/jenis'
 
 import { Langkah1 } from './langkah/Langkah1'
@@ -28,14 +41,40 @@ export type PropLangkah = {
   kelengkapan: Kelengkapan | null
 }
 
-const LANGKAH = [
-  { no: 1, tajuk: 'Maklumat Lawatan', bahagian: 'A · B1' },
-  { no: 2, tajuk: 'Tempat & Tarikh', bahagian: 'B1.4 · B2' },
-  { no: 3, tajuk: 'Kewangan', bahagian: 'C1 · C2' },
-  { no: 4, tajuk: 'Anggota Rombongan', bahagian: 'D · E' },
-  { no: 5, tajuk: 'Nisbah Pengiring', bahagian: 'I' },
-  { no: 6, tajuk: 'Dokumen & Hantar', bahagian: 'Hantar' },
+const LANGKAH: { no: number; tajuk: string; bahagian: string; ikon: LucideIcon }[] = [
+  { no: 1, tajuk: 'Maklumat Lawatan', bahagian: 'Bhg. A · B1', ikon: School },
+  { no: 2, tajuk: 'Tempat & Tarikh', bahagian: 'Bhg. B1.4 · B2', ikon: MapPinned },
+  { no: 3, tajuk: 'Kewangan', bahagian: 'Bhg. C1 · C2', ikon: Banknote },
+  { no: 4, tajuk: 'Anggota Rombongan', bahagian: 'Bhg. D · E', ikon: Users },
+  { no: 5, tajuk: 'Nisbah Pengiring', bahagian: 'Bhg. I', ikon: Scale },
+  { no: 6, tajuk: 'Dokumen & Hantar', bahagian: 'Semakan akhir', ikon: FileUp },
 ]
+
+/** Anggaran kelengkapan setiap langkah untuk penanda — pengesahan
+ *  sebenar tetap dibuat oleh semak_kelengkapan() di pangkalan data. */
+function lengkapLangkah(b: BundelPermohonan, k: Kelengkapan | null): boolean[] {
+  const p = b.permohonan
+  const ketua = b.peserta.find((x) => x.kategori === 'KETUA_ROMBONGAN')
+  const n = k?.nisbah
+  return [
+    !!p.kategori &&
+      (p.tujuan?.trim().length ?? 0) >= 10 &&
+      p.pengangkutan.length > 0 &&
+      (!p.anjuran_pihak_luar || !!p.nama_penganjur_luar?.trim()),
+    b.tempat.length > 0 && b.tempat.every((t) => t.tempat.trim().length > 0),
+    Number(p.kutipan_murid) + Number(p.kutipan_guru) + Number(p.sumber_lain) > 0 ||
+      b.penaja.length > 0,
+    !!ketua?.nama?.trim() &&
+      !!ketua.kp?.trim() &&
+      !!ketua.telefon?.trim() &&
+      (p.kategori !== 'LUAR_NEGARA' || !!ketua.pasport?.trim()) &&
+      p.bil_murid > 0 &&
+      p.bil_guru > 0,
+    !!n && p.bil_murid > 0 &&
+      (n.sah || (n.perlu_justifikasi && (p.justifikasi_nisbah?.trim().length ?? 0) >= 20)),
+    !!k?.boleh_hantar,
+  ]
+}
 
 export function BorangPermohonan() {
   const { id } = useParams<{ id: string }>()
@@ -145,34 +184,52 @@ export function BorangPermohonan() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const lengkap = lengkapLangkah(bundel, kelengkapan)
+  const bilLengkap = lengkap.filter(Boolean).length
+  const semasa = LANGKAH[langkah - 1]
+
   return (
     <>
       <TajukHalaman
+        ikon={FilePlus2}
+        jejak={[
+          { teks: 'Permohonan', ke: '/senarai' },
+          { teks: bundel.permohonan.no_rujukan ? 'Pindaan' : 'Permohonan baharu' },
+        ]}
         tajuk={
           bundel.permohonan.no_rujukan
             ? `Pindaan — ${bundel.permohonan.no_rujukan}`
-            : 'Permohonan Lawatan Murid Sekolah'
+            : 'Borang Permohonan Lawatan Murid Sekolah'
         }
-        nota={`${bundel.sekolah.nama} · ${bundel.sekolah.kod_sekolah}`}
+        nota={`Lampiran A · ${bundel.sekolah.nama} (${bundel.sekolah.kod_sekolah})`}
         aksi={
-          <span className="text-xs text-slate-500">
-            {menyimpan
-              ? 'Menyimpan…'
-              : disimpanPada
-                ? `Disimpan ${disimpanPada.toLocaleTimeString('ms-MY')}`
-                : 'Draf disimpan automatik'}
+          <span
+            className={kelas(
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium',
+              menyimpan ? 'bg-emas-50 text-emas-700' : 'bg-emerald-50 text-emerald-700',
+            )}
+          >
+            {menyimpan ? (
+              'Menyimpan…'
+            ) : (
+              <>
+                <Check className="h-3.5 w-3.5" aria-hidden />
+                {disimpanPada
+                  ? `Disimpan ${disimpanPada.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}`
+                  : 'Draf disimpan automatik'}
+              </>
+            )}
           </span>
         }
       />
 
-      {bundel.permohonan.status === 'DIKEMBALIKAN' &&
-        bundel.permohonan.catatan_kembali && (
-          <div className="mb-5">
-            <Mesej jenis="amaran" tajuk="Dikembalikan untuk pindaan">
-              {bundel.permohonan.catatan_kembali}
-            </Mesej>
-          </div>
-        )}
+      {bundel.permohonan.status === 'DIKEMBALIKAN' && bundel.permohonan.catatan_kembali && (
+        <div className="mb-5">
+          <Mesej jenis="amaran" tajuk="Dikembalikan untuk pindaan">
+            {bundel.permohonan.catatan_kembali}
+          </Mesej>
+        </div>
+      )}
 
       {ralat && (
         <div className="mb-5">
@@ -180,85 +237,116 @@ export function BorangPermohonan() {
         </div>
       )}
 
-      {/* Penanda langkah */}
-      <nav className="mb-6 overflow-x-auto">
-        <ol className="flex min-w-max gap-1">
-          {LANGKAH.map((l) => {
-            const aktif = l.no === langkah
-            const lepas = l.no < langkah
-            return (
-              <li key={l.no}>
-                <button
-                  type="button"
-                  onClick={() => keLangkah(l.no)}
-                  className={kelas(
-                    'flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition',
-                    aktif
-                      ? 'border-jata-300 bg-jata-50'
-                      : 'border-transparent hover:bg-slate-100',
-                  )}
-                >
-                  <span
-                    className={kelas(
-                      'grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-semibold',
-                      aktif
-                        ? 'bg-jata-600 text-white'
-                        : lepas
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-slate-200 text-slate-600',
-                    )}
-                  >
-                    {l.no}
-                  </span>
-                  <span className="hidden sm:block">
-                    <span
+      <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+        {/* ── Penanda langkah ─────────────────────────────────── */}
+        <aside className="lg:sticky lg:top-20 lg:self-start">
+          <div className="kad overflow-hidden">
+            <div className="border-b border-slate-200 bg-jata-800 px-4 py-3 text-white">
+              <p className="text-xs font-semibold uppercase tracking-wider text-jata-200">Kemajuan borang</p>
+              <p className="mt-0.5 text-sm font-semibold">
+                {bilLengkap} daripada {LANGKAH.length} langkah lengkap
+              </p>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/15">
+                <div
+                  className="h-full rounded-full bg-emas-400 transition-all"
+                  style={{ width: `${(bilLengkap / LANGKAH.length) * 100}%` }}
+                />
+              </div>
+            </div>
+            <ol className="flex gap-1 overflow-x-auto p-2 lg:block lg:space-y-0.5">
+              {LANGKAH.map((l, i) => {
+                const aktif = l.no === langkah
+                const siap = lengkap[i]
+                return (
+                  <li key={l.no} className="shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => keLangkah(l.no)}
+                      aria-current={aktif ? 'step' : undefined}
                       className={kelas(
-                        'block text-xs font-medium',
-                        aktif ? 'text-jata-800' : 'text-slate-700',
+                        'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition',
+                        aktif ? 'bg-jata-50 ring-1 ring-inset ring-jata-200' : 'hover:bg-slate-50',
                       )}
                     >
-                      {l.tajuk}
-                    </span>
-                    <span className="block text-[10px] uppercase tracking-wide text-slate-400">
-                      Bhg. {l.bahagian}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ol>
-      </nav>
+                      <span
+                        className={kelas(
+                          'grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold',
+                          aktif
+                            ? 'bg-jata-700 text-white'
+                            : siap
+                              ? 'bg-emerald-600 text-white'
+                              : 'border-2 border-slate-300 bg-white text-slate-500',
+                        )}
+                      >
+                        {siap && !aktif ? <Check className="h-3.5 w-3.5" aria-hidden /> : l.no}
+                      </span>
+                      <span className="min-w-0">
+                        <span className={kelas('block whitespace-nowrap text-sm font-medium', aktif ? 'text-jata-900' : 'text-slate-700')}>
+                          {l.tajuk}
+                        </span>
+                        <span className="hidden text-[0.65rem] uppercase tracking-wider text-slate-400 lg:block">
+                          {l.bahagian}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
+          <p className="mt-3 hidden text-xs leading-relaxed text-slate-500 lg:block">
+            Tanda hijau ialah anggaran. Semakan muktamad dibuat pada Langkah 6
+            sebelum permohonan boleh dihantar.
+          </p>
+        </aside>
 
-      <div className="space-y-6">
-        {langkah === 1 && <Langkah1 {...prop} />}
-        {langkah === 2 && <Langkah2 {...prop} />}
-        {langkah === 3 && <Langkah3 {...prop} />}
-        {langkah === 4 && <Langkah4 {...prop} />}
-        {langkah === 5 && <Langkah5 {...prop} />}
-        {langkah === 6 && <Langkah6 {...prop} />}
-      </div>
+        {/* ── Kandungan langkah ───────────────────────────────── */}
+        <div className="min-w-0">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-emas-100 text-emas-700">
+              <semasa.ikon className="h-5 w-5" aria-hidden />
+            </span>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Langkah {langkah} daripada {LANGKAH.length}
+              </p>
+              <h2 className="text-lg font-bold text-jata-900">{semasa.tajuk}</h2>
+            </div>
+          </div>
 
-      <div className="mt-8 flex items-center justify-between gap-3 border-t border-slate-200 pt-5">
-        <button
-          type="button"
-          className="btn-kedua"
-          disabled={langkah === 1}
-          onClick={() => keLangkah(langkah - 1)}
-        >
-          Langkah sebelum
-        </button>
-        <span className="text-xs text-slate-400">
-          Langkah {langkah} daripada 6
-        </span>
-        <button
-          type="button"
-          className="btn-utama"
-          disabled={langkah === 6}
-          onClick={() => keLangkah(langkah + 1)}
-        >
-          Langkah seterusnya
-        </button>
+          <div className="space-y-6">
+            {langkah === 1 && <Langkah1 {...prop} />}
+            {langkah === 2 && <Langkah2 {...prop} />}
+            {langkah === 3 && <Langkah3 {...prop} />}
+            {langkah === 4 && <Langkah4 {...prop} />}
+            {langkah === 5 && <Langkah5 {...prop} />}
+            {langkah === 6 && <Langkah6 {...prop} />}
+          </div>
+
+          <div className="mt-8 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-kad">
+            <button
+              type="button"
+              className="btn-kedua"
+              disabled={langkah === 1}
+              onClick={() => keLangkah(langkah - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden />
+              Sebelum
+            </button>
+            <span className="hidden text-xs text-slate-500 sm:block">
+              {langkah < LANGKAH.length ? `Seterusnya: ${LANGKAH[langkah].tajuk}` : 'Langkah terakhir'}
+            </span>
+            <button
+              type="button"
+              className="btn-utama"
+              disabled={langkah === LANGKAH.length}
+              onClick={() => keLangkah(langkah + 1)}
+            >
+              Seterusnya
+              <ChevronRight className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
+        </div>
       </div>
     </>
   )

@@ -4,6 +4,7 @@ import { LABEL_KATEGORI, LABEL_STATUS } from '@/lib/istilah'
 import { formatWang, keCsv, kelas, muatTurun } from '@/lib/guna'
 import { Kosong, Memuat, Mesej } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
+import { BarChart3, Download } from 'lucide-react'
 import type { PermohonanRingkas, Status } from '@/lib/jenis'
 
 const BULAN = [
@@ -101,11 +102,14 @@ export function Laporan() {
   return (
     <>
       <TajukHalaman
-        tajuk="Laporan"
+        ikon={BarChart3}
+        jejak={[{ teks: 'Laporan' }]}
+        tajuk="Laporan Statistik Lawatan"
         nota="Statistik dijana serta-merta daripada rekod dalam skop capaian anda."
         aksi={
           <>
             <select
+              aria-label="Tahun"
               className="medan w-auto"
               value={tahun}
               onChange={(e) => setTahun(Number(e.target.value))}
@@ -122,6 +126,7 @@ export function Laporan() {
               onClick={eksport}
               disabled={data.dalamTahun.length === 0}
             >
+              <Download className="h-4 w-4" aria-hidden />
               Eksport CSV
             </button>
           </>
@@ -155,7 +160,7 @@ export function Laporan() {
 
           <section className="kad">
             <div className="kad-tajuk">
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2>
                 Taburan Bulanan — Tarikh Lawatan {tahun}
               </h2>
             </div>
@@ -183,7 +188,7 @@ export function Laporan() {
           <div className="grid gap-6 lg:grid-cols-2">
             <section className="kad">
               <div className="kad-tajuk">
-                <h2 className="text-sm font-semibold text-slate-900">
+                <h2>
                   Mengikut Daerah
                 </h2>
               </div>
@@ -216,7 +221,7 @@ export function Laporan() {
             <div className="space-y-6">
               <section className="kad">
                 <div className="kad-tajuk">
-                  <h2 className="text-sm font-semibold text-slate-900">
+                  <h2>
                     Mengikut Kategori
                   </h2>
                 </div>
@@ -246,7 +251,7 @@ export function Laporan() {
 
               <section className="kad">
                 <div className="kad-tajuk">
-                  <h2 className="text-sm font-semibold text-slate-900">
+                  <h2>
                     Mengikut Status
                   </h2>
                 </div>

@@ -1,129 +1,373 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import { useState, type ReactNode } from 'react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import {
+  BarChart3,
+  ChevronDown,
+  ChevronRight,
+  Contrast,
+  FilePlus2,
+  Files,
+  Globe,
+  Inbox,
+  LayoutDashboard,
+  LogOut,
+  Mail,
+  MapPin,
+  Menu,
+  Phone,
+  Settings,
+  ShieldCheck,
+  UserRound,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
 import { gunaAuth } from '@/lib/auth'
+import { gunaJabatan } from '@/lib/jabatan'
+import { gunaPaparan, type SaizTeks } from '@/lib/paparan'
 import { LABEL_PERANAN } from '@/lib/istilah'
-import { kelas } from '@/lib/guna'
+import { formatHari, formatTarikh, kelas } from '@/lib/guna'
+import { LogoRasmi } from './LogoRasmi'
 
-type Pautan = { ke: string; teks: string }
+type Pautan = { ke: string; teks: string; ikon: LucideIcon }
 
 function pautanBagi(peranan: string): Pautan[] {
   if (peranan === 'sekolah') {
     return [
-      { ke: '/', teks: 'Papan Pemuka' },
-      { ke: '/permohonan/baharu', teks: 'Permohonan Baharu' },
-      { ke: '/laporan', teks: 'Laporan' },
-      { ke: '/profil', teks: 'Profil' },
+      { ke: '/', teks: 'Papan Pemuka', ikon: LayoutDashboard },
+      { ke: '/permohonan/baharu', teks: 'Permohonan Baharu', ikon: FilePlus2 },
+      { ke: '/senarai', teks: 'Senarai Permohonan', ikon: Files },
+      { ke: '/laporan', teks: 'Laporan', ikon: BarChart3 },
     ]
   }
-  if (peranan === 'admin') {
-    return [
-      { ke: '/', teks: 'Papan Pemuka' },
-      { ke: '/senarai', teks: 'Semua Permohonan' },
-      { ke: '/laporan', teks: 'Laporan' },
-      { ke: '/pentadbir', teks: 'Pentadbir' },
-      { ke: '/profil', teks: 'Profil' },
-    ]
-  }
-  return [
-    { ke: '/', teks: 'Peti Tindakan' },
-    { ke: '/senarai', teks: 'Semua Permohonan' },
-    { ke: '/laporan', teks: 'Laporan' },
-    { ke: '/profil', teks: 'Profil' },
+  const asas: Pautan[] = [
+    { ke: '/', teks: peranan === 'admin' ? 'Papan Pemuka' : 'Peti Tindakan', ikon: peranan === 'admin' ? LayoutDashboard : Inbox },
+    { ke: '/senarai', teks: 'Semua Permohonan', ikon: Files },
+    { ke: '/laporan', teks: 'Laporan', ikon: BarChart3 },
   ]
+  if (peranan === 'admin') asas.push({ ke: '/pentadbir', teks: 'Pentadbiran', ikon: Settings })
+  return asas
 }
 
-export function Rangka({ children }: { children: ReactNode }) {
+// ── Bar utiliti ─────────────────────────────────────────────────────
+
+export function BarUtiliti() {
+  const { saiz, setSaiz, kontras, togolKontras } = gunaPaparan()
+  const { jabatan } = gunaJabatan()
+  const kini = new Date().toISOString()
+  const pilihanSaiz: { s: SaizTeks; label: string; tajuk: string }[] = [
+    { s: 'kecil', label: 'A−', tajuk: 'Teks kecil' },
+    { s: 'biasa', label: 'A', tajuk: 'Teks biasa' },
+    { s: 'besar', label: 'A+', tajuk: 'Teks besar' },
+  ]
+
+  return (
+    <div className="tanpa-cetak bg-jata-950 text-[0.72rem] text-jata-100">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-1.5 sm:px-6">
+        <p className="flex items-center gap-1.5">
+          <ShieldCheck className="h-3.5 w-3.5 text-emas-400" aria-hidden />
+          <span>Sistem rasmi {jabatan.nama}</span>
+          <span className="hidden text-jata-300 sm:inline">
+            · {formatHari(kini)}, {formatTarikh(kini)}
+          </span>
+        </p>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-0.5" role="group" aria-label="Saiz teks">
+            <span className="mr-1 hidden text-jata-300 sm:inline">Saiz teks</span>
+            {pilihanSaiz.map((p) => (
+              <button
+                key={p.s}
+                type="button"
+                title={p.tajuk}
+                aria-pressed={saiz === p.s}
+                onClick={() => setSaiz(p.s)}
+                className={kelas(
+                  'min-w-[1.75rem] rounded px-1.5 py-0.5 font-semibold transition',
+                  saiz === p.s ? 'bg-emas-400 text-jata-950' : 'hover:bg-white/10',
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={togolKontras}
+            aria-pressed={kontras}
+            className={kelas(
+              'flex items-center gap-1 rounded px-2 py-0.5 font-semibold transition',
+              kontras ? 'bg-emas-400 text-jata-950' : 'hover:bg-white/10',
+            )}
+          >
+            <Contrast className="h-3.5 w-3.5" aria-hidden />
+            Kontras
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Kepala jabatan ──────────────────────────────────────────────────
+
+export function KepalaJabatan({ kanan }: { kanan?: ReactNode }) {
+  const { jabatan } = gunaJabatan()
+  return (
+    <div className="border-b border-slate-200 bg-white">
+      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
+        <Link to="/" className="flex min-w-0 items-center gap-3">
+          <LogoRasmi saiz={52} />
+          <div className="min-w-0 leading-tight">
+            <p className="hidden text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:block">
+              {jabatan.kementerian}
+            </p>
+            <p className="truncate text-sm font-bold uppercase tracking-wide text-jata-900 sm:text-base">
+              <span className="sm:hidden">{jabatan.nama_ringkas || jabatan.nama}</span>
+              <span className="hidden sm:inline">{jabatan.nama}</span>
+            </p>
+            <p className="truncate text-xs text-slate-600">
+              <span className="font-bold text-jata-700">eLAWATAN</span>
+              <span className="hidden sm:inline">
+                {' '}· Sistem Permohonan dan Kelulusan Lawatan Murid Sekolah
+              </span>
+            </p>
+          </div>
+        </Link>
+        {kanan && <div className="ml-auto flex items-center gap-2">{kanan}</div>}
+      </div>
+    </div>
+  )
+}
+
+// ── Menu pengguna ───────────────────────────────────────────────────
+
+function MenuPengguna() {
   const { pegawai, sekolah, keluar } = gunaAuth()
   const navigate = useNavigate()
+  const [buka, setBuka] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!buka) return
+    const tutup = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setBuka(false)
+    }
+    const kekunci = (e: KeyboardEvent) => e.key === 'Escape' && setBuka(false)
+    document.addEventListener('mousedown', tutup)
+    document.addEventListener('keydown', kekunci)
+    return () => {
+      document.removeEventListener('mousedown', tutup)
+      document.removeEventListener('keydown', kekunci)
+    }
+  }, [buka])
+
+  if (!pegawai) return null
+  const skop =
+    pegawai.peranan === 'sekolah'
+      ? (sekolah?.kod_sekolah ?? pegawai.kod_skop)
+      : (pegawai.kod_skop ?? 'Seluruh negeri')
+  const inisial = pegawai.nama
+    .replace(/\b(Tuan|Puan|Encik|Cik|Dato'?|Datuk|Haji|Hajah|Dr\.?|SK|SMK|bin|binti)\b/gi, '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((k) => k[0])
+    .join('')
+    .toUpperCase()
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setBuka((b) => !b)}
+        aria-expanded={buka}
+        aria-haspopup="menu"
+        className="flex items-center gap-2.5 rounded-lg border border-transparent px-2 py-1.5 text-left transition hover:border-slate-200 hover:bg-slate-50"
+      >
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-jata-700 text-xs font-bold text-white ring-2 ring-emas-300">
+          {inisial || <UserRound className="h-4 w-4" />}
+        </span>
+        <span className="hidden max-w-[220px] leading-tight md:block">
+          <span className="block truncate text-sm font-semibold text-jata-900">{pegawai.nama}</span>
+          <span className="block truncate text-[0.7rem] text-slate-500">
+            {LABEL_PERANAN[pegawai.peranan]} · {skop}
+          </span>
+        </span>
+        <ChevronDown className="hidden h-4 w-4 text-slate-400 md:block" aria-hidden />
+      </button>
+
+      {buka && (
+        <div
+          role="menu"
+          className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-timbul"
+        >
+          <div className="border-b border-slate-100 bg-jata-50/60 px-4 py-3">
+            <p className="truncate text-sm font-semibold text-jata-900">{pegawai.nama}</p>
+            <p className="truncate text-xs text-slate-500">{pegawai.emel}</p>
+          </div>
+          <Link
+            to="/profil"
+            role="menuitem"
+            onClick={() => setBuka(false)}
+            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            <UserRound className="h-4 w-4 text-jata-600" aria-hidden />
+            Profil, tandatangan &amp; cop
+          </Link>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={async () => {
+              await keluar()
+              navigate('/masuk', { replace: true })
+            }}
+            className="flex w-full items-center gap-2.5 border-t border-slate-100 px-4 py-2.5 text-left text-sm text-rose-700 hover:bg-rose-50"
+          >
+            <LogOut className="h-4 w-4" aria-hidden />
+            Log keluar
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Kaki laman ──────────────────────────────────────────────────────
+
+export function KakiLaman() {
+  const { jabatan } = gunaJabatan()
+  const tahun = new Date().getFullYear()
+  return (
+    <footer className="app-kaki tanpa-cetak mt-12 bg-jata-950 text-jata-100">
+      <div className="h-1 bg-gradient-to-r from-emas-500 via-emas-300 to-emas-500" />
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
+        <div>
+          <div className="flex items-center gap-3">
+            <LogoRasmi saiz={44} terang />
+            <div className="leading-tight">
+              <p className="font-bold uppercase tracking-wide text-white">{jabatan.nama}</p>
+              <p className="text-xs text-jata-300">{jabatan.sektor}</p>
+            </div>
+          </div>
+          <ul className="mt-5 space-y-2 text-[0.8rem] text-jata-200">
+            {jabatan.alamat && (
+              <li className="flex gap-2">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emas-400" aria-hidden />
+                {jabatan.alamat}
+              </li>
+            )}
+            {jabatan.telefon && (
+              <li className="flex gap-2">
+                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-emas-400" aria-hidden />
+                {jabatan.telefon}
+                {jabatan.faks && ` · Faks ${jabatan.faks}`}
+              </li>
+            )}
+            {jabatan.emel && (
+              <li className="flex gap-2">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-emas-400" aria-hidden />
+                {jabatan.emel}
+              </li>
+            )}
+          </ul>
+        </div>
+
+        <div>
+          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-emas-300">Pautan</p>
+          <ul className="space-y-2 text-[0.8rem]">
+            <li><Link to="/" className="hover:text-white hover:underline">Laman utama sistem</Link></li>
+            <li><Link to="/sah" className="hover:text-white hover:underline">Semak kesahihan surat kelulusan</Link></li>
+            <li><Link to="/profil" className="hover:text-white hover:underline">Profil pengguna</Link></li>
+            {jabatan.laman_web && (
+              <li>
+                <a
+                  href={jabatan.laman_web}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 hover:text-white hover:underline"
+                >
+                  <Globe className="h-3.5 w-3.5" aria-hidden />
+                  Portal rasmi {jabatan.nama_ringkas}
+                </a>
+              </li>
+            )}
+          </ul>
+        </div>
+
+        <div>
+          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-emas-300">Rujukan dasar</p>
+          <ul className="space-y-2 text-[0.8rem] text-jata-200">
+            <li>Surat Pekeliling Ikhtisas KPM Bil. 9 Tahun 2023</li>
+            <li>Peraturan Lawatan Sekolah 1957</li>
+            <li>Senarai Semak BSS Pin.1/2023</li>
+          </ul>
+        </div>
+      </div>
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-[0.72rem] text-jata-300 sm:px-6">
+          <p>Hak Cipta Terpelihara © {tahun} {jabatan.nama}</p>
+          <p>Paparan terbaik: Google Chrome, Microsoft Edge atau Mozilla Firefox versi terkini</p>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+// ── Rangka aplikasi ─────────────────────────────────────────────────
+
+export function Rangka({ children }: { children: ReactNode }) {
+  const { pegawai } = gunaAuth()
   const [menuBuka, setMenuBuka] = useState(false)
 
   if (!pegawai) return <>{children}</>
-
   const pautan = pautanBagi(pegawai.peranan)
-  const skop =
-    pegawai.peranan === 'sekolah'
-      ? (sekolah?.nama ?? pegawai.kod_skop)
-      : (pegawai.kod_skop ?? 'Seluruh negeri')
-
-  async function logKeluar() {
-    await keluar()
-    navigate('/masuk', { replace: true })
-  }
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="app-bar sticky top-0 z-30 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
-          <NavLink to="/" className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-jata-600 text-sm font-bold text-white">
-              eL
-            </span>
-            <span className="leading-tight">
-              <span className="block text-sm font-bold tracking-tight text-jata-700">
-                eLAWATAN
-              </span>
-              <span className="hidden text-[11px] text-slate-500 sm:block">
-                JPN Perak
-              </span>
-            </span>
-          </NavLink>
-
-          <nav className="app-nav ml-4 hidden items-center gap-1 md:flex">
-            {pautan.map((p) => (
-              <NavLink
-                key={p.ke}
-                to={p.ke}
-                end={p.ke === '/'}
-                className={({ isActive }) =>
-                  kelas(
-                    'rounded-lg px-3 py-2 text-sm font-medium transition',
-                    isActive
-                      ? 'bg-jata-50 text-jata-700'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                  )
-                }
+      <header className="app-bar tanpa-cetak">
+        <BarUtiliti />
+        <KepalaJabatan
+          kanan={
+            <>
+              <MenuPengguna />
+              <button
+                type="button"
+                className="rounded-md p-2 text-jata-800 hover:bg-slate-100 lg:hidden"
+                onClick={() => setMenuBuka((b) => !b)}
+                aria-label={menuBuka ? 'Tutup menu' : 'Buka menu'}
+                aria-expanded={menuBuka}
               >
-                {p.teks}
-              </NavLink>
-            ))}
-          </nav>
+                {menuBuka ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </>
+          }
+        />
+      </header>
 
-          <div className="ml-auto flex items-center gap-3">
+      <nav className="app-nav tanpa-cetak sticky top-0 z-30 bg-jata-800 shadow-md" aria-label="Navigasi utama">
+        <div className="mx-auto hidden max-w-7xl items-stretch px-4 sm:px-6 lg:flex">
+          {pautan.map((p) => (
             <NavLink
-              to="/profil"
-              className="hidden rounded-lg px-2 py-1 text-right hover:bg-slate-100 sm:block"
-              title="Profil, tandatangan dan cop"
+              key={p.ke}
+              to={p.ke}
+              end={p.ke === '/'}
+              className={({ isActive }) =>
+                kelas(
+                  'flex items-center gap-2 border-b-[3px] px-4 py-3 text-sm font-medium transition',
+                  isActive
+                    ? 'border-emas-400 bg-jata-900/60 text-white'
+                    : 'border-transparent text-jata-100 hover:bg-jata-700 hover:text-white',
+                )
+              }
             >
-              <p className="text-sm font-medium leading-tight text-slate-800">
-                {pegawai.nama}
-              </p>
-              <p className="text-[11px] leading-tight text-slate-500">
-                {LABEL_PERANAN[pegawai.peranan]} · {skop}
-              </p>
+              <p.ikon className="h-4 w-4" aria-hidden />
+              {p.teks}
             </NavLink>
-            <button
-              type="button"
-              onClick={logKeluar}
-              className="btn-kedua px-3 py-1.5 text-xs"
-            >
-              Log Keluar
-            </button>
-            <button
-              type="button"
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden"
-              onClick={() => setMenuBuka((b) => !b)}
-              aria-label="Menu"
-            >
-              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M3 5h14v2H3V5zm0 4h14v2H3V9zm0 4h14v2H3v-2z" />
-              </svg>
-            </button>
-          </div>
+          ))}
         </div>
 
         {menuBuka && (
-          <nav className="app-nav border-t border-slate-200 px-4 py-2 md:hidden">
-            {pautan.map((p) => (
+          <div className="border-t border-white/10 px-2 py-2 lg:hidden">
+            {[...pautan, { ke: '/profil', teks: 'Profil', ikon: UserRound }].map((p) => (
               <NavLink
                 key={p.ke}
                 to={p.ke}
@@ -131,57 +375,98 @@ export function Rangka({ children }: { children: ReactNode }) {
                 onClick={() => setMenuBuka(false)}
                 className={({ isActive }) =>
                   kelas(
-                    'block rounded-lg px-3 py-2.5 text-sm font-medium',
-                    isActive ? 'bg-jata-50 text-jata-700' : 'text-slate-600',
+                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium',
+                    isActive ? 'bg-jata-900 text-white' : 'text-jata-100',
                   )
                 }
               >
+                <p.ikon className="h-4 w-4" aria-hidden />
                 {p.teks}
               </NavLink>
             ))}
-          </nav>
+          </div>
         )}
-      </header>
+        {!menuBuka && <div className="h-1 lg:hidden" />}
+      </nav>
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
         {children}
       </main>
 
-      <footer className="app-kaki border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-5 text-xs leading-relaxed text-slate-500 sm:px-6">
-          <p>
-            Sistem Permohonan dan Kelulusan Lawatan Murid Sekolah ·
-            Jabatan Pendidikan Negeri Perak
-          </p>
-          <p className="mt-1">
-            Dikuatkuasakan menurut Surat Pekeliling Ikhtisas KPM Bil. 9 Tahun 2023
-            dan Peraturan Lawatan Sekolah 1957.
-          </p>
-        </div>
-      </footer>
+      <KakiLaman />
     </div>
   )
 }
 
-/** Tajuk halaman dengan aksi di kanan. */
+// ── Tajuk halaman dengan jejak ──────────────────────────────────────
+
+export type Jejak = { teks: string; ke?: string }
+
 export function TajukHalaman({
   tajuk,
   nota,
   aksi,
+  jejak = [],
+  ikon: Ikon,
 }: {
   tajuk: string
-  nota?: string
+  nota?: ReactNode
   aksi?: ReactNode
+  jejak?: Jejak[]
+  ikon?: LucideIcon
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-          {tajuk}
-        </h1>
-        {nota && <p className="mt-1 text-sm text-slate-500">{nota}</p>}
+    <div className="mb-6">
+      {jejak.length > 0 && (
+      <nav aria-label="Jejak halaman" className="mb-3">
+        <ol className="flex flex-wrap items-center gap-1 text-xs text-slate-500">
+          <li>
+            <Link to="/" className="hover:text-jata-700 hover:underline">Utama</Link>
+          </li>
+          {jejak.map((j, i) => (
+            <li key={i} className="flex items-center gap-1">
+              <ChevronRight className="h-3 w-3 text-slate-400" aria-hidden />
+              {j.ke ? (
+                <Link to={j.ke} className="hover:text-jata-700 hover:underline">{j.teks}</Link>
+              ) : (
+                <span className="font-medium text-slate-700">{j.teks}</span>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+      )}
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
+        <div className="flex min-w-0 items-start gap-3">
+          {Ikon && (
+            <span className="mt-0.5 hidden h-11 w-11 shrink-0 place-items-center rounded-lg bg-jata-700 text-white shadow-sm sm:grid">
+              <Ikon className="h-5 w-5" aria-hidden />
+            </span>
+          )}
+          <div className="min-w-0 border-l-4 border-emas-400 pl-3 sm:border-0 sm:pl-0">
+            <h1 className="break-words text-xl font-bold tracking-tight text-jata-900 sm:text-2xl">
+              {tajuk}
+            </h1>
+            {nota && <p className="mt-1 text-sm text-slate-600">{nota}</p>}
+          </div>
+        </div>
+        {aksi && <div className="flex flex-wrap items-center gap-2">{aksi}</div>}
       </div>
-      {aksi && <div className="flex flex-wrap items-center gap-2">{aksi}</div>}
+    </div>
+  )
+}
+
+/** Rangka untuk halaman sebelum log masuk. */
+export function RangkaAwam({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-100">
+      <header className="tanpa-cetak">
+        <BarUtiliti />
+        <KepalaJabatan />
+        <div className="h-1 bg-jata-800" />
+      </header>
+      <main className="flex-1">{children}</main>
+      <KakiLaman />
     </div>
   )
 }

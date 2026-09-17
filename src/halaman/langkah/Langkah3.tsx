@@ -34,7 +34,7 @@ export function Langkah3({ bundel, simpan, muatSemula }: PropLangkah) {
 
       <section className="kad">
         <div className="kad-tajuk">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2>
             Bahagian C1 — Maklumat Sumber Kewangan
           </h2>
         </div>
@@ -88,8 +88,8 @@ export function Langkah3({ bundel, simpan, muatSemula }: PropLangkah) {
       </section>
 
       <section className="kad">
-        <div className="kad-tajuk flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-slate-900">
+        <div className="kad-tajuk">
+          <h2>
             Bahagian C2 — Penaja Lawatan
           </h2>
           <button

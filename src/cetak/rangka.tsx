@@ -1,29 +1,24 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { dapatPermohonan, dapatTetapan, type BundelPermohonan } from '@/lib/api'
+import { dapatPermohonan, type BundelPermohonan } from '@/lib/api'
+import { MAKLUMAT_LALAI, muatJabatan, type MaklumatJabatan } from '@/lib/jabatan'
 import { imejCetak } from '@/lib/profil'
 import { Memuat, Mesej } from '@/komponen/ui'
-
-export type MaklumatJpn = {
-  nama: string
-  sektor: string
-  alamat: string
-  telefon: string
-  emel: string
-}
 
 /** Muatkan rekod penuh untuk halaman cetakan. */
 export function gunaCetak(id: string | undefined) {
   const [bundel, setBundel] = useState<BundelPermohonan | null>(null)
   const [imej, setImej] = useState<Record<string, string>>({})
-  const [jpn, setJpn] = useState<MaklumatJpn | null>(null)
+  const [jpn, setJpn] = useState<MaklumatJabatan | null>(null)
+  const [slogan, setSlogan] = useState<string[]>([])
   const [ralat, setRalat] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
-    Promise.all([dapatPermohonan(id), dapatTetapan<MaklumatJpn>('maklumat_jpn')])
+    Promise.all([dapatPermohonan(id), muatJabatan()])
       .then(([b, m]) => {
         setBundel(b)
-        setJpn(m)
+        setJpn(m.jabatan ?? MAKLUMAT_LALAI)
+        setSlogan(m.slogan)
         // Imej gagal dimuat tidak menghalang cetakan — ruang kosong
         // kekal untuk tandatangan basah.
         imejCetak(b.permohonan.id).then(setImej).catch(() => setImej({}))
@@ -34,7 +29,7 @@ export function gunaCetak(id: string | undefined) {
   /** URL imej bagi kunci yang dibekukan, atau undefined. */
   const url = (kunci: string | null | undefined) => (kunci ? imej[kunci] : undefined)
 
-  return { bundel, jpn, ralat, url }
+  return { bundel, jpn, slogan, ralat, url }
 }
 
 /**

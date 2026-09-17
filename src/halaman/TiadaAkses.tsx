@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom'
 import { gunaAuth } from '@/lib/auth'
+import { RangkaAwam } from '@/komponen/Rangka'
 
 export function TiadaAkses() {
   const { sesi, keluar } = gunaAuth()
   const navigate = useNavigate()
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md text-center">
+    <RangkaAwam>
+    <div className="flex items-center justify-center px-4 py-16">
+      <div className="kad w-full max-w-md px-6 py-8 text-center">
         <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-amber-50 text-amber-600 ring-1 ring-amber-200">
           <svg className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
             <path
@@ -41,5 +43,6 @@ export function TiadaAkses() {
         </button>
       </div>
     </div>
+    </RangkaAwam>
   )
 }
