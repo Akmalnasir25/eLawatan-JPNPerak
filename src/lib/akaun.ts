@@ -93,6 +93,22 @@ export async function senaraiPegawaiSkop(): Promise<Pegawai[]> {
   return (data ?? []) as Pegawai[]
 }
 
+/** Nama dan jawatan boleh disunting bila-bila masa; e-mel hanya sebelum
+ *  pegawai log masuk kali pertama (dikuatkuasakan di pangkalan data). */
+export async function kemaskiniPegawai(
+  id: string,
+  isi: { nama: string; jawatan?: string | null; emel?: string | null },
+): Promise<Pegawai> {
+  const { data, error } = await supabase.rpc('kemaskini_pegawai', {
+    p_id: id,
+    p_nama: isi.nama,
+    p_jawatan: isi.jawatan ?? null,
+    p_emel: isi.emel ?? null,
+  })
+  if (error) throw new Error(error.message)
+  return data as Pegawai
+}
+
 export async function tukarStatusPegawai(id: string, aktif: boolean): Promise<Pegawai> {
   const { data, error } = await supabase.rpc('tukar_status_pegawai', {
     p_id: id,

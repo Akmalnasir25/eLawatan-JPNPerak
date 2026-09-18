@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { CheckCircle2, KeyRound, MailPlus, ShieldCheck, UserPlus, Users } from 'lucide-react'
+import { CheckCircle2, KeyRound, MailPlus, Pencil, ShieldCheck, UserPlus, Users } from 'lucide-react'
 import { gunaAuth } from '@/lib/auth'
 import {
   daftarPegawai,
+  kemaskiniPegawai,
   perananBolehDaftar,
   senaraiPegawaiSkop,
   tukarStatusPegawai,
@@ -17,8 +18,9 @@ export function UrusPegawai() {
   const { pegawai: saya, sekolah } = gunaAuth()
   const [senarai, setSenarai] = useState<Pegawai[] | null>(null)
   const [ralat, setRalat] = useState<string | null>(null)
-  const [berjaya, setBerjaya] = useState<string | null>(null)
+  const [berjaya, setBerjaya] = useState<{ tajuk: string; teks: string } | null>(null)
   const [buka, setBuka] = useState(false)
+  const [sunting, setSunting] = useState<Pegawai | null>(null)
   const [sibuk, setSibuk] = useState(false)
 
   const bolehDaftar = perananBolehDaftar(saya!.peranan)
@@ -75,7 +77,7 @@ export function UrusPegawai() {
       />
 
       {ralat && <div className="mb-4"><Mesej jenis="ralat">{ralat}</Mesej></div>}
-      {berjaya && <div className="mb-4"><Mesej jenis="berjaya" tajuk="Pegawai didaftarkan">{berjaya}</Mesej></div>}
+      {berjaya && <div className="mb-4"><Mesej jenis="berjaya" tajuk={berjaya.tajuk}>{berjaya.teks}</Mesej></div>}
 
       <div className="mb-5">
         <Mesej jenis="maklumat" tajuk="Bagaimana akaun baharu bermula">
@@ -134,15 +136,27 @@ export function UrusPegawai() {
                   {p.log_masuk_terakhir ? formatMasa(p.log_masuk_terakhir) : '—'}
                 </td>
                 <td>
-                  {p.id !== saya!.id && (
-                    <button
-                      type="button"
-                      className={kelas('btn-kecil', p.aktif ? 'btn-kedua' : 'btn-hijau')}
-                      disabled={sibuk}
-                      onClick={() => tukarStatus(p)}
-                    >
-                      {p.aktif ? 'Nyahaktif' : 'Aktifkan'}
-                    </button>
+                  {/* Sama dengan semakan kemaskini_pegawai / tukar_status_pegawai */}
+                  {p.id !== saya!.id && (adalahAdmin || bolehDaftar.includes(p.peranan)) && (
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        className="btn-kecil btn-kedua"
+                        disabled={sibuk}
+                        onClick={() => { setSunting(p); setBerjaya(null) }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" aria-hidden />
+                        Sunting
+                      </button>
+                      <button
+                        type="button"
+                        className={kelas('btn-kecil', p.aktif ? 'btn-kedua' : 'btn-hijau')}
+                        disabled={sibuk}
+                        onClick={() => tukarStatus(p)}
+                      >
+                        {p.aktif ? 'Nyahaktif' : 'Aktifkan'}
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>
@@ -158,11 +172,120 @@ export function UrusPegawai() {
         adalahAdmin={adalahAdmin}
         selesai={async (nama, emel) => {
           setBuka(false)
-          setBerjaya(`${nama} (${emel}) boleh log masuk menggunakan e-mel tersebut.`)
+          setBerjaya({
+            tajuk: 'Pegawai didaftarkan',
+            teks: `${nama} (${emel}) boleh log masuk menggunakan e-mel tersebut.`,
+          })
+          await muat()
+        }}
+      />
+
+      <BorangSunting
+        pegawai={sunting}
+        tutup={() => setSunting(null)}
+        selesai={async (nama) => {
+          setSunting(null)
+          setBerjaya({ tajuk: 'Maklumat dikemas kini', teks: `Maklumat ${nama} telah disimpan.` })
           await muat()
         }}
       />
     </>
+  )
+}
+
+function BorangSunting({
+  pegawai,
+  tutup,
+  selesai,
+}: {
+  pegawai: Pegawai | null
+  tutup: () => void
+  selesai: (nama: string) => Promise<void>
+}) {
+  const [nama, setNama] = useState('')
+  const [emel, setEmel] = useState('')
+  const [jawatan, setJawatan] = useState('')
+  const [ralat, setRalat] = useState<string | null>(null)
+  const [sibuk, setSibuk] = useState(false)
+
+  useEffect(() => {
+    if (!pegawai) return
+    setNama(pegawai.nama)
+    setEmel(pegawai.emel)
+    setJawatan(pegawai.jawatan ?? '')
+    setRalat(null)
+  }, [pegawai])
+
+  // Selepas log masuk pertama, e-mel terikat pada akaun log masuk.
+  const emelDikunci = !!pegawai?.user_id
+
+  async function hantar(e: React.FormEvent) {
+    e.preventDefault()
+    if (!pegawai) return
+    setSibuk(true)
+    setRalat(null)
+    try {
+      await kemaskiniPegawai(pegawai.id, {
+        nama,
+        jawatan,
+        emel: emelDikunci ? null : emel,
+      })
+      await selesai(nama.trim())
+    } catch (err) {
+      setRalat(err instanceof Error ? err.message : 'Gagal menyimpan maklumat pegawai.')
+    } finally {
+      setSibuk(false)
+    }
+  }
+
+  return (
+    <Modal tajuk="Sunting pegawai" buka={!!pegawai} tutup={tutup}>
+      <form onSubmit={hantar} className="space-y-4">
+        {ralat && <Mesej jenis="ralat">{ralat}</Mesej>}
+
+        <Medan label="Nama penuh" perlu>
+          <input className="medan" value={nama} onChange={(e) => setNama(e.target.value)} required minLength={3} />
+        </Medan>
+
+        <Medan
+          label="E-mel rasmi"
+          perlu
+          nota={
+            emelDikunci
+              ? 'Pegawai ini sudah log masuk, jadi e-mel tidak boleh diubah lagi. Hubungi pentadbir sistem jika perlu.'
+              : 'Boleh dibetulkan kerana pegawai ini belum log masuk kali pertama.'
+          }
+        >
+          <input
+            className="medan"
+            type="email"
+            value={emel}
+            onChange={(e) => setEmel(e.target.value)}
+            disabled={emelDikunci}
+            required
+          />
+        </Medan>
+
+        <Medan label="Jawatan">
+          <input className="medan" value={jawatan} onChange={(e) => setJawatan(e.target.value)} />
+        </Medan>
+
+        {pegawai && (
+          <p className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2.5 text-sm text-slate-700">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-jata-600" aria-hidden />
+            Peranan: <strong>{LABEL_PERANAN[pegawai.peranan]}</strong> — tidak boleh diubah di sini
+          </p>
+        )}
+
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn-kedua" onClick={tutup}>Batal</button>
+          <button type="submit" className="btn-utama" disabled={sibuk}>
+            {sibuk ? <Berputar /> : null}
+            Simpan
+          </button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 

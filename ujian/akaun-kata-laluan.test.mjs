@@ -309,3 +309,74 @@ describe('Tandatangan di peringkat sekolah', () => {
     assert.equal(f.nama_pemohon, 'Cikgu Faridah binti Yusof', 'pemohon ialah pengguna yang menghantar')
   })
 })
+
+describe('Sunting pegawai oleh pendaftar', () => {
+  const sunting = (uid, id, p) =>
+    sebagai(db, uid, () =>
+      satu(db, 'select * from kemaskini_pegawai($1, $2, $3, $4)', [
+        id, p.nama, p.jawatan ?? null, p.emel ?? null,
+      ]),
+    )
+
+  test('pendaftar membetulkan nama, jawatan dan e-mel sebelum log masuk pertama', async () => {
+    const id = await idPeg('rizal@moe.gov.my')
+    const g = await sunting(u.ppdKetua, id, {
+      nama: 'Encik Rizal bin Kamaruddin',
+      jawatan: 'Penolong Pegawai Pendidikan Daerah',
+      emel: 'Rizal.Kamaruddin@moe.gov.my',
+    })
+    assert.equal(g.nama, 'Encik Rizal bin Kamaruddin')
+    assert.equal(g.jawatan, 'Penolong Pegawai Pendidikan Daerah')
+    assert.equal(g.emel, 'rizal.kamaruddin@moe.gov.my')
+    assert.equal(g.peranan, 'ppd_pegawai', 'peranan tidak berubah')
+    assert.equal(g.kod_skop, 'PRK-KU', 'skop tidak berubah')
+
+    const a = await satu(
+      db,
+      `select nilai_lama, nilai_baharu from log_audit
+        where peristiwa = 'PEGAWAI_DIKEMASKINI' order by id desc limit 1`,
+    )
+    assert.equal(a.nilai_lama.emel, 'rizal@moe.gov.my')
+    assert.equal(a.nilai_baharu.emel, 'rizal.kamaruddin@moe.gov.my')
+  })
+
+  test('e-mel baharu dipautkan pada log masuk pertama', async () => {
+    const uid = await daftarPengguna(db, 'rizal.kamaruddin@moe.gov.my')
+    const g = await satu(db, 'select user_id, peranan from pegawai where emel = $1', [
+      'rizal.kamaruddin@moe.gov.my',
+    ])
+    assert.equal(g.user_id, uid)
+    assert.equal(g.peranan, 'ppd_pegawai')
+  })
+
+  test('e-mel dikunci selepas log masuk pertama, nama masih boleh dibetulkan', async () => {
+    const id = await idPeg('ppd.ku.pegawai@moe.gov.my')
+    await assert.rejects(
+      sunting(u.ppdKetua, id, { nama: 'Hafiz S.', emel: 'lain@moe.gov.my' }),
+      /tidak boleh diubah selepas/,
+    )
+    const g = await sunting(u.ppdKetua, id, { nama: 'Encik Hafiz bin Salleh', emel: 'ppd.ku.pegawai@moe.gov.my' })
+    assert.equal(g.nama, 'Encik Hafiz bin Salleh')
+  })
+
+  test('e-mel baharu disemak: domain, format dan berganda', async () => {
+    const id = await idPeg('halimah@moe.gov.my')
+    await assert.rejects(sunting(u.ppdKetua, id, { nama: 'Puan Halimah', emel: 'h@gmail.com' }), /domain rasmi/)
+    await assert.rejects(sunting(u.ppdKetua, id, { nama: 'Puan Halimah', emel: 'bukan-emel' }), /tidak sah/)
+    await assert.rejects(
+      sunting(u.ppdKetua, id, { nama: 'Puan Halimah', emel: 'ppd.ku.ketua@moe.gov.my' }),
+      /sudah berdaftar/,
+    )
+    await assert.rejects(sunting(u.ppdKetua, id, { nama: 'Ab' }), /Nama pegawai wajib/)
+  })
+
+  test('tidak boleh menyunting luar skop, peranan lebih tinggi atau diri sendiri', async () => {
+    const luar = await idPeg('ppd.ks.pegawai@moe.gov.my')
+    await assert.rejects(sunting(u.ppdKetua, luar, { nama: 'Cubaan Luar' }), /luar skop/)
+    const ketua = await idPeg('ppd.ku.ketua@moe.gov.my')
+    await assert.rejects(sunting(u.ppdPegawai, ketua, { nama: 'Cubaan Naik' }), /tidak boleh menyunting/)
+    await assert.rejects(sunting(u.ppdKetua, ketua, { nama: 'Diri Sendiri' }), /halaman Profil/)
+    const kpm = await idPeg('kpm.penyelaras@moe.gov.my')
+    await assert.rejects(sunting(u.kpm, kpm, { nama: 'KPM' }), /Profil|tidak boleh/)
+  })
+})
