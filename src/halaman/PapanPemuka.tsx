@@ -70,7 +70,8 @@ export function PapanPemuka() {
           </>
         }
         aksi={
-          adalahSekolah || peranan === 'admin' ? (
+          // Hanya sekolah memohon; PPD, JPN dan pentadbir menyemak dan meluluskan.
+          adalahSekolah ? (
             <Link to="/permohonan/baharu" className="btn-utama">
               <FilePlus2 className="h-4 w-4" aria-hidden />
               Permohonan Baharu

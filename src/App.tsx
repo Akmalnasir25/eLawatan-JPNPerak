@@ -91,7 +91,7 @@ export function App() {
       <Route
         path="/permohonan/baharu"
         element={
-          <Lindung peranan={['sekolah', 'admin']}>
+          <Lindung peranan={['sekolah']}>
             <Rangka><BorangPermohonan /></Rangka>
           </Lindung>
         }
