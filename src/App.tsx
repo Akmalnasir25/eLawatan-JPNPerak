@@ -17,6 +17,10 @@ import { Pentadbir } from '@/halaman/Pentadbir'
 import { SahQr } from '@/halaman/SahQr'
 import { Profil } from '@/halaman/Profil'
 import { UrusPegawai } from '@/halaman/UrusPegawai'
+import { Kalendar } from '@/halaman/Kalendar'
+import { Bantuan } from '@/halaman/Bantuan'
+import { PersetujuanPrivasi, Privasi } from '@/halaman/Privasi'
+import { VERSI_PRIVASI } from '@/lib/privasi'
 import { CetakLampiranA } from '@/cetak/LampiranA'
 import { CetakSenaraiSemak } from '@/cetak/SenaraiSemak'
 import { CetakSuratKelulusan } from '@/cetak/SuratKelulusan'
@@ -36,6 +40,7 @@ function Lindung({
   if (!sesi) return <Navigate to="/masuk" state={{ dari: lokasi.pathname }} replace />
   if (tanpaCapaian) return <TiadaAkses />
   if (!pegawai) return <Memuat />
+  if (pegawai.privasi_versi !== VERSI_PRIVASI) return <PersetujuanPrivasi />
   if (peranan && !peranan.includes(pegawai.peranan)) {
     return (
       <div className="mx-auto max-w-lg py-16 text-center">
@@ -60,6 +65,9 @@ export function App() {
       <Route path="/daftar" element={<Daftar />} />
       <Route path="/sah/:kod" element={<SahQr />} />
       <Route path="/sah" element={<SahQr />} />
+      {/* Boleh dibaca sebelum log masuk; rangka penuh apabila log masuk. */}
+      <Route path="/bantuan" element={<Rangka><Bantuan /></Rangka>} />
+      <Route path="/privasi" element={<Rangka><Privasi /></Rangka>} />
 
       {/* Cetakan — tanpa rangka sistem */}
       <Route
@@ -119,6 +127,10 @@ export function App() {
       <Route
         path="/laporan"
         element={<Lindung><Rangka><Laporan /></Rangka></Lindung>}
+      />
+      <Route
+        path="/kalendar"
+        element={<Lindung><Rangka><Kalendar /></Rangka></Lindung>}
       />
       <Route
         path="/profil"

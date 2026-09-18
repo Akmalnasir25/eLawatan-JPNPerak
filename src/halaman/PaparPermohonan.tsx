@@ -57,7 +57,7 @@ import type { Dokumen, ItemSemakan, LogAudit, Tindakan } from '@/lib/jenis'
 export function PaparPermohonan() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { pegawai } = gunaAuth()
+  const { pegawai, pemangkuan } = gunaAuth()
 
   const [b, setB] = useState<BundelPermohonan | null>(null)
   const [audit, setAudit] = useState<LogAudit[]>([])
@@ -95,7 +95,21 @@ export function PaparPermohonan() {
   const p = b.permohonan
   const peranan = pegawai!.peranan
   const peranPerlu = PERANAN_BAGI_STATUS[p.status]
-  const giliranSaya = peranPerlu === peranan
+  // Pemangku bertindak di peringkat pengesah bagi pejabatnya sendiri sahaja.
+  const dipangku = pemangkuan.find(
+    (m) =>
+      m.peranan === peranPerlu &&
+      m.kod_skop === (m.peranan === 'ppd_ketua' ? p.kod_ppd : p.kod_jpn),
+  )
+  // Asingan tugas (juga dikuatkuasakan di pangkalan data): pemangku tidak
+  // mengesahkan permohonan yang disemaknya sendiri dalam pusingan ini.
+  const semakSendiri =
+    !!dipangku &&
+    peranPerlu !== peranan &&
+    b.kelulusan.some(
+      (k) => k.pegawai_id === pegawai!.id && (!p.dihantar_pada || k.tarikh_tindakan >= p.dihantar_pada),
+    )
+  const giliranSaya = peranPerlu === peranan || (!!dipangku && !semakSendiri)
   const pintasan = peranan === 'admin' && !!peranPerlu && !giliranSaya
   const bolehBertindak = giliranSaya || pintasan
   const tahapSemak = PERINGKAT_SEMAK.includes(p.status)
@@ -241,6 +255,16 @@ export function PaparPermohonan() {
         </section>
       )}
 
+      {semakSendiri && (
+        <div className="mb-6">
+          <Mesej jenis="amaran" tajuk="Pengesahan perlu dibuat oleh pegawai lain">
+            Anda memangku {dipangku!.nama}, tetapi permohonan ini telah disemak oleh anda sendiri.
+            Pengesahan mesti dibuat oleh {dipangku!.nama} atau pemangku lain supaya semakan dan
+            pengesahan tidak dibuat oleh orang yang sama.
+          </Mesej>
+        </div>
+      )}
+
       {/* ── Panel tindakan ─────────────────────────────────────── */}
       {bolehBertindak && (
         <section className="mb-6 overflow-hidden rounded-lg border-2 border-emas-400 bg-white shadow-timbul">
@@ -256,7 +280,9 @@ export function PaparPermohonan() {
                 <p className="text-xs text-slate-600">
                   {pintasan
                     ? `Peringkat ini sepatutnya ditindak oleh ${LABEL_PERANAN[peranPerlu!]}`
-                    : `${LABEL_PERANAN[peranan]} · ${LABEL_STATUS[p.status]}`}
+                    : dipangku && peranPerlu !== peranan
+                      ? `Sebagai pemangku bagi ${dipangku.nama} · ${LABEL_STATUS[p.status]}`
+                      : `${LABEL_PERANAN[peranan]} · ${LABEL_STATUS[p.status]}`}
                 </p>
               </div>
             </div>

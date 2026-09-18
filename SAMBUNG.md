@@ -4,6 +4,30 @@ Kemas kini terakhir: 18 September 2026.
 Baca `README.md` untuk cara pasang; fail ini hanya menyenaraikan
 **apa yang tinggal**.
 
+## Notifikasi, had masa, pemangku, privasi, kalendar, bantuan (migrasi 12–17)
+
+- **Sunting pegawai** (migrasi 12): pendaftar membetulkan nama, jawatan
+  dan e-mel (e-mel hanya sebelum log masuk pertama).
+- **Notifikasi**: pencetus status → loceng dalam sistem + baris gilir e-mel
+  (`hantar-notifikasi`, Resend). Peringatan harian `jana_peringatan()`:
+  lewat, eskalasi, tarikh akhir hantar, laporan pasca — tanpa pendua.
+- **Had masa**: `status_sejak`, hari bekerja tolak `cuti_umum`; lencana
+  pada semua senarai; amaran pada papan pemuka.
+- **Pemangku**: hanya pengesah (KPPD, Pengarah); pemangku = penyemak
+  pejabat sama; "b.p." + cop pejabat; asingan tugas dikuatkuasa di DB dan
+  diterangkan di skrin.
+- **Privasi**: pintu persetujuan versi, halaman `/privasi`, tempoh
+  simpanan + anonimkan rekod luput.
+- **Kalendar** (`/kalendar`) dan **Pusat Bantuan** (`/bantuan`).
+- 144/144 ujian Postgres lulus (30 baharu); `hantar-notifikasi` lulus
+  `deno check`; semua aliran di atas disahkan dalam Chrome pada mod demo.
+
+**Belum:** jadual pg_cron dan penghantaran e-mel sebenar (perlu projek
+Supabase + kunci Resend — lihat README §13); senarai cuti umum; semakan
+kandungan notis privasi oleh JPN.
+
+---
+
 ## Akaun pegawai, kata laluan dan sekatan (migrasi 11)
 
 - **Urus Pegawai** pada bar navigasi: pendaftar melihat akaun dalam skopnya

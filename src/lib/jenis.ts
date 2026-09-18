@@ -101,6 +101,8 @@ export type Pegawai = {
   didaftar_oleh: string | null
   didaftar_pada: string | null
   log_masuk_terakhir: string | null
+  privasi_versi: string | null
+  privasi_dipersetujui_pada: string | null
 }
 
 export type Permohonan = {
@@ -234,6 +236,8 @@ export type Kelulusan = {
   kunci_cop: string | null
   /** Perkara yang ditanda penyemak; null di luar peringkat semakan. */
   semakan: ItemSemakan[] | null
+  /** Pegawai asal yang dipangku ketika tindakan diambil. */
+  pemangku_bagi: string | null
 }
 
 export type ItemSemakan = { kod: string; label: string }
@@ -307,4 +311,66 @@ export type PermohonanRingkas = {
   dikemaskini_pada: string
   catatan_kembali: string | null
   kod_qr: string | null
+  status_sejak: string
+  /** Hari bekerja di peringkat semasa; null jika tidak menunggu tindakan. */
+  hari_menunggu: number | null
+  had_hari: number | null
+}
+
+export type Notifikasi = {
+  id: number
+  pegawai_id: string
+  permohonan_id: string | null
+  jenis: string
+  tajuk: string
+  mesej: string
+  pautan: string | null
+  dicipta_pada: string
+  dibaca_pada: string | null
+}
+
+export type StatusPemangkuan = 'AKTIF' | 'AKAN_DATANG' | 'TAMAT' | 'DIBATALKAN'
+
+export type Pemangkuan = {
+  id: string
+  pegawai_asal: string
+  nama_asal: string
+  jawatan_asal: string | null
+  peranan_asal: Peranan
+  pemangku: string
+  nama_pemangku: string
+  jawatan_pemangku: string | null
+  tarikh_mula: string
+  tarikh_tamat: string
+  sebab: string | null
+  status: StatusPemangkuan
+}
+
+/** Pengesah yang sedang dipangku oleh pengguna semasa. */
+export type PemangkuanAktif = {
+  pegawai_asal: string
+  nama: string
+  jawatan: string | null
+  peranan: Peranan
+  kod_skop: string | null
+  tarikh_tamat: string
+}
+
+export type LawatanKalendar = {
+  id: string
+  no_rujukan: string | null
+  status: Status
+  kategori: Kategori | null
+  tujuan: string | null
+  tarikh_mula: string
+  tarikh_tamat: string | null
+  kod_sekolah: string
+  nama_sekolah: string
+  kod_ppd: string
+  nama_ppd: string | null
+  bil_murid: number
+  bil_guru: number
+  bil_bukan_guru: number
+  tempat: { tempat: string; negeri: string | null; negara: string; tarikh_dari: string; tarikh_hingga: string }[]
+  ketua: { nama: string; telefon: string | null } | null
 }

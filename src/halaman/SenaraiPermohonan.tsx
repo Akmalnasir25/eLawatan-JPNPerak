@@ -9,6 +9,7 @@ import { LencanaStatus, Kosong, Memuat, Mesej } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
 import { Download, Files, Search } from 'lucide-react'
 import { NoRujukan } from '@/komponen/JadualPermohonan'
+import { LencanaHadMasa } from '@/komponen/HadMasa'
 import type { PermohonanRingkas, Status } from '@/lib/jenis'
 
 const SEMUA_STATUS = Object.keys(LABEL_STATUS) as Status[]
@@ -205,6 +206,9 @@ export function SenaraiPermohonan() {
                   </td>
                   <td>
                     <LencanaStatus status={p.status} />
+                    <div>
+                      <LencanaHadMasa p={p} />
+                    </div>
                   </td>
                 </tr>
                 )

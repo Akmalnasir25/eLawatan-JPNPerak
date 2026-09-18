@@ -37,6 +37,7 @@ import {
 import { TajukHalaman } from '@/komponen/Rangka'
 import { segarJabatan, type MaklumatJabatan, MAKLUMAT_LALAI } from '@/lib/jabatan'
 import { Settings } from 'lucide-react'
+import { EditorHadMasa, PanelPeringatan, PanelSandaran, PanelSimpanan } from './PentadbirTambahan'
 import type {
   LogAudit,
   Pegawai,
@@ -936,6 +937,8 @@ function TabKategori() {
         </div>
       </section>
 
+      <EditorHadMasa />
+
       <EditorJabatan />
 
       <section className="kad">
@@ -1204,6 +1207,10 @@ function TabSistem() {
           <p className="mt-1 text-2xl font-semibold tabular-nums">{kiraan.pegawai}</p>
         </div>
       </div>
+
+      <PanelPeringatan />
+      <PanelSimpanan />
+      <PanelSandaran />
 
       <section className="kad">
         <div className="kad-tajuk">

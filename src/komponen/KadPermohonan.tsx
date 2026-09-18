@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { CalendarDays, ChevronRight, Users } from 'lucide-react'
 import { LencanaStatus } from './ui'
+import { LencanaHadMasa } from './HadMasa'
 import { LABEL_KATEGORI } from '@/lib/istilah'
 import { formatTarikh, hariLagi, kelas } from '@/lib/guna'
 import type { PermohonanRingkas } from '@/lib/jenis'
@@ -25,8 +26,9 @@ export function KadPermohonan({
           <p className="truncate font-mono text-[0.7rem] text-jata-600">
             {p.no_rujukan ?? 'Draf — belum bernombor'}
           </p>
-          <span className="shrink-0">
+          <span className="flex shrink-0 flex-col items-end">
             <LencanaStatus status={p.status} />
+            <LencanaHadMasa p={p} />
           </span>
         </div>
         <h3 className="mt-1.5 line-clamp-2 text-sm font-semibold text-jata-900">

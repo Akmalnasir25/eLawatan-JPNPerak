@@ -2,7 +2,9 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   BarChart3,
+  CalendarDays,
   ChevronDown,
+  CircleHelp,
   ChevronRight,
   Contrast,
   FilePlus2,
@@ -28,6 +30,7 @@ import { gunaPaparan, type SaizTeks } from '@/lib/paparan'
 import { LABEL_PERANAN } from '@/lib/istilah'
 import { formatHari, formatTarikh, kelas } from '@/lib/guna'
 import { LogoRasmi } from './LogoRasmi'
+import { LocengNotifikasi } from './LocengNotifikasi'
 
 type Pautan = { ke: string; teks: string; ikon: LucideIcon }
 
@@ -37,6 +40,7 @@ function pautanBagi(peranan: string): Pautan[] {
       { ke: '/', teks: 'Papan Pemuka', ikon: LayoutDashboard },
       { ke: '/permohonan/baharu', teks: 'Permohonan Baharu', ikon: FilePlus2 },
       { ke: '/senarai', teks: 'Senarai Permohonan', ikon: Files },
+      { ke: '/kalendar', teks: 'Kalendar', ikon: CalendarDays },
       { ke: '/laporan', teks: 'Laporan', ikon: BarChart3 },
       { ke: '/pegawai', teks: 'Urus Pegawai', ikon: Users },
     ]
@@ -44,6 +48,7 @@ function pautanBagi(peranan: string): Pautan[] {
   const asas: Pautan[] = [
     { ke: '/', teks: peranan === 'admin' ? 'Papan Pemuka' : 'Peti Tindakan', ikon: peranan === 'admin' ? LayoutDashboard : Inbox },
     { ke: '/senarai', teks: 'Semua Permohonan', ikon: Files },
+    { ke: '/kalendar', teks: 'Kalendar', ikon: CalendarDays },
     { ke: '/laporan', teks: 'Laporan', ikon: BarChart3 },
   ]
   if (peranan !== 'kpm') asas.push({ ke: '/pegawai', teks: 'Urus Pegawai', ikon: Users })
@@ -74,6 +79,13 @@ export function BarUtiliti() {
           </span>
         </p>
         <div className="flex items-center gap-3">
+          <Link
+            to="/bantuan"
+            className="flex items-center gap-1 rounded-full px-2.5 py-0.5 font-semibold hover:bg-white/10"
+          >
+            <CircleHelp className="h-3.5 w-3.5" aria-hidden />
+            Bantuan
+          </Link>
           <div className="flex items-center gap-0.5" role="group" aria-label="Saiz teks">
             <span className="mr-1 hidden text-white/60 sm:inline">Saiz teks</span>
             {pilihanSaiz.map((p) => (
@@ -278,6 +290,8 @@ export function KakiLaman() {
             <li><Link to="/" className="hover:text-white hover:underline">Laman utama sistem</Link></li>
             <li><Link to="/sah" className="hover:text-white hover:underline">Semak kesahihan surat kelulusan</Link></li>
             <li><Link to="/profil" className="hover:text-white hover:underline">Profil pengguna</Link></li>
+            <li><Link to="/bantuan" className="hover:text-white hover:underline">Pusat bantuan</Link></li>
+            <li><Link to="/privasi" className="hover:text-white hover:underline">Notis privasi</Link></li>
             {jabatan.laman_web && (
               <li>
                 <a
@@ -330,6 +344,7 @@ export function Rangka({ children }: { children: ReactNode }) {
         <KepalaJabatan
           kanan={
             <>
+              <LocengNotifikasi />
               <MenuPengguna />
               <button
                 type="button"
@@ -369,7 +384,11 @@ export function Rangka({ children }: { children: ReactNode }) {
 
         {menuBuka && (
           <div className="border-t border-slate-100 px-2 py-2 lg:hidden">
-            {[...pautan, { ke: '/profil', teks: 'Profil', ikon: UserRound }].map((p) => (
+            {[
+              ...pautan,
+              { ke: '/profil', teks: 'Profil', ikon: UserRound },
+              { ke: '/bantuan', teks: 'Bantuan', ikon: CircleHelp },
+            ].map((p) => (
               <NavLink
                 key={p.ke}
                 to={p.ke}

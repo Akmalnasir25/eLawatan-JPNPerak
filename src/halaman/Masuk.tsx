@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
   BadgeCheck,
@@ -501,6 +501,12 @@ export function Masuk() {
             <p className="mt-1 text-sm leading-relaxed text-slate-600">{k.teks}</p>
           </div>
         ))}
+        <p className="text-center text-sm text-slate-600 md:col-span-3">
+          Perlukan bantuan? Lihat{' '}
+          <Link to="/bantuan" className="font-semibold text-biru-600 hover:underline">Pusat Bantuan</Link>
+          {' '}atau baca{' '}
+          <Link to="/privasi" className="font-semibold text-biru-600 hover:underline">Notis Privasi</Link>.
+        </p>
       </div>
     </RangkaAwam>
   )

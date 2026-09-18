@@ -17,12 +17,13 @@ import { dapatTetapan, senaraiPermohonan } from '@/lib/api'
 import { LABEL_KATEGORI, LABEL_PERANAN, PERANAN_BAGI_STATUS } from '@/lib/istilah'
 import { formatHari, formatTarikh } from '@/lib/guna'
 import { JadualPermohonan } from '@/komponen/JadualPermohonan'
+import { keadaanHadMasa } from '@/komponen/HadMasa'
 import { KadStatistik, Kosong, Memuat, Mesej } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
 import type { Kategori, PermohonanRingkas, Status } from '@/lib/jenis'
 
 export function PapanPemuka() {
-  const { pegawai, sekolah } = gunaAuth()
+  const { pegawai, sekolah, pemangkuan, perananBertindak } = gunaAuth()
   const [senarai, setSenarai] = useState<PermohonanRingkas[] | null>(null)
   const [tempoh, setTempoh] = useState<Record<string, number> | null>(null)
   const [ralat, setRalat] = useState<string | null>(null)
@@ -36,12 +37,13 @@ export function PapanPemuka() {
   const adalahSekolah = peranan === 'sekolah'
   const adalahPelulus = PERANAN_PELULUS.includes(peranan)
 
+  // Termasuk peringkat pengesah yang sedang dipangku.
   const statusSaya = useMemo(
     () =>
       Object.entries(PERANAN_BAGI_STATUS)
-        .filter(([, r]) => r === peranan)
+        .filter(([, r]) => !!r && perananBertindak.includes(r))
         .map(([s]) => s as Status),
-    [peranan],
+    [perananBertindak],
   )
 
   if (ralat) return <Mesej jenis="ralat">{ralat}</Mesej>
@@ -54,6 +56,10 @@ export function PapanPemuka() {
   const perluLaporan = diluluskan.filter((p) => p.status === 'DILULUSKAN')
   const perlu = adalahSekolah ? draf : petiTindakan
   const kini = new Date().toISOString()
+  // Pentadbir memantau semua peringkat; pelulus memantau peti sendiri.
+  const lewat = (peranan === 'admin' ? dalamProses : petiTindakan).filter(
+    (p) => keadaanHadMasa(p) === 'lewat',
+  )
 
   return (
     <>
@@ -79,6 +85,30 @@ export function PapanPemuka() {
           ) : null
         }
       />
+
+      {pemangkuan.length > 0 && (
+        <div className="mb-4">
+          <Mesej jenis="maklumat" tajuk="Anda sedang memangku">
+            {pemangkuan.map((m) => (
+              <span key={m.pegawai_asal} className="block">
+                {m.nama}
+                {m.jawatan ? ` (${m.jawatan})` : ''} hingga {formatTarikh(m.tarikh_tamat)}.
+                Permohonan di peringkat pengesahan dipaparkan dalam peti tindakan anda.
+              </span>
+            ))}
+          </Mesej>
+        </div>
+      )}
+
+      {lewat.length > 0 && (
+        <div className="mb-4">
+          <Mesej jenis="amaran" tajuk={`${lewat.length} permohonan melebihi had masa tindakan`}>
+            {peranan === 'admin'
+              ? 'Pegawai berkenaan telah dimaklumkan. Semak permohonan bertanda merah dalam Semua Permohonan.'
+              : 'Permohonan bertanda merah di bawah perlu diutamakan.'}
+          </Mesej>
+        </div>
+      )}
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <KadStatistik

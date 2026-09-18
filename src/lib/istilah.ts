@@ -158,6 +158,12 @@ export const LABEL_PERISTIWA_AUDIT: Record<string, string> = {
   LAPORAN_PASCA_DIHANTAR: 'Laporan pasca-lawatan dihantar',
   PROFIL_DIKEMASKINI: 'Profil dikemas kini',
   IMEJ_PROFIL_DITUKAR: 'Tandatangan / cop ditukar',
+  PEMANGKU_DILANTIK: 'Pemangku dilantik',
+  PEMANGKU_DIBATALKAN: 'Pemangkuan dibatalkan',
+  PRIVASI_DIPERSETUJUI: 'Notis privasi dipersetujui',
+  DATA_PERIBADI_DIANONIMKAN: 'Data peribadi dianonimkan',
+  PEGAWAI_DIAKTIFKAN: 'Pegawai diaktifkan',
+  PEGAWAI_DINYAHAKTIFKAN: 'Pegawai dinyahaktifkan',
 }
 
 /** Kategori nisbah Lampiran C — label ringkas untuk pemilih borang. */

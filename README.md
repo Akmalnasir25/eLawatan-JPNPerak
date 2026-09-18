@@ -161,8 +161,15 @@ npx supabase secrets set \
   R2_ACCESS_KEY_ID=... \
   R2_SECRET_ACCESS_KEY=... \
   R2_BUCKET=elawatan-dokumen \
-  DOMAIN_DIBENARKAN=moe-dl.edu.my,moe.gov.my
+  DOMAIN_DIBENARKAN=moe-dl.edu.my,moe.gov.my \
+  RESEND_API_KEY=... \
+  EMEL_DARIPADA="eLAWATAN Perak <no-reply@domain-jpn>" \
+  URL_SISTEM=https://alamat-sistem
 ```
+
+Tanpa `RESEND_API_KEY`, notifikasi kekal dalam sistem (ikon loceng) dan
+baris gilir e-mel tidak disentuh — tiada notifikasi hilang apabila kunci
+ditetapkan kemudian. Domain `EMEL_DARIPADA` mesti disahkan dalam Resend.
 
 `SUPABASE_URL`, `SUPABASE_ANON_KEY` dan `SUPABASE_SERVICE_ROLE_KEY`
 disuntik automatik oleh platform.
@@ -371,14 +378,82 @@ aksen emas, jejak halaman, dan kaki laman korporat.
 
 ---
 
-## 13. Had Yang Diketahui
+## 13. Notifikasi, Had Masa, Pemangku, Privasi dan Kalendar (migrasi 13–17)
+
+### Notifikasi
+
+Pencetus pada `permohonan.status` mencipta notifikasi untuk pegawai yang
+perlu bertindak (termasuk pemangku) dan untuk sekolah apabila permohonan
+dikembalikan, ditolak atau diluluskan. Notifikasi dipapar pada ikon loceng
+dan dihantar melalui e-mel oleh Edge Function `hantar-notifikasi`.
+
+### Jadual (pg_cron) — sekali selepas pemasangan
+
+Hidupkan sambungan **pg_cron** dan **pg_net** di Supabase Dashboard →
+Database → Extensions, kemudian jalankan dalam SQL Editor (gantikan
+`<projek>` dan `<service-role-key>`):
+
+```sql
+-- Peringatan harian 8 pagi waktu Malaysia (00:00 UTC)
+select cron.schedule('elawatan-peringatan', '0 0 * * *', $$select jana_peringatan()$$);
+
+-- Hantar baris gilir e-mel setiap 5 minit
+select cron.schedule('elawatan-emel', '*/5 * * * *', $$
+  select net.http_post(
+    url := 'https://<projek>.supabase.co/functions/v1/hantar-notifikasi',
+    headers := jsonb_build_object('Authorization', 'Bearer <service-role-key>',
+                                  'Content-Type', 'application/json'),
+    body := '{}'::jsonb)
+$$);
+```
+
+Simpan service role key dalam Supabase Vault jika tersedia, bukan teks biasa.
+Pentadbir juga boleh menjalankan peringatan dari *Pentadbiran → Sistem*.
+
+### Had masa tindakan
+
+Setiap peringkat mempunyai had hari bekerja (lalai: semakan 5, pengesahan
+3, KPM 10). Hujung minggu dan tarikh dalam tetapan `cuti_umum` tidak
+dikira. Selepas had, pegawai dimaklumkan setiap hari; selepas tempoh
+eskalasi (lalai 2 hari), KPPD, Pengarah atau pentadbir turut dimaklumkan.
+Ubah di *Pentadbiran → Tetapan & Surat*. **Masukkan cuti umum 2026/2027
+sebelum rintis.**
+
+### Pemangku
+
+KPPD dan Pengarah melantik pemangku (penyemak dalam pejabat sama, maksimum
+90 hari) di halaman Profil; pentadbir boleh melantik bagi pihak mereka di
+Urus Pegawai. Pemangku menandatangani dengan tandatangan sendiri, jawatan
+"b.p. …" dan cop pejabat, dan tidak boleh mengesahkan permohonan yang
+disemaknya sendiri.
+
+### Privasi dan tempoh simpanan
+
+Pengguna mesti bersetuju dengan notis privasi (`/privasi`) sebelum
+menggunakan sistem; versi dan masa direkod. **Kandungan notis ialah draf —
+sahkan dengan pegawai undang-undang dan keselamatan ICT JPN**, kemudian
+tukar `VERSI_PRIVASI` dalam `src/lib/privasi.ts` supaya semua pengguna
+bersetuju semula. Rekod ditutup yang melepasi tempoh simpanan (lalai 7
+tahun) boleh dianonimkan di *Pentadbiran → Sistem*.
+
+### Kalendar dan Pusat Bantuan
+
+`/kalendar` memaparkan lawatan dihantar dan diluluskan dalam skop RLS,
+dengan nombor telefon ketua rombongan. `/bantuan` dan `/privasi` boleh
+dibaca tanpa log masuk.
+
+---
+
+## 14. Had Yang Diketahui
 
 - **Google OIDC DELIMa dimatikan.** Log masuk menggunakan kata laluan,
   dengan OTP e-mel bagi log masuk pertama dan tetapan semula.
   Hidupkan dalam `supabase/config.toml` apabila Client ID diperoleh, dan
   hadkan domain di peringkat penyedia identiti (`hd=moe-dl.edu.my`).
-- **Notifikasi e-mel dan peringatan tarikh tutup belum dibina.** Ini
-  Fasa 4 dalam blueprint.
+- **E-mel notifikasi belum diuji dengan penyedia sebenar.** Fungsi
+  `hantar-notifikasi` lulus `deno check`, tetapi penghantaran melalui
+  Resend dan jadual pg_cron hanya boleh disahkan pada projek Supabase
+  sebenar.
 - **Senarai murid penuh dimuat naik sebagai dokumen**, bukan dimasukkan
   baris demi baris — selaras dengan Lampiran A D2 yang membenarkan
   lampiran berasingan.

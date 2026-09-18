@@ -8,6 +8,7 @@ import type {
   Kelengkapan,
   Kelulusan,
   LaporanPasca,
+  LawatanKalendar,
   LogAudit,
   Pegawai,
   Penaja,
@@ -367,6 +368,14 @@ export async function hantarLaporanPasca(isi: {
     p_cadangan: isi.cadangan ?? null,
   })
   return semak(data, error) as LaporanPasca
+}
+
+// ── Kalendar lawatan ──────────────────────────────────────────────
+
+/** Lawatan yang bertindih dengan julat tarikh (maksimum 62 hari). Skop mengikut RLS. */
+export async function kalendarLawatan(dari: string, hingga: string): Promise<LawatanKalendar[]> {
+  const { data, error } = await supabase.rpc('kalendar_lawatan', { p_dari: dari, p_hingga: hingga })
+  return (semak(data, error) ?? []) as LawatanKalendar[]
 }
 
 // ── Pengesahan awam ───────────────────────────────────────────────

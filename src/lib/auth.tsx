@@ -9,12 +9,17 @@ import {
 } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import type { Pegawai, Peranan, Sekolah } from './jenis'
+import { pemangkuanSaya } from './pemangku'
+import type { Pegawai, PemangkuanAktif, Peranan, Sekolah } from './jenis'
 
 type Konteks = {
   sesi: Session | null
   pegawai: Pegawai | null
   sekolah: Sekolah | null
+  /** Pengesah yang sedang dipangku oleh pengguna ini hari ini. */
+  pemangkuan: PemangkuanAktif[]
+  /** Peranan sendiri ditambah peranan yang dipangku — untuk giliran tindakan. */
+  perananBertindak: Peranan[]
   memuat: boolean
   /** Pengguna disahkan tetapi tiada baris pegawai — tiada capaian. */
   tanpaCapaian: boolean
@@ -29,6 +34,7 @@ export function PembekalAuth({ children }: { children: ReactNode }) {
   const [sesi, setSesi] = useState<Session | null>(null)
   const [pegawai, setPegawai] = useState<Pegawai | null>(null)
   const [sekolah, setSekolah] = useState<Sekolah | null>(null)
+  const [pemangkuan, setPemangkuan] = useState<PemangkuanAktif[]>([])
   const [memuat, setMemuat] = useState(true)
   const [sudahSemak, setSudahSemak] = useState(false)
 
@@ -36,6 +42,7 @@ export function PembekalAuth({ children }: { children: ReactNode }) {
     if (!s) {
       setPegawai(null)
       setSekolah(null)
+      setPemangkuan([])
       setSudahSemak(true)
       setMemuat(false)
       return
@@ -61,6 +68,9 @@ export function PembekalAuth({ children }: { children: ReactNode }) {
       setSekolah(null)
     }
 
+    // Kegagalan memuat pemangkuan tidak menghalang log masuk.
+    setPemangkuan(p ? await pemangkuanSaya().catch(() => []) : [])
+
     setSudahSemak(true)
     setMemuat(false)
   }, [])
@@ -76,6 +86,7 @@ export function PembekalAuth({ children }: { children: ReactNode }) {
       if (peristiwa === 'SIGNED_OUT') {
         setPegawai(null)
         setSekolah(null)
+        setPemangkuan([])
         setMemuat(false)
         return
       }
@@ -109,13 +120,17 @@ export function PembekalAuth({ children }: { children: ReactNode }) {
       sesi,
       pegawai,
       sekolah,
+      pemangkuan,
+      perananBertindak: pegawai
+        ? [...new Set([pegawai.peranan, ...pemangkuan.map((m) => m.peranan)])]
+        : [],
       memuat,
       tanpaCapaian: !!sesi && sudahSemak && !pegawai,
       keluar,
       muatSemula,
       ada,
     }),
-    [sesi, pegawai, sekolah, memuat, sudahSemak, keluar, muatSemula, ada],
+    [sesi, pegawai, sekolah, pemangkuan, memuat, sudahSemak, keluar, muatSemula, ada],
   )
 
   return <KonteksAuth.Provider value={nilai}>{children}</KonteksAuth.Provider>

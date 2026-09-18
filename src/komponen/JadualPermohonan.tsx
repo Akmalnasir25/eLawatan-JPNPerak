@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { KadPermohonan } from './KadPermohonan'
 import { LencanaStatus } from './ui'
+import { LencanaHadMasa } from './HadMasa'
 import { LABEL_KATEGORI } from '@/lib/istilah'
 import { formatTarikh, hariLagi, kelas } from '@/lib/guna'
 import type { PermohonanRingkas } from '@/lib/jenis'
@@ -76,6 +77,9 @@ export function JadualPermohonan({
                   </td>
                   <td>
                     <LencanaStatus status={p.status} />
+                    <div>
+                      <LencanaHadMasa p={p} />
+                    </div>
                   </td>
                   <td>
                     <Link

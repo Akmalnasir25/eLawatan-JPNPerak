@@ -12,6 +12,7 @@ import { formatMasa, formatTarikh, kelas } from '@/lib/guna'
 import { Baris, Berputar, Medan, Mesej } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
 import { ImejTandatangan } from '@/cetak/rangka'
+import { PanelPemangku } from '@/komponen/PanelPemangku'
 import { UserRound } from 'lucide-react'
 
 export function Profil() {
@@ -109,6 +110,9 @@ export function Profil() {
               </p>
             </div>
           </section>
+
+          {/* Pengesah melantik pemangku; penyemak melihat pemangkuan yang melibatkannya. */}
+          {!adalahSekolah && g.peranan !== 'admin' && <PanelPemangku />}
 
           {/* ── Maklumat penandatangan ─────────────────────────── */}
           <form onSubmit={simpan} className="kad">

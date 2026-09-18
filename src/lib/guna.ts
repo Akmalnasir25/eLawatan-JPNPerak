@@ -57,15 +57,20 @@ export function hariLagi(iso: string | null | undefined): number | null {
   return Math.round((sasaran.getTime() - kini.getTime()) / 86_400_000)
 }
 
-/** Tarikh hari ini dalam format input tarikh HTML. */
+/** Tarikh hari ini (waktu tempatan) dalam format input tarikh HTML. */
 export function tarikhHariIni(): string {
-  return new Date().toISOString().slice(0, 10)
+  return tarikhTambahHari(0)
 }
 
+/** YYYY-MM-DD waktu tempatan. toISOString() memberi tarikh UTC — semalam sebelum 8 pagi di Malaysia. */
 export function tarikhTambahHari(hari: number): string {
   const d = new Date()
   d.setDate(d.getDate() + hari)
-  return d.toISOString().slice(0, 10)
+  return tarikhIso(d)
+}
+
+export function tarikhIso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 /** Cantum kelas CSS bersyarat. */

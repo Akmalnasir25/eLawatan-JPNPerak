@@ -12,6 +12,7 @@ import { LABEL_PERANAN } from '@/lib/istilah'
 import { formatMasa, kelas } from '@/lib/guna'
 import { Berputar, Medan, Memuat, Mesej, Modal } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
+import { PanelPemangku } from '@/komponen/PanelPemangku'
 import type { Pegawai, Peranan } from '@/lib/jenis'
 
 export function UrusPegawai() {
@@ -164,6 +165,12 @@ export function UrusPegawai() {
           </tbody>
         </table>
       </div>
+
+      {adalahAdmin && (
+        <div className="mt-6">
+          <PanelPemangku />
+        </div>
+      )}
 
       <BorangDaftar
         buka={buka}

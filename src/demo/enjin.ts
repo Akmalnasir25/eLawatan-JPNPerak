@@ -78,6 +78,14 @@ async function mula(): Promise<PGlite> {
     await db.exec(seed)
     await isiContoh(db)
   }
+
+  // Tiada pg_cron dalam pelayar: jalankan peringatan harian setiap kali demo
+  // dibuka. Fungsi itu sendiri menghalang peringatan berulang pada hari yang sama.
+  try {
+    await db.query('select jana_peringatan()')
+  } catch (e) {
+    console.warn('Peringatan demo gagal', e)
+  }
   return db
 }
 
