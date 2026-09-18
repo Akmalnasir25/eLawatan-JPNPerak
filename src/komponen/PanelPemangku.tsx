@@ -240,7 +240,7 @@ function BorangLantik({
           </select>
         </Medan>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Medan label="Tarikh mula" perlu>
             <input className="medan" type="date" value={mula} min={tarikhHariIni()} onChange={(e) => setMula(e.target.value)} required />
           </Medan>

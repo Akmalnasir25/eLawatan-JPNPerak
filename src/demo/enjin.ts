@@ -10,6 +10,7 @@ import { PGlite, type Transaction } from '@electric-sql/pglite'
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto'
 import tiruanSupabase from '../../ujian/tiruan-supabase.sql?raw'
 import seed from '../../supabase/seed.sql?raw'
+import sekolahPerak from './sekolah-perak.sql?raw'
 import { simpanFail } from './stor-fail'
 
 const migrasi = import.meta.glob('../../supabase/migrations/*.sql', {
@@ -78,6 +79,10 @@ async function mula(): Promise<PGlite> {
     await db.exec(seed)
     await isiContoh(db)
   }
+
+  // Senarai rasmi sekolah Perak — juga untuk pangkalan demo lama dalam pelayar.
+  const bil = await db.query<{ n: number }>('select count(*)::int n from sekolah')
+  if ((bil.rows[0]?.n ?? 0) < 100) await db.exec(sekolahPerak)
 
   // Tiada pg_cron dalam pelayar: jalankan peringatan harian setiap kali demo
   // dibuka. Fungsi itu sendiri menghalang peringatan berulang pada hari yang sama.

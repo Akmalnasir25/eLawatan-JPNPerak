@@ -150,6 +150,37 @@ export async function padamPermohonan(id: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
+/** Draf kosong sekolah semasa, supaya "Permohonan Baharu" tidak mencipta draf berganda. */
+export async function cariDrafKosong(): Promise<string | null> {
+  const { data, error } = await supabase.rpc('cari_draf_kosong')
+  return (semak(data, error) as string | null) ?? null
+}
+
+/** Batalkan permohonan yang dihantar atau diluluskan; pegawai terlibat dimaklumkan. */
+export async function batalPermohonan(id: string, sebab: string): Promise<Permohonan> {
+  const { data, error } = await supabase.rpc('batal_permohonan', {
+    p_permohonan_id: id,
+    p_sebab: sebab,
+  })
+  return semak(data, error) as Permohonan
+}
+
+/** Salin permohonan lama sebagai draf baharu; pulangkan id draf. */
+export async function salinPermohonan(id: string): Promise<string> {
+  const { data, error } = await supabase.rpc('salin_permohonan', { p_permohonan_id: id })
+  return semak(data, error) as string
+}
+
+export type PrestasiKelulusan = {
+  peringkat: { peringkat: Status; bil: number; purata: number; maksimum: number; lewat: number; had: number | null }[]
+  pegawai: { nama_pegawai: string; peringkat: Status; bil: number; purata: number; lewat: number }[]
+}
+
+export async function prestasiKelulusan(tahun: number): Promise<PrestasiKelulusan> {
+  const { data, error } = await supabase.rpc('prestasi_kelulusan', { p_tahun: tahun })
+  return semak(data, error) as PrestasiKelulusan
+}
+
 export async function semakKelengkapan(id: string): Promise<Kelengkapan> {
   const { data, error } = await supabase.rpc('semak_kelengkapan', {
     p_permohonan_id: id,
@@ -220,6 +251,20 @@ export async function kemasBaris<T>(
   const { data, error } = await supabase
     .from(jadual).update(ubah).eq('id', id).select().single()
   return semak(data, error) as T
+}
+
+/** Masukkan banyak peserta sekali gus (import senarai), dalam kelompok 200. */
+export async function tambahBanyakPeserta(baris: Partial<Peserta>[]): Promise<void> {
+  for (let i = 0; i < baris.length; i += 200) {
+    const { error } = await supabase.from('peserta').insert(baris.slice(i, i + 200))
+    if (error) throw new Error(error.message)
+  }
+}
+
+export async function padamMurid(permohonanId: string): Promise<void> {
+  const { error } = await supabase
+    .from('peserta').delete().eq('permohonan_id', permohonanId).eq('kategori', 'MURID')
+  if (error) throw new Error(error.message)
 }
 
 export async function padamBaris(jadual: Jadual, id: string): Promise<void> {

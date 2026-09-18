@@ -84,7 +84,7 @@ export function Profil() {
         nota="Maklumat ini dicetak pada borang rasmi apabila anda menyokong atau meluluskan permohonan."
       />
 
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="space-y-6 lg:col-span-3">
           {/* ── Akaun ───────────────────────────────────────────── */}
           <section className="kad">
@@ -210,7 +210,7 @@ export function Profil() {
                 PNG berlatar lutsinar paling sesuai. Maksimum 1 MB setiap imej.
               </p>
             </div>
-            <div className="kad-isi grid gap-4 sm:grid-cols-2">
+            <div className="kad-isi grid grid-cols-1 gap-4 sm:grid-cols-2">
               <PetakImej
                 jenis="tandatangan"
                 tajuk={label.tandatangan}

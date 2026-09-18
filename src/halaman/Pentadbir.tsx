@@ -38,6 +38,8 @@ import { TajukHalaman } from '@/komponen/Rangka'
 import { segarJabatan, type MaklumatJabatan, MAKLUMAT_LALAI } from '@/lib/jabatan'
 import { Settings } from 'lucide-react'
 import { EditorHadMasa, PanelPeringatan, PanelSandaran, PanelSimpanan } from './PentadbirTambahan'
+import { huraiJadual } from '@/lib/import-jadual'
+import { kepalaSekolahSah, LAJUR_WAJIB_SEKOLAH, petaSekolah } from '@/lib/import-sekolah'
 import type {
   LogAudit,
   Pegawai,
@@ -383,19 +385,26 @@ function TabImport() {
   const [ralat, setRalat] = useState<string | null>(null)
   const [berjaya, setBerjaya] = useState<string | null>(null)
   const [sibuk, setSibuk] = useState(false)
+  const [ppd, setPpd] = useState<Ppd[]>([])
 
-  const baris = teks.trim() ? huraiCsv(teks.trim()) : []
+  useEffect(() => {
+    semuaPpd().then(setPpd).catch(() => setPpd([]))
+  }, [])
+
+  // Tampalan terus dari Excel (tab) atau CSV.
+  const baris = huraiJadual(teks)
   const kepala = baris[0] ?? []
   const isi = baris.slice(1)
 
-  const lajurSekolah = ['kod_sekolah', 'nama', 'emel', 'kod_ppd', 'jenis', 'nama_guru_besar']
+  const lajurSekolah = ['kod_sekolah', 'nama', 'emel', 'kod_ppd', 'jenis', 'nama_guru_besar', 'poskod', 'bandar', 'telefon']
   const lajurPegawai = ['emel', 'nama', 'peranan', 'kod_skop', 'jawatan']
-  const lajurPerlu = mod === 'sekolah' ? lajurSekolah.slice(0, 4) : lajurPegawai.slice(0, 3)
+  const lajurPerlu = mod === 'sekolah' ? LAJUR_WAJIB_SEKOLAH : lajurPegawai.slice(0, 3)
   const lajurJangka = mod === 'sekolah' ? lajurSekolah : lajurPegawai
 
-  const kepalaSah = lajurPerlu.every((l) =>
-    kepala.map((k) => k.toLowerCase()).includes(l),
-  )
+  const kepalaSah =
+    mod === 'sekolah'
+      ? kepalaSekolahSah(kepala)
+      : lajurPerlu.every((l) => kepala.map((k) => k.toLowerCase()).includes(l))
 
   function nilai(b: string[], lajur: string): string {
     const i = kepala.findIndex((k) => k.toLowerCase() === lajur)
@@ -403,6 +412,7 @@ function TabImport() {
   }
 
   function sahBaris(b: string[]): string | null {
+    if (mod === 'sekolah') return petaSekolah(kepala, b, ppd, DOMAIN_DIBENARKAN).masalah
     for (const l of lajurPerlu) {
       if (!nilai(b, l)) return `Lajur ${l} kosong`
     }
@@ -424,16 +434,11 @@ function TabImport() {
     setBerjaya(null)
     try {
       if (mod === 'sekolah') {
-        await importSekolah(
-          sah.map((b) => ({
-            kod_sekolah: nilai(b, 'kod_sekolah').toUpperCase(),
-            nama: nilai(b, 'nama'),
-            emel: nilai(b, 'emel').toLowerCase(),
-            kod_ppd: nilai(b, 'kod_ppd').toUpperCase(),
-            jenis: nilai(b, 'jenis').toUpperCase() || 'RENDAH',
-            nama_guru_besar: nilai(b, 'nama_guru_besar') || null,
-          })),
-        )
+        const senarai = sah.map((b) => petaSekolah(kepala, b, ppd, DOMAIN_DIBENARKAN).sekolah!)
+        // Kelompok 300 baris supaya senarai negeri (±1,100 sekolah) tidak melebihi had permintaan.
+        for (let i = 0; i < senarai.length; i += 300) {
+          await importSekolah(senarai.slice(i, i + 300))
+        }
       } else {
         await importPegawai(
           sah.map((b) => ({
@@ -484,12 +489,19 @@ function TabImport() {
       <section className="kad">
         <div className="kad-tajuk">
           <h2>
-            Tampal CSV
+            Tampal dari Excel atau CSV
           </h2>
           <p className="-mt-1 basis-full text-xs text-slate-500">
             Baris pertama mesti kepala lajur. Lajur dijangka:{' '}
             <span className="font-mono">{lajurJangka.join(', ')}</span>. Lajur
             wajib: <span className="font-mono">{lajurPerlu.join(', ')}</span>.
+            {mod === 'sekolah' && (
+              <>
+                {' '}Senarai rasmi KPM (KODSEKOLAH, NAMASEKOLAH, PPD, PERINGKAT, JENIS/LABEL, EMAIL…) juga
+                diterima terus — salin keseluruhan helaian Excel dan tampal di sini. Nama PPD dipadankan
+                dengan kod PPD secara automatik.
+              </>
+            )}
           </p>
         </div>
         <div className="kad-isi space-y-3">
@@ -715,7 +727,7 @@ function TabSekolah() {
         lebar="max-w-2xl"
       >
         {sunting && (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <Medan label="Nama sekolah" perlu>
                 <input
@@ -904,7 +916,7 @@ function TabKategori() {
             SPI Bil. 9/2023.
           </p>
         </div>
-        <div className="kad-isi grid gap-4 sm:grid-cols-4">
+        <div className="kad-isi grid grid-cols-1 gap-4 sm:grid-cols-4">
           {Object.entries(LABEL_KATEGORI).map(([kod, label]) => (
             <Medan key={kod} label={label}>
               <div className="relative">
@@ -1344,7 +1356,7 @@ function EditorJabatan() {
       </div>
       <div className="kad-isi space-y-4">
         {mesej && <Mesej jenis={mesej.jenis}>{mesej.teks}</Mesej>}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {MEDAN_JABATAN.map((m) => (
             <div key={m.kunci} className={m.lebar ? 'sm:col-span-2' : undefined}>
               <Medan label={m.label}>

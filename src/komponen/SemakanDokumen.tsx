@@ -228,7 +228,7 @@ function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, notaSem
             {semakanPenyemak.catatan && <p className="mt-2 whitespace-pre-wrap break-words">Catatan penyemak: {semakanPenyemak.catatan}</p>}
           </>}
         </div>}
-        {bolehSemak ? <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+        {bolehSemak ? <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
           <div>
             <label htmlFor="catatan-dokumen" className="mb-1 block text-sm font-medium text-slate-800">Catatan {keputusan === 'PEMBETULAN' ? '(wajib)' : '(pilihan)'}</label>
             <textarea id="catatan-dokumen" rows={2} maxLength={2000} value={catatan} disabled={sibuk}

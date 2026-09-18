@@ -66,6 +66,9 @@ berkelakuan seperti sistem sebenar. Tiada data dihantar ke mana-mana.
 - Log masuk biasa pun berfungsi — kod OTP dipaparkan di penjuru kanan
   atas, dan kata laluan demo disimpan dalam pelayar sahaja.
 - Empat permohonan contoh disediakan dalam pelbagai status.
+- Senarai rasmi 1,107 sekolah Perak dimuatkan (`src/demo/sekolah-perak.sql`,
+  dijana oleh `python infra/jana-sekolah-demo.py <fail.xlsx>`). Mana-mana
+  e-mel sekolah `@moe.edu.my` dalam senarai boleh log masuk demo.
 - Dokumen yang dimuat naik disimpan dalam IndexedDB pelayar, bukan R2.
 
 Kod demo (`src/demo/`) hanya dimuatkan oleh `npm run demo`. Binaan
@@ -161,7 +164,7 @@ npx supabase secrets set \
   R2_ACCESS_KEY_ID=... \
   R2_SECRET_ACCESS_KEY=... \
   R2_BUCKET=elawatan-dokumen \
-  DOMAIN_DIBENARKAN=moe-dl.edu.my,moe.gov.my \
+  DOMAIN_DIBENARKAN=moe-dl.edu.my,moe.edu.my,moe.gov.my \
   RESEND_API_KEY=... \
   EMEL_DARIPADA="eLAWATAN Perak <no-reply@domain-jpn>" \
   URL_SISTEM=https://alamat-sistem

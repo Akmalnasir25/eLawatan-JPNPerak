@@ -127,7 +127,7 @@ export function PapanPemuka() {
         />
       </div>
 
-      <div className="grid gap-8 xl:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1fr_320px]">
         <div className="min-w-0 space-y-8">
           <section>
             <h2 className="tajuk-seksyen">

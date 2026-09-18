@@ -128,7 +128,7 @@ export function LaporanPascaLawatan() {
               Kehadiran Sebenar
             </h2>
           </div>
-          <div className="kad-isi grid gap-4 sm:grid-cols-2">
+          <div className="kad-isi grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Medan
               label="Bilangan murid hadir"
               nota={`Dipohon: ${p.bil_murid} murid`}

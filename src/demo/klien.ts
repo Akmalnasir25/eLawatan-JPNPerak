@@ -356,7 +356,7 @@ async function pegawaiSemasa() {
   return r.rows[0] ?? null
 }
 
-const DOMAIN = (import.meta.env.VITE_DOMAIN_DIBENARKAN ?? 'moe-dl.edu.my,moe.gov.my')
+const DOMAIN = (import.meta.env.VITE_DOMAIN_DIBENARKAN ?? 'moe-dl.edu.my,moe.edu.my,moe.gov.my')
   .split(',')
   .map((d: string) => d.trim().toLowerCase())
 

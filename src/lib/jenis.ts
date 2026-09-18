@@ -139,6 +139,8 @@ export type Permohonan = {
   diluluskan_pada: string | null
   dikemaskini_pada: string
   catatan_kembali: string | null
+  sebab_batal: string | null
+  dibatalkan_pada: string | null
   // Bahagian F — dibekukan semasa dihantar
   nama_guru_besar: string | null
   nama_pemohon: string | null

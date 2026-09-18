@@ -39,7 +39,7 @@ export function Langkah3({ bundel, simpan, muatSemula }: PropLangkah) {
           </h2>
         </div>
         <div className="kad-isi space-y-5">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Medan
               label="Kutipan daripada murid"
               nota={
@@ -121,7 +121,7 @@ export function Langkah3({ bundel, simpan, muatSemula }: PropLangkah) {
           {penaja.map((x, i) => (
             <div
               key={x.id}
-              className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-[2fr_1.5fr_1fr_auto]"
+              className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-[2fr_1.5fr_1fr_auto]"
             >
               <Medan label={`Penaja ${i + 1}`}>
                 <input

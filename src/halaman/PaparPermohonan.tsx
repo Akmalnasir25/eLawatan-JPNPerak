@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
+  batalPermohonan,
   dapatPermohonan,
   dapatTetapan,
+  padamPermohonan,
+  salinPermohonan,
   senaraiAudit,
   tindakanKelulusan,
   type BundelPermohonan,
 } from '@/lib/api'
+import { padamDokumen } from '@/lib/r2'
 import { gunaAuth } from '@/lib/auth'
 import { SemakanDokumen } from '@/komponen/SemakanDokumen'
 import {
@@ -23,7 +27,7 @@ import {
   SEMAKAN_BAGI_PENGESAH,
   labelSokong,
 } from '@/lib/istilah'
-import { formatMasa, formatSaiz, formatTarikh, formatWang, kelas, laluan } from '@/lib/guna'
+import { formatMasa, formatSaiz, formatTarikh, formatWang, kelas, laluan, tarikhHariIni } from '@/lib/guna'
 import {
   Baris,
   Berputar,
@@ -36,10 +40,13 @@ import { TajukHalaman } from '@/komponen/Rangka'
 import { RantaianKelulusan } from '@/komponen/RantaianKelulusan'
 import { PaparanPengesah } from '@/komponen/PaparanPengesah'
 import {
+  Ban,
   Banknote,
   ArrowLeft,
   CheckCircle2,
   ClipboardCheck,
+  Copy,
+  Trash2,
   FileText,
   History,
   MapPinned,
@@ -52,7 +59,13 @@ import {
   XCircle,
   type LucideIcon,
 } from 'lucide-react'
-import type { Dokumen, ItemSemakan, LogAudit, Tindakan } from '@/lib/jenis'
+import type { Dokumen, ItemSemakan, LogAudit, Status, Tindakan } from '@/lib/jenis'
+
+/** Status yang boleh dibatalkan sekolah — sepadan dengan batal_permohonan(). */
+const BOLEH_BATAL: Status[] = [
+  'MENUNGGU_PPD_SEMAK', 'MENUNGGU_PPD_SAH', 'MENUNGGU_JPN_SEMAK',
+  'MENUNGGU_JPN_SAH', 'MENUNGGU_KPM', 'DIKEMBALIKAN', 'DILULUSKAN',
+]
 
 export function PaparPermohonan() {
   const { id } = useParams<{ id: string }>()
@@ -70,6 +83,9 @@ export function PaparPermohonan() {
   const [itemSemakan, setItemSemakan] = useState<ItemSemakan[]>([])
   const [ditanda, setDitanda] = useState<string[]>([])
   const [paparPenuh, setPaparPenuh] = useState(false)
+  const [dialog, setDialog] = useState<'padam' | 'batal' | null>(null)
+  const [sebabBatal, setSebabBatal] = useState('')
+  const [sibukAksi, setSibukAksi] = useState(false)
 
   const muat = useCallback(async () => {
     if (!id) return
@@ -149,6 +165,49 @@ export function PaparPermohonan() {
     }
   }
 
+  async function padamDraf() {
+    setSibukAksi(true)
+    setRalat(null)
+    try {
+      // Fail R2 dipadam dahulu; baris dokumen ikut terpadam bersama draf.
+      for (const d of b!.dokumen) await padamDokumen(d.id).catch(() => {})
+      await padamPermohonan(p.id)
+      navigate('/', { replace: true })
+    } catch (e) {
+      setRalat(e instanceof Error ? e.message : 'Gagal memadam draf.')
+      setDialog(null)
+      setSibukAksi(false)
+    }
+  }
+
+  async function batalLawatan() {
+    setSibukAksi(true)
+    setRalat(null)
+    try {
+      await batalPermohonan(p.id, sebabBatal.trim())
+      setDialog(null)
+      setSebabBatal('')
+      await muat()
+    } catch (e) {
+      setRalat(e instanceof Error ? e.message : 'Gagal membatalkan permohonan.')
+      setDialog(null)
+    } finally {
+      setSibukAksi(false)
+    }
+  }
+
+  async function gunaSemula() {
+    setSibukAksi(true)
+    setRalat(null)
+    try {
+      const baharu = await salinPermohonan(p.id)
+      navigate(`/permohonan/${baharu}/sunting?langkah=1`)
+    } catch (e) {
+      setRalat(e instanceof Error ? e.message : 'Gagal menyalin permohonan.')
+      setSibukAksi(false)
+    }
+  }
+
   function bukaDokumen(d: Dokumen) {
     setDokPapar(null)
     setDokSemak(d)
@@ -171,6 +230,26 @@ export function PaparPermohonan() {
         }
         aksi={
           <>
+            {milikSekolah && p.status === 'DRAF' && (
+              <button type="button" className="btn-kedua text-rose-700" onClick={() => setDialog('padam')}>
+                <Trash2 className="h-4 w-4" aria-hidden />
+                Padam draf
+              </button>
+            )}
+            {milikSekolah &&
+              BOLEH_BATAL.includes(p.status) &&
+              !(p.status === 'DILULUSKAN' && p.tarikh_tamat && p.tarikh_tamat < tarikhHariIni()) && (
+              <button type="button" className="btn-kedua text-rose-700" onClick={() => setDialog('batal')}>
+                <Ban className="h-4 w-4" aria-hidden />
+                Batalkan lawatan
+              </button>
+            )}
+            {milikSekolah && p.status !== 'DRAF' && (
+              <button type="button" className="btn-kedua" onClick={gunaSemula} disabled={sibukAksi}>
+                <Copy className="h-4 w-4" aria-hidden />
+                Guna semula
+              </button>
+            )}
             {bolehSunting && (
               <Link to={`/permohonan/${p.id}/sunting`} className="btn-utama">
                 <PencilLine className="h-4 w-4" aria-hidden />
@@ -215,6 +294,64 @@ export function PaparPermohonan() {
           </Mesej>
         </div>
       )}
+      {p.status === 'BATAL' && (
+        <div className="mb-5">
+          <Mesej
+            jenis="amaran"
+            tajuk={`Dibatalkan oleh sekolah${p.dibatalkan_pada ? ` pada ${formatMasa(p.dibatalkan_pada)}` : ''}`}
+          >
+            {p.sebab_batal ?? 'Tiada sebab direkodkan.'} Surat kelulusan, jika ada, tidak lagi sah.
+          </Mesej>
+        </div>
+      )}
+
+      <Modal tajuk="Padam draf" buka={dialog === 'padam'} tutup={() => setDialog(null)}>
+        <div className="space-y-4 text-sm text-slate-700">
+          <p>
+            Draf ini{b.dokumen.length ? ` dan ${b.dokumen.length} dokumen yang dimuat naik` : ''} akan dipadam
+            secara kekal. Draf belum dihantar kepada PPD.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button type="button" className="btn-kedua" onClick={() => setDialog(null)}>Batal</button>
+            <button type="button" className="btn-merah" onClick={padamDraf} disabled={sibukAksi}>
+              {sibukAksi ? <Berputar /> : null}
+              Padam draf
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal tajuk="Batalkan lawatan" buka={dialog === 'batal'} tutup={() => setDialog(null)}>
+        <div className="space-y-4 text-sm text-slate-700">
+          <p>
+            Permohonan akan ditutup dengan status <strong>Dibatalkan</strong>
+            {p.status === 'DILULUSKAN' ? ' dan surat kelulusan tidak lagi sah' : ''}. Pegawai PPD/JPN yang
+            terlibat akan dimaklumkan. Tindakan ini tidak boleh diundur.
+          </p>
+          <label className="block">
+            <span className="mb-1 block font-medium text-slate-800">Sebab pembatalan</span>
+            <textarea
+              className="medan min-h-[90px]"
+              value={sebabBatal}
+              onChange={(e) => setSebabBatal(e.target.value)}
+              placeholder="Contoh: Syarikat bas menarik diri; amaran banjir di kawasan lawatan."
+            />
+            <span className="mt-1 block text-xs text-slate-500">Sekurang-kurangnya 10 aksara.</span>
+          </label>
+          <div className="flex justify-end gap-2">
+            <button type="button" className="btn-kedua" onClick={() => setDialog(null)}>Kembali</button>
+            <button
+              type="button"
+              className="btn-merah"
+              onClick={batalLawatan}
+              disabled={sibukAksi || sebabBatal.trim().length < 10}
+            >
+              {sibukAksi ? <Berputar /> : null}
+              Batalkan lawatan
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {ringkas && (
         <PaparanPengesah
@@ -325,7 +462,7 @@ export function PaparPermohonan() {
                   {semuaDitanda ? 'Kosongkan semua' : 'Tanda semua'}
                 </button>
               </div>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {itemSemakan.map((i) => (
                   <label
                     key={i.kod}
@@ -381,7 +518,7 @@ export function PaparPermohonan() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           {/* Bahagian A & B1 */}
           <section className="kad">

@@ -50,7 +50,7 @@ export async function pegawaiSemasa(req: Request): Promise<Pegawai | null> {
 }
 
 export function domainDibenarkan(): string[] {
-  return (Deno.env.get('DOMAIN_DIBENARKAN') ?? 'moe-dl.edu.my,moe.gov.my')
+  return (Deno.env.get('DOMAIN_DIBENARKAN') ?? 'moe-dl.edu.my,moe.edu.my,moe.gov.my')
     .split(',')
     .map((d) => d.trim().toLowerCase())
     .filter(Boolean)

@@ -188,7 +188,7 @@ export function Kalendar() {
       {!data && !ralat && <Memuat />}
 
       {data && (
-        <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_340px]">
           {/* ── Grid bulan (skrin lebar) ─────────────────────────── */}
           <div className="kad hidden overflow-hidden md:block">
             <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500">

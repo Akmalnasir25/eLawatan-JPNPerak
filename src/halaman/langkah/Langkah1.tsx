@@ -103,7 +103,7 @@ export function Langkah1({ bundel, simpan }: PropLangkah) {
             perlu
             nota="Kategori menentukan rantaian kelulusan dan tempoh minimum permohonan."
           >
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {KATEGORI.map((k) => (
                 <button
                   key={k}
@@ -176,7 +176,7 @@ export function Langkah1({ bundel, simpan }: PropLangkah) {
             label="Ciri tambahan lawatan"
             nota="Setiap ciri yang ditanda akan menambah dokumen wajib pada Langkah 6."
           >
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Petak
                 label="Melibatkan penginapan"
                 nota="Mencetuskan borang penilaian risiko"

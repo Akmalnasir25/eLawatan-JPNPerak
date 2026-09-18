@@ -160,7 +160,7 @@ export function PaparanPengesah({
                 </span>
               </p>
               {perakuan.semakan ? (
-                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {perakuan.semakan.map((i) => (
                     <li key={i.kod} className="flex items-start gap-2 text-sm text-slate-700">
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden />

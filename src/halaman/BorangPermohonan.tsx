@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { gunaAuth } from '@/lib/auth'
 import {
+  cariDrafKosong,
   ciptaPermohonan,
   dapatPermohonan,
   semakKelengkapan,
@@ -98,8 +99,12 @@ export function BorangPermohonan() {
   useEffect(() => {
     if (id || !sekolah || sudahCipta.current) return
     sudahCipta.current = true
-    ciptaPermohonan(sekolah, pegawai?.id ?? null, nisbahCadangan(sekolah.jenis))
-      .then((p) => navigate(`/permohonan/${p.id}/sunting?langkah=1`, { replace: true }))
+    // Guna semula draf kosong yang ditinggalkan sebelum ini.
+    cariDrafKosong()
+      .then(async (sedia) =>
+        sedia ?? (await ciptaPermohonan(sekolah, pegawai?.id ?? null, nisbahCadangan(sekolah.jenis))).id,
+      )
+      .then((drafId) => navigate(`/permohonan/${drafId}/sunting?langkah=1`, { replace: true }))
       .catch((e) => setRalat(e.message))
   }, [id, sekolah, pegawai, navigate])
 
@@ -237,7 +242,7 @@ export function BorangPermohonan() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
         {/* ── Penanda langkah ─────────────────────────────────── */}
         <aside className="lg:sticky lg:top-20 lg:self-start">
           <div className="kad overflow-hidden">

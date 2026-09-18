@@ -252,7 +252,7 @@ export function KakiLaman() {
   const tahun = new Date().getFullYear()
   return (
     <footer className="app-kaki tanpa-cetak mt-12 bg-jata-700 text-white/85">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
+      <div className="mx-auto grid grid-cols-1 max-w-7xl gap-8 px-4 py-10 text-sm sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-3">
             <LogoRasmi saiz={44} terang />

@@ -30,7 +30,7 @@ const SOALAN: Soalan[] = [
     soalan: 'Bagaimana log masuk kali pertama?',
     jawapan: (
       <ol className="ml-5 list-decimal space-y-1">
-        <li>Masukkan e-mel rasmi anda (domain moe-dl.edu.my atau moe.gov.my).</li>
+        <li>Masukkan e-mel rasmi anda (domain moe.edu.my, moe-dl.edu.my atau moe.gov.my).</li>
         <li>Sistem menghantar kod pengesahan enam digit ke e-mel itu.</li>
         <li>Masukkan kod, kemudian cipta kata laluan sekurang-kurangnya 12 aksara.</li>
         <li>Log masuk seterusnya hanya menggunakan e-mel dan kata laluan.</li>
@@ -291,7 +291,7 @@ export function Bantuan() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <div className="min-w-0 space-y-6">
           {tapis.length === 0 && (
             <p className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">

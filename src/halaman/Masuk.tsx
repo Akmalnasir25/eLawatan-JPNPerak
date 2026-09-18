@@ -207,7 +207,7 @@ export function Masuk() {
             backgroundSize: '22px 22px',
           }}
         />
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:py-16">
+        <div className="relative mx-auto grid grid-cols-1 max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:py-16">
           {/* ── Lajur maklumat ───────────────────────────────── */}
           <div className="text-white" data-animasi="kiri">
             <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-biru-200">
@@ -225,7 +225,7 @@ export function Masuk() {
               kelulusan berkod QR.
             </p>
 
-            <ol className="mt-8 grid max-w-xl gap-3 sm:grid-cols-3">
+            <ol className="mt-8 grid grid-cols-1 max-w-xl gap-3 sm:grid-cols-3">
               {[
                 { ikon: FileSignature, tajuk: 'Isi borang', nota: 'Lampiran A digital, enam langkah' },
                 { ikon: Route, tajuk: 'Kelulusan berperingkat', nota: 'PPD, JPN dan KPM mengikut kategori' },
@@ -490,7 +490,7 @@ export function Masuk() {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-7xl gap-4 px-4 py-10 sm:px-6 md:grid-cols-3">
+      <div className="mx-auto grid grid-cols-1 max-w-7xl gap-4 px-4 py-10 sm:px-6 md:grid-cols-3">
         {[
           { tajuk: 'Siapa boleh log masuk?', teks: 'E-mel rasmi sekolah dan pegawai KPM yang didaftarkan oleh pejabat masing-masing.' },
           { tajuk: 'Log masuk kali pertama', teks: `Kod pengesahan dihantar ke e-mel anda, kemudian anda mencipta kata laluan sendiri (minimum ${PANJANG_KATA_LALUAN} aksara).` },

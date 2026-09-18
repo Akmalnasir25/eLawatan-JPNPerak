@@ -5,7 +5,7 @@ import { supabase } from '#klien'
 export { supabase, hantarFail, MOD_DEMO, demo } from '#klien'
 
 export const DOMAIN_DIBENARKAN = (
-  import.meta.env.VITE_DOMAIN_DIBENARKAN ?? 'moe-dl.edu.my,moe.gov.my'
+  import.meta.env.VITE_DOMAIN_DIBENARKAN ?? 'moe-dl.edu.my,moe.edu.my,moe.gov.my'
 )
   .split(',')
   .map((d) => d.trim().toLowerCase())

@@ -4,6 +4,7 @@ import { LABEL_PESERTA } from '@/lib/istilah'
 import { Medan, Mesej } from '@/komponen/ui'
 import type { Peserta, PesertaKategori } from '@/lib/jenis'
 import type { PropLangkah } from '../BorangPermohonan'
+import { SenaraiMurid } from './SenaraiMurid'
 
 export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
   const { permohonan: p, peserta } = bundel
@@ -54,7 +55,7 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
           </h2>
         </div>
         <div className="kad-isi">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Medan
               label="Bilangan murid"
               perlu
@@ -117,7 +118,7 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
             Bahagian D1 — Ketua Rombongan
           </h2>
         </div>
-        <div className="kad-isi grid gap-4 sm:grid-cols-2">
+        <div className="kad-isi grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Medan label="Nama penuh" perlu>
               <input
@@ -203,6 +204,15 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
       </section>
 
       {/* ── Bahagian D2 ──────────────────────────────────────────── */}
+      <SenaraiMurid
+        permohonanId={p.id}
+        peserta={peserta}
+        bilMurid={p.bil_murid}
+        jalankan={jalankan}
+        simpanBilangan={(n) => simpan({ bil_murid: n })}
+        sibuk={sibuk}
+      />
+
       <SenaraiAnggota
         kategori="GURU_PENGIRING"
         tajuk="Bahagian D2 — Senarai Guru Pengiring"
