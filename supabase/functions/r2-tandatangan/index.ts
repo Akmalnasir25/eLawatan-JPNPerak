@@ -60,12 +60,25 @@ Deno.serve(async (req) => {
     }
 
     if (b.tujuan === 'profil') {
-      const { data } = await db
-        .from('pegawai')
-        .select('kunci_tandatangan, kunci_cop')
-        .eq('id', pegawai.id)
-        .single()
-      const kunci = [data?.kunci_tandatangan, data?.kunci_cop].filter(Boolean) as string[]
+      // Tandatangan Guru Besar dan cop milik sekolah, bukan akaun individu.
+      const { data } =
+        pegawai.peranan === 'sekolah'
+          ? await db
+              .from('sekolah')
+              .select('kunci_tandatangan_gb, kunci_cop')
+              .eq('kod_sekolah', pegawai.kod_skop ?? '')
+              .maybeSingle()
+          : await db
+              .from('pegawai')
+              .select('kunci_tandatangan, kunci_cop')
+              .eq('id', pegawai.id)
+              .maybeSingle()
+
+      const rekod = (data ?? {}) as Record<string, string | null>
+      const kunci = [
+        rekod.kunci_tandatangan_gb ?? rekod.kunci_tandatangan,
+        rekod.kunci_cop,
+      ].filter(Boolean) as string[]
       return jawapan({ imej: await tandatanganSemua(kunci, 300) })
     }
 

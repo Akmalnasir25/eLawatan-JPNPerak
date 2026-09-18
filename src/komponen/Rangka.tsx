@@ -16,6 +16,7 @@ import {
   Menu,
   Phone,
   Settings,
+  Users,
   ShieldCheck,
   UserRound,
   X,
@@ -37,6 +38,7 @@ function pautanBagi(peranan: string): Pautan[] {
       { ke: '/permohonan/baharu', teks: 'Permohonan Baharu', ikon: FilePlus2 },
       { ke: '/senarai', teks: 'Senarai Permohonan', ikon: Files },
       { ke: '/laporan', teks: 'Laporan', ikon: BarChart3 },
+      { ke: '/pegawai', teks: 'Urus Pegawai', ikon: Users },
     ]
   }
   const asas: Pautan[] = [
@@ -44,6 +46,7 @@ function pautanBagi(peranan: string): Pautan[] {
     { ke: '/senarai', teks: 'Semua Permohonan', ikon: Files },
     { ke: '/laporan', teks: 'Laporan', ikon: BarChart3 },
   ]
+  if (peranan !== 'kpm') asas.push({ ke: '/pegawai', teks: 'Urus Pegawai', ikon: Users })
   if (peranan === 'admin') asas.push({ ke: '/pentadbir', teks: 'Pentadbiran', ikon: Settings })
   return asas
 }

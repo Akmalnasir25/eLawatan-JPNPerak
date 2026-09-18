@@ -77,6 +77,9 @@ export type Sekolah = {
   telefon: string | null
   faks: string | null
   aktif: boolean
+  // Tandatangan Guru Besar dan cop milik sekolah, bukan akaun individu
+  kunci_tandatangan_gb: string | null
+  kunci_cop: string | null
 }
 
 export type Pegawai = {
@@ -94,6 +97,10 @@ export type Pegawai = {
   kunci_tandatangan: string | null
   kunci_cop: string | null
   profil_dikemaskini_pada: string | null
+  kata_laluan_ditetapkan: boolean
+  didaftar_oleh: string | null
+  didaftar_pada: string | null
+  log_masuk_terakhir: string | null
 }
 
 export type Permohonan = {

@@ -63,7 +63,8 @@ berkelakuan seperti sistem sebenar. Tiada data dihantar ke mana-mana.
 
 - Baner kuning di bawah skrin: **log masuk pantas** sebagai mana-mana
   peranan, dan **Set semula** untuk memadam data demo.
-- Log masuk biasa pun berfungsi — kod OTP dipaparkan di penjuru kanan atas.
+- Log masuk biasa pun berfungsi — kod OTP dipaparkan di penjuru kanan
+  atas, dan kata laluan demo disimpan dalam pelayar sahaja.
 - Empat permohonan contoh disediakan dalam pelbagai status.
 - Dokumen yang dimuat naik disimpan dalam IndexedDB pelayar, bukan R2.
 
@@ -109,8 +110,11 @@ values ('nama.anda@moe.gov.my', 'Nama Penuh Anda', 'admin',
         'Penyelaras ICT, Sektor Pengurusan Sekolah');
 ```
 
-Log masuk dengan e-mel itu; pencetus `handle_pengguna_baharu` akan
+Log masuk dengan e-mel itu. Sistem menghantar kod pengesahan, meminta
+anda mencipta kata laluan, dan pencetus `handle_pengguna_baharu`
 memautkan baris tersebut kepada akaun auth anda secara automatik.
+Selepas itu pentadbir mendaftarkan pegawai lain dari dalam sistem —
+lihat bahagian 11.
 
 ---
 
@@ -175,7 +179,7 @@ npm run dev              # http://localhost:5173
 Tabur Edge Functions:
 
 ```bash
-npm run fn:tabur         # menabur kesemua lima fungsi
+npm run fn:tabur         # menabur kesemua tujuh fungsi
 ```
 
 Bina untuk pengeluaran:
@@ -227,7 +231,11 @@ Deno dimuat turun automatik melalui npm pada kali pertama.
 | Catatan wajib bagi Kembalikan dan Tolak | `tindakan_kelulusan()` |
 | Log audit tidak boleh dipadam | Tiada dasar UPDATE atau DELETE pada `log_audit` |
 | Permohonan dikunci selepas hantar | Pencetus `halang_sunting_selepas_hantar` |
-| Domain e-mel KPM sahaja | `daftar-semak` + semakan pelayar |
+| Domain e-mel KPM sahaja | `daftar-semak`, `daftar_pegawai()` + semakan pelayar |
+| Siapa boleh mendaftarkan siapa | `peranan_boleh_daftar()` — skop dipaksa daripada pendaftar |
+| Sekatan selepas 5 percubaan gagal | `status_sekatan()` disemak dalam `log-masuk` sebelum kata laluan diuji |
+| Pentadbir tidak boleh menetapkan kata laluan orang lain | `tetap-kata-laluan` hanya menyentuh pemilik token |
+| Rekod percubaan log masuk tersembunyi | `cubaan_masuk` — RLS hidup, tiada dasar langsung |
 | Tandatangan dan cop dibekukan pada saat tindakan | `tindakan_kelulusan()`, `hantar_permohonan()`, `hantar_laporan_pasca()` |
 | Tiada sesiapa boleh guna tandatangan orang lain | `tetapkan_imej_profil()` — kunci mesti di bawah `profil/<id sendiri>/` |
 | Pintasan pentadbir tidak mencetak tandatangan | `tindakan_kelulusan()` |
@@ -283,7 +291,65 @@ penjuru kanan).
 
 ---
 
-## 11. Identiti Korporat
+## 11. Akaun Pegawai, Kata Laluan dan Sekatan
+
+Tiada sesiapa mendaftar sendiri. Akaun diwujudkan oleh pegawai yang sudah
+berada dalam sistem, melalui **Urus Pegawai** pada bar navigasi.
+
+| Pendaftar | Boleh mendaftarkan |
+|---|---|
+| Pentadbir sistem | Semua peranan, dan menetapkan kod skop sendiri |
+| Pengarah JPN / Pegawai JPN | Pegawai JPN (penyemak), dalam skop negeri |
+| KPPD / Pegawai PPD | Pegawai PPD (penyemak), dalam skop daerah sendiri |
+| Sekolah | Pengguna sekolah tambahan, sekolah yang sama |
+
+Bilangan pegawai penyemak tidak dihadkan. Kod skop **tidak** diambil
+daripada borang kecuali bagi pentadbir — `daftar_pegawai()` memaksanya
+daripada akaun pendaftar, jadi KPPD Kinta Utara tidak boleh mencipta akaun
+bagi daerah lain walaupun permintaan HTTP diubah suai.
+
+### Log masuk kali pertama
+
+1. Pegawai memasukkan e-melnya di skrin log masuk.
+2. `daftar-semak` memulangkan `PERLU_KATA_LALUAN`; kod pengesahan
+   dihantar ke e-mel itu.
+3. Selepas kod disahkan, skrin **Cipta Kata Laluan** dipaparkan.
+4. Kata laluan disimpan oleh Supabase Auth (bcrypt), dan pegawai terus
+   masuk ke sistem.
+
+Log masuk seterusnya terus meminta kata laluan. **Lupa kata laluan**
+mengulangi laluan OTP yang sama. Akaun sedia ada yang dahulunya
+menggunakan OTP sahaja diarahkan mencipta kata laluan pada log masuk
+berikutnya.
+
+### Syarat kata laluan
+
+- Sekurang-kurangnya **12 aksara**, bukan ruang kosong semata-mata.
+- Tidak boleh mengandungi bahagian nama e-mel.
+- Disemak terhadap pangkalan data kebocoran **Have I Been Pwned**
+  menggunakan k-anonymity — hanya lima aksara pertama cincangan SHA-1
+  dihantar, tidak pernah kata laluan itu sendiri. Jika perkhidmatan itu
+  tidak dapat dihubungi, semakan dilangkau dan kata laluan diterima.
+
+### Sekatan sementara
+
+Lima percubaan gagal dalam tempoh 15 minit menyekat e-mel itu selama 15
+minit. Nilai ini boleh diubah dalam `tetapan` → `sekatan_log_masuk`.
+
+- Semakan dibuat **di pelayan**, dalam Edge Function `log-masuk`, sebelum
+  kata laluan diuji — jadi kata laluan yang betul pun ditolak semasa
+  disekat.
+- Log masuk yang berjaya memadam kiraan gagal.
+- Mesej ralat tidak pernah menyatakan sama ada e-mel itu wujud.
+- Jadual `cubaan_masuk` hanya boleh dibaca oleh peranan perkhidmatan.
+
+Pentadbir **tidak** boleh melihat atau menetapkan kata laluan sesiapa.
+Jika akaun perlu dihentikan, nyahaktifkannya dalam Urus Pegawai — akaun
+yang dinyahaktifkan ditolak sebelum kata laluan diminta.
+
+---
+
+## 12. Identiti Korporat
 
 Reka bentuk mengikut kelaziman portal sektor awam: bar utiliti (tarikh,
 saiz teks, kontras tinggi), kepala jabatan, navigasi biru tua dengan
@@ -305,9 +371,10 @@ aksen emas, jejak halaman, dan kaki laman korporat.
 
 ---
 
-## 12. Had Yang Diketahui
+## 13. Had Yang Diketahui
 
-- **Google OIDC DELIMa dimatikan.** Log masuk menggunakan OTP e-mel.
+- **Google OIDC DELIMa dimatikan.** Log masuk menggunakan kata laluan,
+  dengan OTP e-mel bagi log masuk pertama dan tetapan semula.
   Hidupkan dalam `supabase/config.toml` apabila Client ID diperoleh, dan
   hadkan domain di peringkat penyedia identiti (`hd=moe-dl.edu.my`).
 - **Notifikasi e-mel dan peringatan tarikh tutup belum dibina.** Ini

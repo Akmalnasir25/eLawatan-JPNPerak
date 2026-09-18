@@ -55,3 +55,56 @@ export function domainDibenarkan(): string[] {
     .map((d) => d.trim().toLowerCase())
     .filter(Boolean)
 }
+
+/** Klien anon tanpa sesi — untuk log masuk kata laluan di sisi pelayan. */
+export function klienAnon(): SupabaseClient {
+  return createClient(URL_SUPABASE, KUNCI_ANON, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+}
+
+/**
+ * Dasar kata laluan: sekurang-kurangnya 12 aksara dan tidak pernah bocor.
+ * Semakan kebocoran menggunakan API julat HaveIBeenPwned — hanya lima
+ * aksara pertama cincangan SHA-1 dihantar, tidak pernah kata laluan.
+ */
+export const PANJANG_KATA_LALUAN = 12
+
+export async function semakKataLaluan(
+  kataLaluan: string,
+  emel: string,
+): Promise<string | null> {
+  const k = kataLaluan ?? ''
+  if (k.length < PANJANG_KATA_LALUAN) {
+    return `Kata laluan mesti sekurang-kurangnya ${PANJANG_KATA_LALUAN} aksara.`
+  }
+  if (k.trim().length < PANJANG_KATA_LALUAN) {
+    return 'Kata laluan tidak boleh terdiri daripada ruang kosong.'
+  }
+  if (k.toLowerCase().includes(emel.split('@')[0].toLowerCase())) {
+    return 'Kata laluan tidak boleh mengandungi nama e-mel anda.'
+  }
+
+  try {
+    const bait = new TextEncoder().encode(k)
+    const cincang = [...new Uint8Array(await crypto.subtle.digest('SHA-1', bait))]
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase()
+    const res = await fetch(`https://api.pwnedpasswords.com/range/${cincang.slice(0, 5)}`, {
+      headers: { 'Add-Padding': 'true' },
+    })
+    if (res.ok) {
+      const ekor = cincang.slice(5)
+      for (const baris of (await res.text()).split('\n')) {
+        const [suf, kira] = baris.trim().split(':')
+        if (suf === ekor && Number(kira) > 0) {
+          return 'Kata laluan ini pernah bocor dalam kebocoran data awam. Sila pilih yang lain.'
+        }
+      }
+    }
+  } catch {
+    // Perkhidmatan semakan tidak dapat dihubungi — panjang minimum tetap dikuatkuasakan.
+  }
+  return null
+}

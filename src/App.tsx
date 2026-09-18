@@ -16,6 +16,7 @@ import { Laporan } from '@/halaman/Laporan'
 import { Pentadbir } from '@/halaman/Pentadbir'
 import { SahQr } from '@/halaman/SahQr'
 import { Profil } from '@/halaman/Profil'
+import { UrusPegawai } from '@/halaman/UrusPegawai'
 import { CetakLampiranA } from '@/cetak/LampiranA'
 import { CetakSenaraiSemak } from '@/cetak/SenaraiSemak'
 import { CetakSuratKelulusan } from '@/cetak/SuratKelulusan'
@@ -122,6 +123,14 @@ export function App() {
       <Route
         path="/profil"
         element={<Lindung><Rangka><Profil /></Rangka></Lindung>}
+      />
+      <Route
+        path="/pegawai"
+        element={
+          <Lindung peranan={['sekolah', 'ppd_pegawai', 'ppd_ketua', 'jpn_pegawai', 'jpn_pengarah', 'admin']}>
+            <Rangka><UrusPegawai /></Rangka>
+          </Lindung>
+        }
       />
       <Route
         path="/pentadbir"

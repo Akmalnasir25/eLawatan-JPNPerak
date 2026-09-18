@@ -1,8 +1,37 @@
 # Nota Sambung Kerja
 
-Kemas kini terakhir: 17 September 2026.
+Kemas kini terakhir: 18 September 2026.
 Baca `README.md` untuk cara pasang; fail ini hanya menyenaraikan
 **apa yang tinggal**.
+
+## Akaun pegawai, kata laluan dan sekatan (migrasi 11)
+
+- **Urus Pegawai** pada bar navigasi: pendaftar melihat akaun dalam skopnya
+  sahaja, mendaftarkan pegawai penyemak tanpa had bilangan, dan
+  menyahaktifkan akaun. `daftar_pegawai()` memaksa kod skop daripada akaun
+  pendaftar; hanya pentadbir boleh menaipnya sendiri.
+- **Log masuk kali pertama**: e-mel → OTP → cipta kata laluan → terus masuk.
+  Log masuk seterusnya menggunakan kata laluan; *Lupa kata laluan*
+  mengulangi laluan OTP. Akaun lama yang dahulunya OTP sahaja diarahkan
+  mencipta kata laluan pada log masuk berikutnya.
+- **Sekatan sementara**: 5 percubaan gagal dalam 15 minit menyekat e-mel
+  selama 15 minit, disemak dalam Edge Function `log-masuk` sebelum kata
+  laluan diuji, jadi kata laluan betul pun ditolak semasa disekat.
+  Nilai dalam `tetapan` → `sekatan_log_masuk`. Jadual `cubaan_masuk`
+  mempunyai RLS hidup tanpa sebarang dasar — peranan perkhidmatan sahaja.
+- **Kata laluan**: minimum 12 aksara, tidak boleh mengandungi nama e-mel,
+  dan disemak terhadap Have I Been Pwned secara k-anonymity (hanya lima
+  aksara cincangan SHA-1 dihantar). Pentadbir tidak pernah boleh melihat
+  atau menetapkan kata laluan sesiapa — `tetap-kata-laluan` hanya menyentuh
+  pemilik token.
+- **Tandatangan Guru Besar dan cop kini milik `sekolah`**, bukan akaun
+  individu, supaya pengguna sekolah kedua mewarisi imej yang sama.
+- 109/109 ujian Postgres lulus (19 ujian baharu), tujuh Edge Function lulus
+  `deno check`, dan aliran penuh disahkan dalam Chrome tanpa kepala:
+  daftar → OTP → cipta kata laluan → log masuk → 5 kali gagal → disekat →
+  lupa kata laluan → akaun dinyahaktifkan ditolak.
+
+---
 
 ## Kemas kini Semua Permohonan — Tarikh Lawatan
 
@@ -27,8 +56,8 @@ Baca `README.md` untuk cara pasang; fail ini hanya menyenaraikan
 
 | Lapisan | Keadaan |
 |---|---|
-| Skema, fungsi, RLS, data rujukan | **Dijalankan atas Postgres 18 sebenar** (PGlite) — 57 ujian aliran lulus |
-| Edge Functions (5) | Lulus `deno check`; tandatangan R2 lulus 4 ujian luar talian |
+| Skema, fungsi, RLS, data rujukan | **Dijalankan atas Postgres 18 sebenar** (PGlite) — 109 ujian lulus |
+| Edge Functions (7) | Lulus `deno check`; tandatangan R2 lulus 4 ujian luar talian |
 | Antara muka React penuh | `tsc` lulus, `vite build` lulus |
 | Cetakan, panel pentadbir, laporan, pengesahan QR | Siap |
 | Profil, tandatangan digital & cop rasmi (migrasi 5) | Diuji dalam pelayar: muat naik, SVG ditolak, cetakan F/G/penyemak/surat/senarai semak, pembekuan selepas imej dibuang, naik taraf pangkalan demo lama |
@@ -66,9 +95,9 @@ Jalankan semua semakan: `npm run ujian`
    paling mungkin gagal ialah tetapan CORS bucket — lihat
    `infra/r2-cors.json`.
 
-3. **Ujian hujung-ke-hujung dalam pelayar.** Log masuk sebagai
-   `aba1234@moe-dl.edu.my`, isi borang enam langkah, hantar, kemudian
-   luluskan sebagai `ppd.ku.pegawai@moe.gov.my` → `ppd.ku.ketua@moe.gov.my`.
+3. **Hantar e-mel sebenar kepada pegawai yang baru didaftarkan.**
+   Sekarang pendaftar perlu memberitahu mereka secara manual bahawa akaun
+   sudah dibuka. Notifikasi automatik tergolong dalam Fasa 4 di bawah.
 
 4. **Notifikasi e-mel dan peringatan tarikh tutup** — Fasa 4 blueprint,
    belum disentuh.
@@ -88,6 +117,11 @@ Jalankan semua semakan: `npm run ujian`
 - **Pendaftaran dan log masuk berkongsi satu skrin.** Aliran padanan
   senarai + OTP dalam spesifikasi sudah merangkumi kedua-duanya;
   `/daftar` hanya mengalih ke `/masuk`.
+- **Log masuk kata laluan melalui Edge Function, bukan terus dari pelayar.**
+  Jika pelayar memanggil `signInWithPassword` sendiri, sekatan boleh
+  dipintas dengan hanya tidak memanggil fungsi kiraan. `log-masuk`
+  menyemak sekatan, mengesahkan kata laluan, merekod percubaan, kemudian
+  memulangkan sesi — semuanya di pelayan.
 - **Peranan diberi melalui pencetus `handle_pengguna_baharu`.** Pegawai
   yang didaftarkan pentadbir dipautkan pada log masuk pertama; e-mel yang
   sepadan senarai sekolah menjadi akaun sekolah secara automatik; e-mel

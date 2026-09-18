@@ -40,7 +40,7 @@ export function Profil() {
 
   useEffect(() => {
     void muatImej()
-  }, [muatImej, g.kunci_tandatangan, g.kunci_cop])
+  }, [muatImej, g.kunci_tandatangan, g.kunci_cop, sekolah?.kunci_tandatangan_gb, sekolah?.kunci_cop])
 
   async function simpan(e: React.FormEvent) {
     e.preventDefault()
@@ -63,8 +63,12 @@ export function Profil() {
     }
   }
 
-  const urlTtd = g.kunci_tandatangan ? imej[g.kunci_tandatangan] : undefined
-  const urlCop = g.kunci_cop ? imej[g.kunci_cop] : undefined
+  // Bagi akaun sekolah, tandatangan Guru Besar dan cop disimpan pada rekod
+  // sekolah supaya semua pengguna sekolah berkongsi imej yang sama.
+  const kunciTtd = adalahSekolah ? (sekolah?.kunci_tandatangan_gb ?? null) : g.kunci_tandatangan
+  const kunciCop = adalahSekolah ? (sekolah?.kunci_cop ?? null) : g.kunci_cop
+  const urlTtd = kunciTtd ? imej[kunciTtd] : undefined
+  const urlCop = kunciCop ? imej[kunciCop] : undefined
   const namaPenandatangan = adalahSekolah ? namaGb : nama
   const jawatanPenandatangan = adalahSekolah
     ? `Guru Besar / Pengetua, ${sekolah?.nama ?? ''}`
@@ -207,14 +211,14 @@ export function Profil() {
                 jenis="tandatangan"
                 tajuk={label.tandatangan}
                 url={urlTtd}
-                ada={!!g.kunci_tandatangan}
+                ada={!!kunciTtd}
                 selesai={muatSemula}
               />
               <PetakImej
                 jenis="cop"
                 tajuk={label.cop}
                 url={urlCop}
-                ada={!!g.kunci_cop}
+                ada={!!kunciCop}
                 selesai={muatSemula}
               />
             </div>

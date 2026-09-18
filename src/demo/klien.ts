@@ -310,6 +310,20 @@ const auth = {
     tetapkanSesi(null, 'SIGNED_OUT')
     return { error: null }
   },
+
+  /** Memasang sesi yang dipulangkan oleh tiruan Edge Function log-masuk. */
+  async setSession({ access_token }: { access_token: string; refresh_token: string }) {
+    const id = access_token.replace(/^demo\./, '')
+    const { sebagaiPelayan } = await enjin()
+    const r = await sebagaiPelayan((tx) =>
+      tx.query<{ id: string; email: string }>('select id, email from auth.users where id = $1', [id]),
+    )
+    const p = r.rows[0]
+    if (!p) return { data: { session: null }, error: { message: 'Sesi tidak sah' } }
+    const sesi: Sesi = { access_token, user: { id: p.id, email: p.email } }
+    tetapkanSesi(sesi, 'SIGNED_IN')
+    return { data: { session: sesi, user: sesi.user }, error: null }
+  },
 }
 
 async function logMasukTerus(email: string): Promise<Sesi> {
@@ -346,6 +360,40 @@ const DOMAIN = (import.meta.env.VITE_DOMAIN_DIBENARKAN ?? 'moe-dl.edu.my,moe.gov
   .split(',')
   .map((d: string) => d.trim().toLowerCase())
 
+type Sekatan = {
+  disekat: boolean
+  cubaan_gagal: number
+  baki_cubaan: number
+  saat_lagi: number
+  had: number
+}
+
+/** Cincangan ringkas untuk demo sahaja; Supabase sebenar menggunakan bcrypt. */
+async function cincangKataLaluan(kata: string, garam: string): Promise<string> {
+  const bait = new TextEncoder().encode(`${garam}:${kata}`)
+  const c = await crypto.subtle.digest('SHA-256', bait)
+  return [...new Uint8Array(c)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+// Mod demo tiada capaian ke perkhidmatan semakan kebocoran, jadi hanya
+// senarai pendek kata laluan lazim disekat di sini.
+const KATA_LALUAN_LAZIM = [
+  'kata laluan', 'katalaluan123', 'password1234', '123456789012',
+  'qwertyuiop12', 'abcd12345678', 'adminadmin12',
+]
+
+function semakKataLaluanDemo(kata: string, emel: string): string | null {
+  if ((kata ?? '').length < 12) return 'Kata laluan mesti sekurang-kurangnya 12 aksara.'
+  if (kata.trim().length < 12) return 'Kata laluan tidak boleh terdiri daripada ruang kosong.'
+  if (kata.toLowerCase().includes(emel.split('@')[0].toLowerCase())) {
+    return 'Kata laluan tidak boleh mengandungi nama e-mel anda.'
+  }
+  if (KATA_LALUAN_LAZIM.includes(kata.toLowerCase())) {
+    return 'Kata laluan ini pernah bocor dalam kebocoran data awam. Sila pilih yang lain.'
+  }
+  return null
+}
+
 // URL blob dicache supaya imej yang sama tidak dicipta berulang kali.
 const cacheImej = new Map<string, string>()
 
@@ -378,20 +426,35 @@ const fungsi: Record<string, (b: any) => Promise<unknown>> = {
     return sebagaiPelayan(async (tx) => {
       const g = (
         await tx.query<any>(
-          'select nama, peranan, kod_skop, jawatan, user_id, aktif from pegawai where lower(emel) = $1',
+          `select nama, peranan, kod_skop, jawatan, user_id, aktif, kata_laluan_ditetapkan
+             from pegawai where lower(emel) = $1`,
           [bersih],
         )
       ).rows[0]
-      if (g?.user_id) {
-        return g.aktif
-          ? { status: 'SUDAH_BERDAFTAR', mesej: 'E-mel ini sudah berdaftar. Sila log masuk terus.', peranan: g.peranan }
-          : { status: 'AKAUN_TIDAK_AKTIF', mesej: 'Akaun ini telah dinyahaktifkan. Sila hubungi pentadbir sistem.' }
-      }
       if (g) {
+        if (!g.aktif) {
+          return {
+            status: 'AKAUN_TIDAK_AKTIF',
+            mesej: 'Akaun ini telah dinyahaktifkan. Sila hubungi pentadbir sistem.',
+          }
+        }
+        const butiran = { nama: g.nama, peranan: g.peranan, jawatan: g.jawatan, kod_skop: g.kod_skop }
+        if (g.kata_laluan_ditetapkan) {
+          const s = await tx.query<{ s: Sekatan }>('select status_sekatan($1) s', [bersih])
+          return {
+            status: 'ADA_KATA_LALUAN',
+            mesej: 'Sila masukkan kata laluan anda.',
+            pegawai: butiran,
+            sekatan: s.rows[0].s,
+          }
+        }
         return {
-          status: 'PEGAWAI_MENUNGGU',
-          mesej: 'Akaun pegawai dijumpai. Kod pengesahan akan dihantar.',
-          pegawai: { nama: g.nama, peranan: g.peranan, jawatan: g.jawatan, kod_skop: g.kod_skop },
+          status: 'PERLU_KATA_LALUAN',
+          mesej: g.user_id
+            ? 'Sistem kini menggunakan kata laluan. Sila cipta kata laluan anda.'
+            : 'Akaun anda telah didaftarkan. Sila cipta kata laluan untuk kali pertama.',
+          pegawai: butiran,
+          pernah_masuk: !!g.user_id,
         }
       }
       const s = (
@@ -467,6 +530,82 @@ const fungsi: Record<string, (b: any) => Promise<unknown>> = {
     })
   },
 
+  async 'log-masuk'({ emel, kata_laluan }: { emel: string; kata_laluan: string }) {
+    const { sebagaiPelayan } = await enjin()
+    const bersih = String(emel).trim().toLowerCase()
+
+    const sekatan = await sebagaiPelayan((tx) =>
+      tx.query<{ s: Sekatan }>('select status_sekatan($1) s', [bersih]),
+    )
+    const s = sekatan.rows[0].s
+    if (s.disekat) {
+      return {
+        ralat: `Akaun disekat sementara selepas ${s.had} percubaan gagal. Cuba lagi dalam ${Math.ceil(s.saat_lagi / 60)} minit.`,
+        disekat: true,
+        saat_lagi: s.saat_lagi,
+      }
+    }
+
+    const cincang = await cincangKataLaluan(kata_laluan, bersih)
+    const pengguna = await sebagaiPelayan((tx) =>
+      tx.query<{ id: string; kata_laluan: string | null; aktif: boolean | null }>(
+        `select u.id, u.kata_laluan, g.aktif
+           from auth.users u left join pegawai g on g.user_id = u.id
+          where lower(u.email) = $1`,
+        [bersih],
+      ),
+    )
+    const p = pengguna.rows[0]
+
+    if (!p || !p.kata_laluan || p.kata_laluan !== cincang) {
+      await sebagaiPelayan((tx) => tx.query('select rekod_cubaan($1, false, null)', [bersih]))
+      const selepas = await sebagaiPelayan((tx) =>
+        tx.query<{ s: Sekatan }>('select status_sekatan($1) s', [bersih]),
+      )
+      const t = selepas.rows[0].s
+      return t.disekat
+        ? {
+            ralat: `Akaun disekat sementara selepas ${t.had} percubaan gagal. Cuba lagi dalam ${Math.ceil(t.saat_lagi / 60)} minit.`,
+            disekat: true,
+            saat_lagi: t.saat_lagi,
+          }
+        : { ralat: 'E-mel atau kata laluan tidak betul.', baki_cubaan: t.baki_cubaan }
+    }
+
+    if (p.aktif === false) {
+      return { ralat: 'Akaun ini telah dinyahaktifkan. Sila hubungi pentadbir sistem.' }
+    }
+
+    await sebagaiPelayan((tx) => tx.query('select rekod_cubaan($1, true, null)', [bersih]))
+    return { sesi: { access_token: `demo.${p.id}`, refresh_token: p.id } }
+  },
+
+  async 'tetap-kata-laluan'({ kata_laluan }: { kata_laluan: string }) {
+    const sesi = sesiSemasa()
+    if (!sesi) return { ralat: 'Tidak dibenarkan.' }
+
+    const masalah = semakKataLaluanDemo(kata_laluan, sesi.user.email)
+    if (masalah) return { ralat: masalah }
+
+    const cincang = await cincangKataLaluan(kata_laluan, sesi.user.email)
+    const { sebagaiPelayan } = await enjin()
+    await sebagaiPelayan(async (tx) => {
+      await tx.query('update auth.users set kata_laluan = $1 where id = $2', [cincang, sesi.user.id])
+      await tx.query(
+        `update pegawai set kata_laluan_ditetapkan = true, log_masuk_terakhir = now()
+          where user_id = $1`,
+        [sesi.user.id],
+      )
+      await tx.query(
+        `insert into log_audit (pegawai_id, emel_pegawai, peristiwa)
+         select id, emel, 'KATA_LALUAN_DITETAPKAN' from pegawai where user_id = $1`,
+        [sesi.user.id],
+      )
+      await tx.query('select rekod_cubaan($1, true, null)', [sesi.user.email])
+    })
+    return { berjaya: true }
+  },
+
   async 'r2-tandatangan'(
     b:
       | { tujuan: 'naik'; jenis: string; jenis_mime: string; saiz: number }
@@ -492,7 +631,10 @@ const fungsi: Record<string, (b: any) => Promise<unknown>> = {
     if (b.tujuan === 'profil') {
       const r = await sebagaiPelayan((tx) =>
         tx.query<{ t: string | null; c: string | null }>(
-          'select kunci_tandatangan t, kunci_cop c from pegawai where id = $1',
+          `select case when g.peranan = 'sekolah' then s.kunci_tandatangan_gb else g.kunci_tandatangan end t,
+                  case when g.peranan = 'sekolah' then s.kunci_cop else g.kunci_cop end c
+             from pegawai g left join sekolah s on s.kod_sekolah = g.kod_skop
+            where g.id = $1`,
           [g.id],
         ),
       )

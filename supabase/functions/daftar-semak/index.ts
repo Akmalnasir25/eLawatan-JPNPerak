@@ -59,35 +59,45 @@ Deno.serve(async (req) => {
     // Langkah 3 — semak sama ada sudah berdaftar
     const { data: pegawai } = await db
       .from('pegawai')
-      .select('nama, peranan, kod_skop, jawatan, user_id, aktif')
+      .select('nama, peranan, kod_skop, jawatan, user_id, aktif, kata_laluan_ditetapkan')
       .ilike('emel', bersih)
       .maybeSingle()
 
-    if (pegawai && pegawai.user_id) {
+    if (pegawai) {
       if (!pegawai.aktif) {
         return jawapan({
           status: 'AKAUN_TIDAK_AKTIF',
           mesej: 'Akaun ini telah dinyahaktifkan. Sila hubungi pentadbir sistem.',
         })
       }
-      return jawapan({
-        status: 'SUDAH_BERDAFTAR',
-        mesej: 'E-mel ini sudah berdaftar. Sila log masuk terus.',
-        peranan: pegawai.peranan,
-      })
-    }
 
-    // Pegawai yang telah didaftarkan pentadbir tetapi belum pernah log masuk
-    if (pegawai && !pegawai.user_id) {
+      const butiran = {
+        nama: pegawai.nama,
+        peranan: pegawai.peranan,
+        jawatan: pegawai.jawatan,
+        kod_skop: pegawai.kod_skop,
+      }
+
+      // Kata laluan sudah ditetapkan — terus ke skrin kata laluan.
+      if (pegawai.kata_laluan_ditetapkan) {
+        const { data: sekatan } = await db.rpc('status_sekatan', { p_emel: bersih })
+        return jawapan({
+          status: 'ADA_KATA_LALUAN',
+          mesej: 'Sila masukkan kata laluan anda.',
+          pegawai: butiran,
+          sekatan,
+        })
+      }
+
+      // Akaun baharu, atau akaun lama yang masih menggunakan OTP:
+      // kedua-duanya perlu mencipta kata laluan melalui kod pengesahan.
       return jawapan({
-        status: 'PEGAWAI_MENUNGGU',
-        mesej: 'Akaun pegawai dijumpai. Kod pengesahan akan dihantar.',
-        pegawai: {
-          nama: pegawai.nama,
-          peranan: pegawai.peranan,
-          jawatan: pegawai.jawatan,
-          kod_skop: pegawai.kod_skop,
-        },
+        status: 'PERLU_KATA_LALUAN',
+        mesej: pegawai.user_id
+          ? 'Sistem kini menggunakan kata laluan. Sila cipta kata laluan anda.'
+          : 'Akaun anda telah didaftarkan. Sila cipta kata laluan untuk kali pertama.',
+        pegawai: butiran,
+        pernah_masuk: !!pegawai.user_id,
       })
     }
 

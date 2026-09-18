@@ -820,7 +820,12 @@ describe('Profil, tandatangan dan cop', () => {
 describe('Identiti korporat (migrasi 6)', () => {
   test('maklumat jabatan dan slogan boleh dibaca tanpa log masuk; tetapan lain tidak', async () => {
     const r = await sebagai(db, null, () => db.query('select kunci from tetapan order by kunci'))
-    assert.deepEqual(r.rows.map((x) => x.kunci), ['maklumat_jpn', 'slogan_surat'])
+    // domain_dibenarkan dibaca oleh skrin log masuk sebelum log masuk (migrasi 11)
+    assert.deepEqual(r.rows.map((x) => x.kunci), [
+      'domain_dibenarkan',
+      'maklumat_jpn',
+      'slogan_surat',
+    ])
   })
 
   test('slogan surat boleh dikemas kini pentadbir sahaja', async () => {

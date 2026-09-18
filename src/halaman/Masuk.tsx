@@ -1,59 +1,59 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { DOMAIN_DIBENARKAN, panggilFungsi, supabase } from '@/lib/supabase'
-import { gunaAuth } from '@/lib/auth'
-import { LABEL_PERANAN } from '@/lib/istilah'
-import { Berputar, Mesej } from '@/komponen/ui'
-import { RangkaAwam } from '@/komponen/Rangka'
 import {
   ArrowRight,
   BadgeCheck,
   FileSignature,
   KeyRound,
+  Lock,
   Mail,
   Route,
   ShieldCheck,
 } from 'lucide-react'
-import type { Peranan } from '@/lib/jenis'
+import { supabase } from '@/lib/supabase'
+import { gunaAuth } from '@/lib/auth'
+import {
+  kekuatanKataLaluan,
+  logMasukKataLaluan,
+  PANJANG_KATA_LALUAN,
+  semakEmel as semakEmelApi,
+  tetapKataLaluan,
+  type SemakanEmel,
+} from '@/lib/akaun'
+import { LABEL_PERANAN } from '@/lib/istilah'
+import { kelas } from '@/lib/guna'
+import { Berputar, Mesej } from '@/komponen/ui'
+import { RangkaAwam } from '@/komponen/Rangka'
 
-type Semakan = {
-  status:
-    | 'DOMAIN_TIDAK_SAH'
-    | 'SUDAH_BERDAFTAR'
-    | 'AKAUN_TIDAK_AKTIF'
-    | 'PEGAWAI_MENUNGGU'
-    | 'TIADA_DALAM_SENARAI'
-    | 'SEKOLAH_TIDAK_AKTIF'
-    | 'PADANAN_DIJUMPAI'
-  mesej: string
-  peranan?: Peranan
-  pegawai?: { nama: string; peranan: Peranan; jawatan: string | null; kod_skop: string | null }
-  sekolah?: {
-    kod_sekolah: string
-    nama: string
-    jenis: string
-    kod_ppd: string
-    nama_ppd: string
-    kod_jpn: string
-    negeri: string
-  }
+type Fasa = 'emel' | 'padanan' | 'otp' | 'cipta' | 'kata_laluan'
+type TujuanOtp = 'cipta' | 'set-semula'
+
+const TAJUK: Record<Fasa, { tajuk: string; nota: string; ikon: typeof Mail }> = {
+  emel: { tajuk: 'Log Masuk', nota: 'Sekolah dan pegawai menggunakan pintu yang sama', ikon: Mail },
+  padanan: { tajuk: 'Sahkan Maklumat Sekolah', nota: 'Padanan daripada senarai rasmi JPN', ikon: BadgeCheck },
+  otp: { tajuk: 'Kod Pengesahan', nota: 'Kod dihantar ke e-mel anda', ikon: KeyRound },
+  cipta: { tajuk: 'Cipta Kata Laluan', nota: 'Digunakan untuk log masuk seterusnya', ikon: Lock },
+  kata_laluan: { tajuk: 'Kata Laluan', nota: 'Masukkan kata laluan akaun anda', ikon: Lock },
 }
 
-type Fasa = 'emel' | 'padanan' | 'otp'
-
 export function Masuk() {
-  const { sesi, memuat } = gunaAuth()
+  const { sesi, memuat, muatSemula } = gunaAuth()
   const navigate = useNavigate()
   const lokasi = useLocation()
 
   const [fasa, setFasa] = useState<Fasa>('emel')
+  const [tujuanOtp, setTujuanOtp] = useState<TujuanOtp>('cipta')
   const [emel, setEmel] = useState('')
   const [kod, setKod] = useState('')
-  const [semakan, setSemakan] = useState<Semakan | null>(null)
+  const [kataLaluan, setKataLaluan] = useState('')
+  const [kataLaluan2, setKataLaluan2] = useState('')
+  const [semakan, setSemakan] = useState<SemakanEmel | null>(null)
   const [ralat, setRalat] = useState<string | null>(null)
+  const [nota, setNota] = useState<string | null>(null)
   const [sibuk, setSibuk] = useState(false)
   const [kiraSemula, setKiraSemula] = useState(0)
   const kodRef = useRef<HTMLInputElement>(null)
+  const kataRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (kiraSemula <= 0) return
@@ -63,40 +63,49 @@ export function Masuk() {
 
   useEffect(() => {
     if (fasa === 'otp') kodRef.current?.focus()
+    if (fasa === 'kata_laluan' || fasa === 'cipta') kataRef.current?.focus()
   }, [fasa])
 
-  if (!memuat && sesi) {
+  if (!memuat && sesi && fasa !== 'cipta') {
     const dari = (lokasi.state as { dari?: string } | null)?.dari ?? '/'
     return <Navigate to={dari} replace />
   }
 
-  async function semakEmel(e: React.FormEvent) {
+  function semula(f: Fasa) {
+    setFasa(f)
+    setRalat(null)
+    setNota(null)
+  }
+
+  // ── Langkah 1: e-mel menentukan laluan ──────────────────────────
+  async function hantarEmel(e: React.FormEvent) {
     e.preventDefault()
     setRalat(null)
+    setNota(null)
     setSibuk(true)
     try {
-      const hasil = await panggilFungsi<Semakan>('daftar-semak', {
-        emel: emel.trim().toLowerCase(),
-      })
+      const hasil = await semakEmelApi(emel)
       setSemakan(hasil)
 
-      if (
-        hasil.status === 'DOMAIN_TIDAK_SAH' ||
-        hasil.status === 'TIADA_DALAM_SENARAI' ||
-        hasil.status === 'AKAUN_TIDAK_AKTIF' ||
-        hasil.status === 'SEKOLAH_TIDAK_AKTIF'
-      ) {
-        setRalat(hasil.mesej)
-        return
+      switch (hasil.status) {
+        case 'ADA_KATA_LALUAN':
+          if (hasil.sekatan?.disekat) {
+            setRalat(
+              `Akaun disekat sementara. Cuba lagi dalam ${Math.ceil(hasil.sekatan.saat_lagi / 60)} minit.`,
+            )
+          }
+          semula('kata_laluan')
+          break
+        case 'PERLU_KATA_LALUAN':
+          setNota(hasil.mesej)
+          await hantarKod(!hasil.pernah_masuk, 'cipta')
+          break
+        case 'PADANAN_DIJUMPAI':
+          semula('padanan')
+          break
+        default:
+          setRalat(hasil.mesej)
       }
-
-      if (hasil.status === 'PADANAN_DIJUMPAI') {
-        setFasa('padanan')
-        return
-      }
-
-      // Pegawai berdaftar atau menunggu log masuk pertama — hantar kod terus
-      await hantarKod(hasil.status !== 'SUDAH_BERDAFTAR')
     } catch (err) {
       setRalat(err instanceof Error ? err.message : 'Ralat tidak dijangka.')
     } finally {
@@ -104,7 +113,7 @@ export function Masuk() {
     }
   }
 
-  async function hantarKod(ciptaPengguna: boolean) {
+  async function hantarKod(ciptaPengguna: boolean, tujuan: TujuanOtp) {
     setSibuk(true)
     setRalat(null)
     const { error } = await supabase.auth.signInWithOtp({
@@ -114,16 +123,19 @@ export function Masuk() {
     setSibuk(false)
     if (error) {
       setRalat(
-        error.message.includes('rate')
+        error.message.toLowerCase().includes('rate')
           ? 'Terlalu kerap meminta kod. Sila tunggu seminit.'
           : error.message,
       )
       return
     }
+    setTujuanOtp(tujuan)
+    setKod('')
     setFasa('otp')
     setKiraSemula(60)
   }
 
+  // ── Langkah 2: sahkan OTP ───────────────────────────────────────
   async function sahkanKod(e: React.FormEvent) {
     e.preventDefault()
     setRalat(null)
@@ -135,28 +147,63 @@ export function Masuk() {
     })
     setSibuk(false)
     if (error) {
-      setRalat('Kod OTP tidak sepadan. Sila cuba lagi.')
+      setRalat('Kod pengesahan tidak sepadan atau telah luput. Sila cuba lagi.')
       setKod('')
       return
     }
-    navigate('/', { replace: true })
+    setKataLaluan('')
+    setKataLaluan2('')
+    semula('cipta')
   }
 
-  const tajukKad =
-    fasa === 'emel' ? 'Log Masuk' : fasa === 'padanan' ? 'Sahkan Maklumat Sekolah' : 'Kod Pengesahan'
-  const ikonKad = fasa === 'emel' ? Mail : fasa === 'padanan' ? BadgeCheck : KeyRound
-  const IkonKad = ikonKad
+  // ── Langkah 3: cipta kata laluan ────────────────────────────────
+  async function simpanKataLaluan(e: React.FormEvent) {
+    e.preventDefault()
+    if (kataLaluan !== kataLaluan2) {
+      setRalat('Kedua-dua kata laluan tidak sama.')
+      return
+    }
+    setRalat(null)
+    setSibuk(true)
+    try {
+      await tetapKataLaluan(kataLaluan)
+      await muatSemula()
+      navigate('/', { replace: true })
+    } catch (err) {
+      setRalat(err instanceof Error ? err.message : 'Gagal menyimpan kata laluan.')
+    } finally {
+      setSibuk(false)
+    }
+  }
+
+  // ── Log masuk dengan kata laluan ────────────────────────────────
+  async function masuk(e: React.FormEvent) {
+    e.preventDefault()
+    setRalat(null)
+    setSibuk(true)
+    try {
+      await logMasukKataLaluan(emel, kataLaluan)
+      navigate('/', { replace: true })
+    } catch (err) {
+      setRalat(err instanceof Error ? err.message : 'Log masuk gagal.')
+      setKataLaluan('')
+    } finally {
+      setSibuk(false)
+    }
+  }
+
+  const t = TAJUK[fasa]
+  const IkonKad = t.ikon
+  const kekuatan = kekuatanKataLaluan(kataLaluan)
 
   return (
     <RangkaAwam>
       <div className="relative overflow-hidden bg-jata-700">
-        {/* Corak latar halus */}
         <div
           aria-hidden
           className="absolute inset-0 opacity-[0.07]"
           style={{
-            backgroundImage:
-              'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)',
+            backgroundImage: 'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)',
             backgroundSize: '22px 22px',
           }}
         />
@@ -206,177 +253,238 @@ export function Masuk() {
                   <IkonKad className="h-5 w-5" aria-hidden />
                 </span>
                 <div>
-                  <h2 className="text-lg font-bold text-jata-900">{tajukKad}</h2>
-                  <p className="text-xs text-slate-500">
-                    {fasa === 'emel'
-                      ? 'Sekolah dan pegawai menggunakan pintu yang sama'
-                      : fasa === 'padanan'
-                        ? 'Langkah 2 daripada 3'
-                        : 'Langkah 3 daripada 3'}
-                  </p>
+                  <h2 className="text-lg font-bold text-jata-900">{t.tajuk}</h2>
+                  <p className="text-xs text-slate-500">{t.nota}</p>
                 </div>
               </div>
-            <div className="space-y-5 px-6 py-6">
-              {ralat && <Mesej jenis="ralat">{ralat}</Mesej>}
 
-              {/* ── Langkah 1: e-mel ─────────────────────────────── */}
-              {fasa === 'emel' && (
-                <form onSubmit={semakEmel} className="space-y-4">
-                  <div>
-                    <label className="label" htmlFor="emel">
-                      E-mel rasmi
-                    </label>
-                    <input
-                      id="emel"
-                      type="email"
-                      required
-                      autoFocus
-                      autoComplete="email"
-                      className="medan"
-                      placeholder={`nama@${DOMAIN_DIBENARKAN[0]}`}
-                      value={emel}
-                      onChange={(e) => setEmel(e.target.value)}
-                    />
-                    <p className="nota">
-                      Hanya domain {DOMAIN_DIBENARKAN.join(' dan ')} diterima.
-                      Bagi sekolah, gunakan e-mel rasmi sekolah — bukan e-mel guru.
-                    </p>
-                  </div>
-                  <button
-                    type="submit"
-                    className="btn-utama w-full py-3"
-                    disabled={sibuk || !emel.includes('@')}
-                  >
-                    {sibuk ? <Berputar /> : null}
-                    Teruskan
-                    {!sibuk && <ArrowRight className="h-4 w-4" aria-hidden />}
-                  </button>
-                </form>
-              )}
+              <div className="space-y-5 px-6 py-6">
+                {ralat && <Mesej jenis="ralat">{ralat}</Mesej>}
+                {nota && !ralat && <Mesej jenis="maklumat">{nota}</Mesej>}
 
-              {/* ── Langkah 5: papar padanan senarai JPN ─────────── */}
-              {fasa === 'padanan' && semakan?.sekolah && (
-                <div className="space-y-4">
-                  <Mesej jenis="maklumat" tajuk="Padanan senarai JPN">
-                    Maklumat ini diambil daripada senarai rasmi JPN dan tidak
-                    boleh diubah oleh sekolah. Hubungi pentadbir sistem jika
-                    terdapat kesilapan.
-                  </Mesej>
-                  <dl className="divide-y divide-slate-100 rounded-lg border border-slate-200 px-4">
-                    {[
-                      ['Nama sekolah', semakan.sekolah.nama],
-                      ['Kod sekolah', semakan.sekolah.kod_sekolah],
-                      ['Daerah', semakan.sekolah.nama_ppd],
-                      ['Negeri', semakan.sekolah.negeri],
-                    ].map(([k, v]) => (
-                      <div key={k} className="flex justify-between gap-4 py-2.5">
-                        <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          {k}
-                        </dt>
-                        <dd className="text-right text-sm font-medium text-slate-800">
-                          {v}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className="btn-kedua flex-1"
-                      onClick={() => {
-                        setFasa('emel')
-                        setSemakan(null)
-                      }}
-                    >
-                      Kembali
+                {/* ── E-mel ─────────────────────────────────── */}
+                {fasa === 'emel' && (
+                  <form onSubmit={hantarEmel} className="space-y-4">
+                    <div>
+                      <label className="label" htmlFor="emel">E-mel rasmi</label>
+                      <input
+                        id="emel"
+                        type="email"
+                        required
+                        autoFocus
+                        autoComplete="username"
+                        className="medan"
+                        placeholder="nama@moe.gov.my"
+                        value={emel}
+                        onChange={(e) => setEmel(e.target.value)}
+                      />
+                      <p className="nota">
+                        Bagi sekolah, gunakan e-mel rasmi sekolah. Pegawai menggunakan
+                        e-mel yang didaftarkan oleh pejabat masing-masing.
+                      </p>
+                    </div>
+                    <button type="submit" className="btn-utama w-full py-3" disabled={sibuk || !emel.includes('@')}>
+                      {sibuk ? <Berputar /> : null}
+                      Teruskan
+                      {!sibuk && <ArrowRight className="h-4 w-4" aria-hidden />}
                     </button>
+                  </form>
+                )}
+
+                {/* ── Padanan sekolah ───────────────────────── */}
+                {fasa === 'padanan' && semakan?.sekolah && (
+                  <div className="space-y-4">
+                    <Mesej jenis="maklumat" tajuk="Padanan senarai JPN">
+                      Maklumat ini diambil daripada senarai rasmi JPN dan tidak boleh
+                      diubah oleh sekolah.
+                    </Mesej>
+                    <dl className="divide-y divide-slate-100 rounded-lg border border-slate-200 px-4">
+                      {[
+                        ['Nama sekolah', semakan.sekolah.nama],
+                        ['Kod sekolah', semakan.sekolah.kod_sekolah],
+                        ['Daerah', semakan.sekolah.nama_ppd],
+                        ['Negeri', semakan.sekolah.negeri],
+                      ].map(([k, v]) => (
+                        <div key={k} className="flex justify-between gap-4 py-2.5">
+                          <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{k}</dt>
+                          <dd className="text-right text-sm font-medium text-slate-800">{v}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <div className="flex gap-2">
+                      <button type="button" className="btn-kedua flex-1" onClick={() => { setSemakan(null); semula('emel') }}>
+                        Kembali
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-utama flex-1"
+                        disabled={sibuk}
+                        onClick={() => hantarKod(true, 'cipta')}
+                      >
+                        {sibuk ? <Berputar /> : null}
+                        Sahkan &amp; Hantar Kod
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Kod pengesahan ────────────────────────── */}
+                {fasa === 'otp' && (
+                  <form onSubmit={sahkanKod} className="space-y-4">
+                    {semakan?.pegawai && (
+                      <Mesej jenis="maklumat" tajuk="Akaun dijumpai">
+                        {semakan.pegawai.nama} — {LABEL_PERANAN[semakan.pegawai.peranan]}
+                        {semakan.pegawai.kod_skop ? ` · ${semakan.pegawai.kod_skop}` : ''}
+                      </Mesej>
+                    )}
+                    <div>
+                      <label className="label" htmlFor="kod">Kod pengesahan 6 digit</label>
+                      <input
+                        id="kod"
+                        ref={kodRef}
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                        pattern="[0-9]{6}"
+                        required
+                        className="medan text-center text-2xl font-semibold tracking-[0.5em]"
+                        value={kod}
+                        onChange={(e) => setKod(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      />
+                      <p className="nota">
+                        Kod dihantar ke <strong>{emel}</strong>. Sah selama 10 minit.
+                        {tujuanOtp === 'set-semula' && ' Selepas ini anda menetapkan kata laluan baharu.'}
+                      </p>
+                    </div>
+                    <button type="submit" className="btn-utama w-full py-3" disabled={sibuk || kod.length !== 6}>
+                      {sibuk ? <Berputar /> : null}
+                      Sahkan Kod
+                    </button>
+                    <div className="flex items-center justify-between text-xs">
+                      <button type="button" className="text-slate-500 hover:text-slate-700" onClick={() => { setKod(''); setSemakan(null); semula('emel') }}>
+                        Tukar e-mel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={kiraSemula > 0 || sibuk}
+                        className="font-semibold text-jata-700 hover:underline disabled:text-slate-400 disabled:no-underline"
+                        onClick={() => hantarKod(!semakan?.pernah_masuk && tujuanOtp === 'cipta', tujuanOtp)}
+                      >
+                        {kiraSemula > 0 ? `Hantar semula dalam ${kiraSemula}s` : 'Hantar semula kod'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* ── Cipta kata laluan ─────────────────────── */}
+                {fasa === 'cipta' && (
+                  <form onSubmit={simpanKataLaluan} className="space-y-4">
+                    <div>
+                      <label className="label" htmlFor="kata1">Kata laluan baharu</label>
+                      <input
+                        id="kata1"
+                        ref={kataRef}
+                        type="password"
+                        autoComplete="new-password"
+                        required
+                        minLength={PANJANG_KATA_LALUAN}
+                        className="medan"
+                        value={kataLaluan}
+                        onChange={(e) => setKataLaluan(e.target.value)}
+                      />
+                      <div className="mt-2 flex gap-1" aria-hidden>
+                        {[1, 2, 3].map((n) => (
+                          <span
+                            key={n}
+                            className={kelas(
+                              'h-1 flex-1 rounded-full transition',
+                              kekuatan.skor >= n
+                                ? kekuatan.skor === 3
+                                  ? 'bg-emerald-500'
+                                  : kekuatan.skor === 2
+                                    ? 'bg-amber-500'
+                                    : 'bg-rose-500'
+                                : 'bg-slate-200',
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <p className="nota">
+                        {kekuatan.label}. Kata laluan yang pernah bocor dalam
+                        kebocoran data awam akan ditolak.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="label" htmlFor="kata2">Ulang kata laluan</label>
+                      <input
+                        id="kata2"
+                        type="password"
+                        autoComplete="new-password"
+                        required
+                        className="medan"
+                        value={kataLaluan2}
+                        onChange={(e) => setKataLaluan2(e.target.value)}
+                      />
+                    </div>
                     <button
-                      type="button"
-                      className="btn-utama flex-1"
-                      disabled={sibuk}
-                      onClick={() => hantarKod(true)}
+                      type="submit"
+                      className="btn-utama w-full py-3"
+                      disabled={sibuk || kataLaluan.length < PANJANG_KATA_LALUAN || !kataLaluan2}
                     >
                       {sibuk ? <Berputar /> : null}
-                      Sahkan &amp; Hantar Kod
+                      Simpan &amp; Masuk
                     </button>
-                  </div>
-                </div>
-              )}
+                  </form>
+                )}
 
-              {/* ── Langkah 7: masukkan OTP ──────────────────────── */}
-              {fasa === 'otp' && (
-                <form onSubmit={sahkanKod} className="space-y-4">
-                  {semakan?.pegawai && (
-                    <Mesej jenis="maklumat" tajuk="Akaun pegawai dijumpai">
-                      {semakan.pegawai.nama} —{' '}
-                      {LABEL_PERANAN[semakan.pegawai.peranan]}
-                      {semakan.pegawai.kod_skop
-                        ? ` · ${semakan.pegawai.kod_skop}`
-                        : ''}
-                    </Mesej>
-                  )}
-                  <div>
-                    <label className="label" htmlFor="kod">
-                      Kod pengesahan 6 digit
-                    </label>
-                    <input
-                      id="kod"
-                      ref={kodRef}
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      maxLength={6}
-                      pattern="[0-9]{6}"
-                      required
-                      className="medan text-center text-2xl font-semibold tracking-[0.5em]"
-                      value={kod}
-                      onChange={(e) =>
-                        setKod(e.target.value.replace(/\D/g, '').slice(0, 6))
-                      }
-                    />
-                    <p className="nota">
-                      Kod dihantar ke <strong>{emel}</strong>. Sah selama 10 minit.
-                    </p>
-                  </div>
-                  <button
-                    type="submit"
-                    className="btn-utama w-full py-3"
-                    disabled={sibuk || kod.length !== 6}
-                  >
-                    {sibuk ? <Berputar /> : null}
-                    Sahkan &amp; Log Masuk
-                  </button>
-                  <div className="flex items-center justify-between text-xs">
-                    <button
-                      type="button"
-                      className="text-slate-500 hover:text-slate-700"
-                      onClick={() => {
-                        setFasa('emel')
-                        setKod('')
-                        setSemakan(null)
-                      }}
-                    >
-                      Tukar e-mel
+                {/* ── Kata laluan ───────────────────────────── */}
+                {fasa === 'kata_laluan' && (
+                  <form onSubmit={masuk} className="space-y-4">
+                    <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                      <span className="text-slate-500">E-mel</span>{' '}
+                      <strong className="text-jata-900">{emel}</strong>
+                      <button
+                        type="button"
+                        className="ml-2 text-xs font-semibold text-jata-700 hover:underline"
+                        onClick={() => { setKataLaluan(''); setSemakan(null); semula('emel') }}
+                      >
+                        Tukar
+                      </button>
+                    </div>
+                    <div>
+                      <label className="label" htmlFor="kata">Kata laluan</label>
+                      <input
+                        id="kata"
+                        ref={kataRef}
+                        type="password"
+                        autoComplete="current-password"
+                        required
+                        className="medan"
+                        value={kataLaluan}
+                        onChange={(e) => setKataLaluan(e.target.value)}
+                      />
+                    </div>
+                    <button type="submit" className="btn-utama w-full py-3" disabled={sibuk || !kataLaluan}>
+                      {sibuk ? <Berputar /> : null}
+                      Log Masuk
                     </button>
                     <button
                       type="button"
-                      disabled={kiraSemula > 0 || sibuk}
-                      className="font-medium text-jata-600 hover:text-jata-700 disabled:text-slate-400"
-                      onClick={() => hantarKod(semakan?.status !== 'SUDAH_BERDAFTAR')}
+                      className="w-full text-center text-xs font-semibold text-jata-700 hover:underline"
+                      disabled={sibuk}
+                      onClick={() => hantarKod(false, 'set-semula')}
                     >
-                      {kiraSemula > 0
-                        ? `Hantar semula dalam ${kiraSemula}s`
-                        : 'Hantar semula kod'}
+                      Lupa kata laluan? Dapatkan kod pengesahan
                     </button>
-                  </div>
-                </form>
-              )}
-            </div>
+                  </form>
+                )}
+              </div>
 
-            <div className="border-t border-slate-100 bg-slate-50 px-6 py-3 text-[0.7rem] leading-relaxed text-slate-500">
-              Peringkat capaian ditentukan oleh e-mel yang log masuk — pengguna
-              tidak memilih peranan sendiri. Sekolah kali pertama didaftarkan
-              automatik jika e-mel ada dalam senarai JPN.
-            </div>
+              <div className="border-t border-slate-100 bg-slate-50 px-6 py-3 text-[0.7rem] leading-relaxed text-slate-500">
+                Peringkat capaian ditentukan oleh e-mel yang log masuk — pengguna
+                tidak memilih peranan sendiri. Kata laluan hanya diketahui oleh
+                pemiliknya; pentadbir tidak boleh melihat atau menetapkannya.
+              </div>
             </div>
           </div>
         </div>
@@ -384,8 +492,8 @@ export function Masuk() {
 
       <div className="mx-auto grid max-w-7xl gap-4 px-4 py-10 sm:px-6 md:grid-cols-3">
         {[
-          { tajuk: 'Siapa boleh log masuk?', teks: 'E-mel rasmi sekolah (moe-dl.edu.my) dan pegawai KPM (moe.gov.my) yang didaftarkan oleh pentadbir JPN.' },
-          { tajuk: 'Tiada kata laluan', teks: 'Kod pengesahan sekali guna dihantar ke e-mel anda setiap kali log masuk. Kod sah selama 10 minit.' },
+          { tajuk: 'Siapa boleh log masuk?', teks: 'E-mel rasmi sekolah dan pegawai KPM yang didaftarkan oleh pejabat masing-masing.' },
+          { tajuk: 'Log masuk kali pertama', teks: `Kod pengesahan dihantar ke e-mel anda, kemudian anda mencipta kata laluan sendiri (minimum ${PANJANG_KATA_LALUAN} aksara).` },
           { tajuk: 'Semak surat kelulusan', teks: 'Ibu bapa dan pihak luar boleh mengesahkan surat melalui kod QR tanpa log masuk.' },
         ].map((k) => (
           <div key={k.tajuk} className="kad px-5 py-4">

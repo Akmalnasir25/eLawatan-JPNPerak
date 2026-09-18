@@ -71,6 +71,9 @@ async function mula(): Promise<PGlite> {
     })
   }
 
+  // Kata laluan demo disimpan sebagai cincangan dalam auth.users tiruan.
+  await db.exec('alter table auth.users add column if not exists kata_laluan text')
+
   if (baharu) {
     await db.exec(seed)
     await isiContoh(db)
