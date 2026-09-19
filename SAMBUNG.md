@@ -74,6 +74,12 @@ kandungan notis privasi oleh JPN.
   tarikh/pagination. Ujian visual pelayar belum dibuat.
   Cuba dengan refresh demo pada port 5500.
 
+**Checkpoint local selepas restart:** lihat [LOCAL.md](LOCAL.md).
+Supabase local, OTP pelayar, storan private dan aliran API sehingga kelulusan
+PPD/QR telah diuji. Migrasi tambahan membetulkan carian pgcrypto pada Supabase.
+Ujian PGlite 47/47, R2 4/4, semakan jenis fungsi dan build lulus.
+Ujian wizard penuh melalui UI, telefon sebenar dan integrasi cloud masih belum lengkap.
+
 ---
 
 ## Siap dan disahkan

@@ -19,6 +19,7 @@ const TIRUAN_SUPABASE = fs.readFileSync(path.join(akar, 'ujian', 'tiruan-supabas
 
 export async function binaPangkalan() {
   const db = new PGlite({ extensions: { pgcrypto } })
+  await db.exec('create schema extensions; create extension pgcrypto with schema extensions;')
   await db.exec(TIRUAN_SUPABASE)
 
   const fail = fs.readdirSync(dirMigrasi).filter((f) => f.endsWith('.sql')).sort()

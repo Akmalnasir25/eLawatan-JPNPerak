@@ -7,7 +7,7 @@
 
 import { jawapan, kendaliOptions, ralat } from '../_shared/cors.ts'
 import { klienPentadbir, pegawaiSemasa } from '../_shared/supabase.ts'
-import { padamObjek } from '../_shared/r2.ts'
+import { padamObjek } from '../_shared/storan.ts'
 
 Deno.serve(async (req) => {
   const pra = kendaliOptions(req)

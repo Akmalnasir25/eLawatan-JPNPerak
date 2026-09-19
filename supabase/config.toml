@@ -2,14 +2,14 @@ project_id = "elawatan-perak"
 
 [api]
 enabled = true
-port = 54321
+port = 55321
 schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54322
-shadow_port = 54320
+port = 55322
+shadow_port = 55320
 major_version = 15
 
 [db.seed]
@@ -18,11 +18,11 @@ sql_paths = ["./seed.sql"]
 
 [studio]
 enabled = true
-port = 54323
+port = 55323
 
-[inbucket]
+[local_smtp]
 enabled = true
-port = 54324
+port = 55324
 
 [auth]
 enabled = true
@@ -46,7 +46,7 @@ max_frequency = "60s"
 
 [auth.email.template.magic_link]
 subject = "Kod pengesahan eLAWATAN Perak"
-content_path = "./templates/otp.html"
+content_path = "./supabase/templates/otp.html"
 
 # Google OIDC — dimatikan buat masa ini.
 # Hidupkan apabila Client ID DELIMa diperoleh, dan hadkan domain

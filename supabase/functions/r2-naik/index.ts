@@ -8,7 +8,7 @@
 
 import { jawapan, kendaliOptions, ralat } from '../_shared/cors.ts'
 import { klienPentadbir, pegawaiSemasa } from '../_shared/supabase.ts'
-import { binaKunci, presignNaik } from '../_shared/r2.ts'
+import { binaKunci, presignNaik, tempohNaik } from '../_shared/storan.ts'
 
 type Permintaan = {
   permohonan_id: string
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
     const kunci = binaKunci(permohonan_id, jenis_dokumen, nama_fail)
     const url = await presignNaik(kunci, jenis_mime, 900)
 
-    return jawapan({ url, kunci_r2: kunci, tamat_dalam_saat: 900 })
+    return jawapan({ url, kunci_r2: kunci, tamat_dalam_saat: tempohNaik })
   } catch (e) {
     console.error('r2-naik', e)
     return ralat('Ralat pelayan semasa menyediakan pautan muat naik.', 500)

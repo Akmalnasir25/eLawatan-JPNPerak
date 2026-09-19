@@ -8,6 +8,10 @@ Dokumentasi dasar dan pitching kekal dalam `00-INDEKS.md` hingga
 `05-SLAID-PITCHING.md`. Fail ini menerangkan **cara memasang dan
 menjalankan sistem**.
 
+Untuk ujian sepenuhnya pada komputer ini dengan OTP dan storan dokumen
+local, ikut [LOCAL.md](LOCAL.md). Skrip `infra/mula-local.ps1` mengendalikan
+port Windows dan salinan runtime pada pemacu sistem; tiada akaun cloud diperlukan.
+
 ---
 
 ## 1. Susunan Projek
