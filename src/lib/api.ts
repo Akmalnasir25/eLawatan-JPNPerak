@@ -55,7 +55,7 @@ export async function senaraiPermohonan(tapis?: {
 }
 
 /** Semua Permohonan: ambil semua halaman sebelum tapis/susun tarikh di UI.
- * RLS masih menentukan rekod yang boleh dibaca. Dashboard kekal menggunakan hadnya.
+ * RLS masih menentukan rekod yang boleh dibaca, termasuk untuk papan pemuka.
  */
 export async function semuaPermohonan(): Promise<PermohonanRingkas[]> {
   const semua: PermohonanRingkas[] = []
@@ -67,6 +67,22 @@ export async function semuaPermohonan(): Promise<PermohonanRingkas[]> {
     semua.push(...halaman)
     if (halaman.length < saiz) return semua
   }
+}
+
+/** Semua rekod dan status laporan sebenar; kedua-dua pertanyaan tertakluk RLS. */
+export async function permohonanDenganLaporan(): Promise<PermohonanRingkas[]> {
+  const laporan = async () => {
+    const ids = new Set<string>()
+    for (let mula = 0; ; mula += 500) {
+      const { data, error } = await supabase.from('laporan_pasca')
+        .select('permohonan_id').order('permohonan_id').range(mula, mula + 499)
+      const halaman = semak(data, error) as { permohonan_id: string }[]
+      halaman.forEach(r => ids.add(r.permohonan_id))
+      if (halaman.length < 500) return ids
+    }
+  }
+  const [semua, ids] = await Promise.all([semuaPermohonan(), laporan()])
+  return semua.map(p => ({ ...p, laporan_dihantar: ids.has(p.id) }))
 }
 
 export type BundelPermohonan = {

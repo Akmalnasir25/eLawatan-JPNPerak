@@ -296,6 +296,8 @@ export type Kelengkapan = {
 }
 
 export type PermohonanRingkas = {
+  /** Diperoleh daripada rekod laporan sebenar dalam skop RLS. */
+  laporan_dihantar?: boolean
   id: string
   no_rujukan: string | null
   status: Status

@@ -1,3 +1,5 @@
+import { hariMalaysia } from '@/lib/tarikh-lawatan'
+import { dalamTapisPapan } from '@/lib/tapis-papan-pemuka'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -13,7 +15,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import { gunaAuth, PERANAN_PELULUS } from '@/lib/auth'
-import { dapatTetapan, senaraiPermohonan } from '@/lib/api'
+import { dapatTetapan, permohonanDenganLaporan } from '@/lib/api'
 import { LABEL_KATEGORI, LABEL_PERANAN, PERANAN_BAGI_STATUS } from '@/lib/istilah'
 import { formatHari, formatTarikh } from '@/lib/guna'
 import { JadualPermohonan } from '@/komponen/JadualPermohonan'
@@ -26,11 +28,19 @@ export function PapanPemuka() {
   const { pegawai, sekolah, pemangkuan, perananBertindak } = gunaAuth()
   const [senarai, setSenarai] = useState<PermohonanRingkas[] | null>(null)
   const [tempoh, setTempoh] = useState<Record<string, number> | null>(null)
+  const [hariIni, setHariIni] = useState(hariMalaysia)
   const [ralat, setRalat] = useState<string | null>(null)
 
   useEffect(() => {
-    senaraiPermohonan().then(setSenarai).catch((e) => setRalat(e.message))
+    permohonanDenganLaporan().then(setSenarai).catch((e) => setRalat(e.message))
     dapatTetapan<Record<string, number>>('tempoh_minimum').then(setTempoh)
+  }, [])
+
+  useEffect(() => {
+    const segar = () => setHariIni(hariMalaysia())
+    const sela = window.setInterval(segar, 60000)
+    window.addEventListener('focus', segar)
+    return () => { window.clearInterval(sela); window.removeEventListener('focus', segar) }
   }, [])
 
   const peranan = pegawai!.peranan
@@ -49,11 +59,12 @@ export function PapanPemuka() {
   if (ralat) return <Mesej jenis="ralat">{ralat}</Mesej>
   if (!senarai) return <Memuat />
 
-  const petiTindakan = senarai.filter((p) => statusSaya.includes(p.status))
-  const draf = senarai.filter((p) => p.status === 'DRAF' || p.status === 'DIKEMBALIKAN')
-  const dalamProses = senarai.filter((p) => p.status.startsWith('MENUNGGU'))
-  const diluluskan = senarai.filter((p) => p.status === 'DILULUSKAN' || p.status === 'SELESAI')
-  const perluLaporan = diluluskan.filter((p) => p.status === 'DILULUSKAN')
+  const petiTindakan = senarai.filter(p => dalamTapisPapan(p, 'tindakan', hariIni, statusSaya))
+  const draf = senarai.filter(p => dalamTapisPapan(p, 'draf', hariIni))
+  const dalamProses = senarai.filter(p => dalamTapisPapan(p, 'proses', hariIni))
+  const diluluskan = senarai.filter(p => dalamTapisPapan(p, 'lulus', hariIni))
+  const perluLaporan = senarai.filter(p => dalamTapisPapan(p, 'laporan_perlu', hariIni))
+  const siapLaporan = senarai.filter(p => dalamTapisPapan(p, 'laporan_siap', hariIni))
   const perlu = adalahSekolah ? draf : petiTindakan
   const kini = new Date().toISOString()
   // Pentadbir memantau semua peringkat; pelulus memantau peti sendiri.
@@ -110,21 +121,28 @@ export function PapanPemuka() {
         </div>
       )}
 
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
         <KadStatistik
           ikon={adalahSekolah ? PencilLine : Inbox}
           nada={perlu.length > 0 ? 'emas' : 'kelabu'}
           label={adalahSekolah ? 'Draf & perlu pindaan' : 'Menunggu tindakan anda'}
+          ke={`/senarai?kumpulan=${adalahSekolah ? 'draf' : 'tindakan'}`}
           nilai={perlu.length}
         />
-        <KadStatistik ikon={Hourglass} label="Dalam proses kelulusan" nilai={dalamProses.length} />
-        <KadStatistik ikon={CheckCircle2} nada="hijau" label="Diluluskan & selesai" nilai={diluluskan.length} />
+        <KadStatistik ke="/senarai?kumpulan=proses" ikon={Hourglass} label="Dalam proses kelulusan" nilai={dalamProses.length} />
+        <KadStatistik ke="/senarai?kumpulan=lulus" ikon={CheckCircle2} nada="hijau" label="Diluluskan & selesai" nilai={diluluskan.length} />
         <KadStatistik
           ikon={ClipboardList}
           nada="kelabu"
           label={adalahSekolah ? 'Jumlah permohonan sekolah' : 'Jumlah rekod dalam skop'}
+          ke="/senarai"
           nilai={senarai.length}
         />
+        <KadStatistik ikon={ClipboardList} ke="/senarai?kumpulan=laporan_perlu"
+          nada={perluLaporan.length ? 'emas' : 'kelabu'}
+          label="Laporan pasca-lawatan sekolah — Perlu disiapkan" nilai={perluLaporan.length} nota="Lawatan tamat, laporan belum dihantar" />
+        <KadStatistik ikon={CheckCircle2} ke="/senarai?kumpulan=laporan_siap" nada="hijau"
+          label="Laporan pasca-lawatan sekolah — Siap" nilai={siapLaporan.length} nota="Laporan telah dihantar" />
       </div>
 
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1fr_320px]">
@@ -188,22 +206,6 @@ export function PapanPemuka() {
 
         {/* ── Lajur sisi ─────────────────────────────────────────── */}
         <aside className="space-y-5">
-          {adalahSekolah && perluLaporan.length > 0 && (
-            <div className="kad border-l-4 border-l-emas-400 px-5 py-4">
-              <p className="text-sm font-semibold text-jata-900">Laporan pasca-lawatan</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                {perluLaporan.length} lawatan diluluskan memerlukan Lampiran G
-                dalam tempoh 7 hari selepas lawatan tamat.
-              </p>
-              <Link
-                to={`/permohonan/${perluLaporan[0].id}/laporan`}
-                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-jata-700 hover:underline"
-              >
-                Isi laporan <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-              </Link>
-            </div>
-          )}
-
           <div className="kad">
             <div className="kad-tajuk">
               <h2>Tempoh minimum permohonan</h2>

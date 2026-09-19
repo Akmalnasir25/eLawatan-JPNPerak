@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { semuaPermohonan } from '@/lib/api'
+import { Link, useSearchParams } from 'react-router-dom'
+import { permohonanDenganLaporan } from '@/lib/api'
+import { dalamTapisPapan, kenalTapisPapan, LABEL_TAPIS_PAPAN } from '@/lib/tapis-papan-pemuka'
 import { gunaAuth } from '@/lib/auth'
-import { LABEL_KATEGORI, LABEL_STATUS } from '@/lib/istilah'
+import { LABEL_KATEGORI, LABEL_STATUS, PERANAN_BAGI_STATUS } from '@/lib/istilah'
 import { keCsv, muatTurun, kelas } from '@/lib/guna'
 import { hariMalaysia, paparanTarikhLawatan, susunTarikhLawatan } from '@/lib/tarikh-lawatan'
 import { LencanaStatus, Kosong, Memuat, Mesej } from '@/komponen/ui'
@@ -15,7 +16,12 @@ import type { PermohonanRingkas, Status } from '@/lib/jenis'
 const SEMUA_STATUS = Object.keys(LABEL_STATUS) as Status[]
 
 export function SenaraiPermohonan() {
-  const { pegawai } = gunaAuth()
+  const { pegawai, perananBertindak } = gunaAuth()
+  const [params, setParams] = useSearchParams()
+  const kumpulan = kenalTapisPapan(params.get('kumpulan'))
+  const laporan = kumpulan === 'laporan_perlu' || kumpulan === 'laporan_siap'
+  const statusSaya = useMemo(() => Object.entries(PERANAN_BAGI_STATUS)
+    .filter(([, r]) => !!r && perananBertindak.includes(r)).map(([s]) => s as Status), [perananBertindak])
   const [senarai, setSenarai] = useState<PermohonanRingkas[] | null>(null)
   const [ralat, setRalat] = useState<string | null>(null)
   const [carian, setCarian] = useState('')
@@ -36,7 +42,7 @@ export function SenaraiPermohonan() {
   }, [])
 
   useEffect(() => {
-    semuaPermohonan()
+    permohonanDenganLaporan()
       .then(setSenarai)
       .catch((e) => setRalat(e.message))
   }, [])
@@ -45,6 +51,7 @@ export function SenaraiPermohonan() {
     if (!senarai) return []
     const c = carian.trim().toLowerCase()
     return susunTarikhLawatan(senarai.filter((p) => {
+      if (!dalamTapisPapan(p, kumpulan, hariIni, statusSaya)) return false
       if (tapisStatus && p.status !== tapisStatus) return false
       if (tapisKategori && p.kategori !== tapisKategori) return false
       if (!c) return true
@@ -52,7 +59,7 @@ export function SenaraiPermohonan() {
         .filter(Boolean)
         .some((n) => String(n).toLowerCase().includes(c))
     }), hariIni)
-  }, [senarai, carian, tapisStatus, tapisKategori, hariIni])
+  }, [senarai, carian, tapisStatus, tapisKategori, hariIni, kumpulan, statusSaya])
 
   function eksport() {
     muatTurun(
@@ -88,7 +95,7 @@ export function SenaraiPermohonan() {
       <TajukHalaman
         ikon={Files}
         jejak={[{ teks: 'Permohonan' }]}
-        tajuk={pegawai?.peranan === 'sekolah' ? 'Senarai Permohonan' : 'Semua Permohonan'}
+        tajuk={kumpulan ? LABEL_TAPIS_PAPAN[kumpulan] : pegawai?.peranan === 'sekolah' ? 'Senarai Permohonan' : 'Semua Permohonan'}
         nota={`${ditapis.length} daripada ${senarai.length} rekod dalam skop capaian anda`}
         aksi={
           <button
@@ -103,6 +110,12 @@ export function SenaraiPermohonan() {
         }
       />
 
+      {kumpulan && <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
+        <span className="rounded bg-jata-50 px-3 py-2">Penapis: {LABEL_TAPIS_PAPAN[kumpulan]}</span>
+        <button type="button" className="btn-halus" onClick={() => {
+          setParams({}); setTapisStatus(''); setTapisKategori(''); setCarian('')
+        }}>Lihat semua permohonan</button>
+      </div>}
       <div className="kad mb-5">
         <div className="kad-isi grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1fr]">
           <div className="relative">
@@ -147,7 +160,9 @@ export function SenaraiPermohonan() {
       <p className="mb-3 text-sm text-slate-600">Disusun mengikut tarikh lawatan paling hampir. Lawatan sedang berlangsung didahulukan; tarikh yang telah berlalu di bawah.</p>
       {ditapis.length === 0 ? (
         <Kosong
-          tajuk="Tiada rekod sepadan"
+          tajuk={kumpulan === 'laporan_perlu' && !carian && !tapisStatus && !tapisKategori
+            ? 'Tiada laporan perlu disiapkan' : kumpulan === 'laporan_siap' && !carian && !tapisStatus && !tapisKategori
+            ? 'Belum ada laporan yang dihantar' : 'Tiada rekod sepadan'}
           nota="Longgarkan penapis atau ubah kata carian."
         />
       ) : (
@@ -162,6 +177,7 @@ export function SenaraiPermohonan() {
                 <th>Tarikh Lawatan</th>
                 <th className="text-right">Peserta</th>
                 <th>Status</th>
+                <th>Tindakan</th>
               </tr>
             </thead>
             <tbody>
@@ -209,6 +225,15 @@ export function SenaraiPermohonan() {
                     <div>
                       <LencanaHadMasa p={p} />
                     </div>
+                  </td>
+                  <td className="whitespace-nowrap">
+                    <Link className="btn-halus" to={laporan
+                      ? kumpulan === 'laporan_siap' ? `/cetak/lampiran-g/${p.id}`
+                        : pegawai?.peranan === 'sekolah' ? `/permohonan/${p.id}/laporan` : `/permohonan/${p.id}`
+                      : kumpulan === 'draf' && pegawai?.peranan === 'sekolah' ? `/permohonan/${p.id}/sunting` : `/permohonan/${p.id}`}>
+                      {laporan ? kumpulan === 'laporan_siap' ? 'Lihat laporan' : pegawai?.peranan === 'sekolah' ? 'Isi laporan' : 'Lihat permohonan'
+                        : kumpulan === 'draf' && pegawai?.peranan === 'sekolah' ? 'Sunting' : 'Lihat permohonan'}
+                    </Link>
                   </td>
                 </tr>
                 )

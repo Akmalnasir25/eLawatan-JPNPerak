@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import {
   cloneElement,
   isValidElement,
@@ -67,15 +68,17 @@ export function KadStatistik({
   ikon: Ikon,
   nada = 'biru',
   nota,
+  ke,
 }: {
+  ke?: string
   label: string
   nilai: ReactNode
   ikon: LucideIcon
   nada?: keyof typeof NADA_STATISTIK
   nota?: string
 }) {
-  return (
-    <div className="kad kad-hidup flex items-center gap-4 px-4 py-3.5 sm:px-5 sm:py-4">
+  const isi = (
+    <div className="kad kad-hidup h-full flex items-center gap-4 px-4 py-3.5 sm:px-5 sm:py-4">
       <span className={kelas('hidden h-12 w-12 shrink-0 place-items-center rounded-lg ring-1 ring-inset sm:grid', NADA_STATISTIK[nada])}>
         <Ikon className="h-6 w-6" aria-hidden />
       </span>
@@ -88,6 +91,7 @@ export function KadStatistik({
       </div>
     </div>
   )
+  return ke ? <Link to={ke} aria-label={`${label}: ${nilai}. Lihat senarai`} className="block rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-jata-600 hover:ring-2 hover:ring-jata-200">{isi}</Link> : isi
 }
 
 /** Nombor mengira dari 0 apabila mula kelihatan di skrin. */
