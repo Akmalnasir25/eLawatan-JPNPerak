@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { NamaKetua } from './NamaKetua'
 import { kemasBaris, padamBaris, tambahBaris } from '@/lib/api'
 import { LABEL_PESERTA } from '@/lib/istilah'
 import { Medan, Mesej } from '@/komponen/ui'
@@ -17,30 +18,34 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
     try {
       await kerja()
       await muatSemula()
+      return true
     } catch (e) {
       setRalat(e instanceof Error ? e.message : 'Gagal menyimpan baris.')
+      return false
     } finally {
       setSibuk(false)
     }
   }
 
   const ketua = peserta.find((x) => x.kategori === 'KETUA_ROMBONGAN') ?? null
+  const ketuaBaharu = useRef<Promise<Peserta> | null>(null)
 
   async function pastikanKetua(): Promise<Peserta> {
     if (ketua) return ketua
-    const baharu = await tambahBaris<Peserta>('peserta', {
+    ketuaBaharu.current ??= tambahBaris<Peserta>('peserta', {
       permohonan_id: p.id,
       kategori: 'KETUA_ROMBONGAN',
       susunan: 0,
       nama: '',
-    })
-    await muatSemula()
-    return baharu
+    }).catch(e => { ketuaBaharu.current = null; throw e })
+    return ketuaBaharu.current
   }
 
   async function kemasKetua(medan: Partial<Peserta>) {
-    const k = await pastikanKetua()
-    await jalankan(() => kemasBaris('peserta', k.id, medan))
+    return jalankan(async () => {
+      const k = await pastikanKetua()
+      await kemasBaris('peserta', k.id, medan)
+    })
   }
 
   return (
@@ -120,17 +125,7 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
         </div>
         <div className="kad-isi grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Medan label="Nama penuh" perlu>
-              <input
-                className="medan"
-                defaultValue={ketua?.nama ?? ''}
-                key={`nama-${ketua?.id ?? 'baharu'}`}
-                onBlur={(e) =>
-                  e.target.value !== (ketua?.nama ?? '') &&
-                  kemasKetua({ nama: e.target.value })
-                }
-              />
-            </Medan>
+            <NamaKetua key={p.id} nama={ketua?.nama ?? ''} simpan={nama => kemasKetua({ nama })} />
           </div>
           <Medan label="No. kad pengenalan" perlu>
             <input
@@ -208,7 +203,7 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
         permohonanId={p.id}
         peserta={peserta}
         bilMurid={p.bil_murid}
-        jalankan={jalankan}
+        jalankan={async kerja => { await jalankan(kerja) }}
         simpanBilangan={(n) => simpan({ bil_murid: n })}
         sibuk={sibuk}
       />
@@ -219,7 +214,7 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
         nota="Senarai penuh boleh dilampirkan sebagai dokumen pada Langkah 6. Baris di sini dicetak pada Lampiran A."
         peserta={peserta}
         permohonanId={p.id}
-        jalankan={jalankan}
+        jalankan={async kerja => { await jalankan(kerja) }}
         sibuk={sibuk}
       />
 
@@ -229,7 +224,7 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
           tajuk="Bahagian D2 — Senarai Bukan Murid (Ibu Bapa / Individu)"
           peserta={peserta}
           permohonanId={p.id}
-          jalankan={jalankan}
+          jalankan={async kerja => { await jalankan(kerja) }}
           sibuk={sibuk}
         />
       )}
@@ -240,7 +235,7 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
           tajuk="Bahagian D2 — Senarai Pengiring Anggota Keselamatan"
           peserta={peserta}
           permohonanId={p.id}
-          jalankan={jalankan}
+          jalankan={async kerja => { await jalankan(kerja) }}
           sibuk={sibuk}
         />
       )}
@@ -252,7 +247,7 @@ export function Langkah4({ bundel, simpan, muatSemula }: PropLangkah) {
         nota="Guru yang dibenarkan memungut dan menggunakan wang bagi lawatan ini."
         peserta={peserta}
         permohonanId={p.id}
-        jalankan={jalankan}
+        jalankan={async kerja => { await jalankan(kerja) }}
         sibuk={sibuk}
       />
     </>

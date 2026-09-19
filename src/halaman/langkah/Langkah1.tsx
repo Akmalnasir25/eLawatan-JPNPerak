@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { formatTujuanLawatan } from '@/lib/format-teks'
 import { dapatTetapan } from '@/lib/api'
 import {
   BAHAGIAN_PELULUS,
@@ -34,6 +35,8 @@ const PENGANGKUTAN_LAIN: Pengangkutan[] = ['KENDERAAN_GURU', 'KENDERAAN_IBU_BAPA
 
 export function Langkah1({ bundel, simpan }: PropLangkah) {
   const { permohonan: p, sekolah, ppd } = bundel
+  const tujuanDisunting = useRef(false)
+  const [tujuanAsal, setTujuanAsal] = useState<string | null>(null)
   const [tempoh, setTempoh] = useState<Record<string, number> | null>(null)
 
   useEffect(() => {
@@ -140,10 +143,24 @@ export function Langkah1({ bundel, simpan }: PropLangkah) {
             <textarea
               className="medan min-h-[92px]"
               value={p.tujuan ?? ''}
-              onChange={(e) => simpan({ tujuan: e.target.value })}
+              onChange={(e) => { tujuanDisunting.current = true; setTujuanAsal(null); simpan({ tujuan: e.target.value }) }}
+              onBlur={(e) => {
+                if (!tujuanDisunting.current) return
+                tujuanDisunting.current = false
+                const asal = e.target.value
+                const tersusun = formatTujuanLawatan(asal)
+                if (tersusun !== asal) { setTujuanAsal(asal); simpan({ tujuan: tersusun }) }
+              }}
               placeholder="Contoh: Lawatan sambil belajar ke Muzium Darul Ridzuan bagi menyokong tajuk Sejarah Tingkatan 2…"
             />
           </Medan>
+
+          {tujuanAsal !== null && <div className="-mt-2 text-xs text-slate-600" aria-live="polite">
+            Format huruf diselaraskan secara automatik. Sila semak ejaan nama khas dan singkatan.
+            <button type="button" className="ml-2 font-semibold underline" onClick={() => {
+              simpan({ tujuan: tujuanAsal }); setTujuanAsal(null); tujuanDisunting.current = false
+            }}>Kekalkan format asal</button>
+          </div>}
 
           <Medan
             label="Jenis pengangkutan"
