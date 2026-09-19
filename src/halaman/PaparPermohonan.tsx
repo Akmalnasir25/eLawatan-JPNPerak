@@ -13,6 +13,7 @@ import {
 import { padamDokumen } from '@/lib/r2'
 import { gunaAuth } from '@/lib/auth'
 import { SemakanDokumen } from '@/komponen/SemakanDokumen'
+import { paparanRujukanPPD } from '@/lib/semakan-dokumen'
 import {
   BAHAGIAN_PELULUS,
   LABEL_KATEGORI,
@@ -654,6 +655,7 @@ export function PaparPermohonan() {
           </section>
 
           <SemakanDokumen permohonanId={p.id} dokumen={b.dokumen} pegawai={pegawai!}
+            rujukanPPD={paparanRujukanPPD(peranan, p)}
             bolehSemak={bolehBertindak && tahapSemak} dipilih={dokSemak}
             notaSemakan={`Status permohonan: ${LABEL_STATUS[p.status]}. ${tahapSemak && peranPerlu
               ? `Keputusan dokumen kini di bawah giliran ${LABEL_PERANAN[peranPerlu]}.`

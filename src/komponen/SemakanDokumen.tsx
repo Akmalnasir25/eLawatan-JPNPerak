@@ -14,7 +14,8 @@ const WARNA = {
   PEMBETULAN: 'border-amber-200 bg-amber-50 text-amber-950',
 }
 
-export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, notaSemakan, dipilih, pilih, butiran }: {
+export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, notaSemakan, dipilih, pilih, butiran, rujukanPPD = false }: {
+  rujukanPPD?: boolean
   permohonanId: string
   dokumen: Dokumen[]
   pegawai: Pegawai
@@ -43,27 +44,32 @@ export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, not
       .sort((a, b) => b.masa.localeCompare(a.masa) || a.id.localeCompare(b.id)))
   }, [permohonanId])
   const tambah = (r: Rekod) => setRekod((lama) => [r, ...lama.filter((x) => x.id !== r.id)])
-  const penyemak = penyemakBagiPengesah(pegawai.peranan)
+  const penyemak = rujukanPPD ? 'ppd_pegawai' : penyemakBagiPengesah(pegawai.peranan)
+  const pemohon = pegawai.peranan === 'sekolah'
   const labelPenyemak = penyemak === 'ppd_pegawai' ? 'penyemak PPD' : 'penyemak JPN'
   const selesai = dokumen.filter((d) => {
-    const s = semakanUntukPaparan(rekod, d, pegawai)?.status
+    const s = semakanUntukPaparan(rekod, d, pegawai, rujukanPPD)?.status
     return s === 'PATUH' || s === 'PEMBETULAN'
   }).length
   return <section className="kad">
     <div className="kad-tajuk flex flex-wrap items-center justify-between gap-2">
       <h2 className="flex items-center gap-2"><Files className="h-4 w-4" aria-hidden />Dokumen Sokongan ({dokumen.length})</h2>
-      {!ralat && !memuat && <span className="text-xs font-normal">{penyemak ? `Semakan ${labelPenyemak}` : 'Semakan anda'}: {selesai}/{dokumen.length} mempunyai keputusan</span>}
+      {!ralat && !memuat && <span className="text-xs font-normal">{pemohon ? 'Semakan pegawai' : penyemak ? `Semakan ${labelPenyemak}` : 'Semakan anda'}: {selesai}/{dokumen.length} mempunyai keputusan</span>}
     </div>
     <div className="kad-isi">
-      <p className="mb-4 text-sm text-slate-600">{penyemak
+      <p className="mb-4 text-sm text-slate-600">{pemohon
+        ? 'Buka dokumen untuk melihat fail. Keputusan dan catatan pegawai dipaparkan selepas semakan.'
+        : rujukanPPD
+        ? 'Keputusan dan catatan merujuk semakan PPD. Pembukaan oleh JPN direkodkan dalam Log bersama.'
+        : penyemak
         ? `Warna dan catatan merujuk semakan ${labelPenyemak}. Pembukaan oleh pengesah hanya direkodkan dalam Log bersama.`
         : 'Buka dokumen untuk membaca dan menyemak. Keputusan serta catatan disimpan bagi setiap fail.'}</p>
-      {!bolehSemak && <p className="mb-4 text-sm text-slate-600">{notaSemakan}</p>}
+      {!bolehSemak && !pemohon && !rujukanPPD && <p className="mb-4 text-sm text-slate-600">{notaSemakan}</p>}
       {ralat && <div className="mb-3"><Mesej jenis="ralat">{ralat} <button type="button" onClick={() => void muat()} className="underline">Cuba lagi</button></Mesej></div>}
       {!dokumen.length && <p className="text-sm text-slate-600">Tiada dokumen dimuat naik.</p>}
       <ul className="space-y-3">
         {dokumen.map((d) => {
-          const s = semakanUntukPaparan(rekod, d, pegawai)
+          const s = semakanUntukPaparan(rekod, d, pegawai, rujukanPPD)
           const pembukaan = rekod.filter((r) => r.dokumen_id === d.id &&
             r.cincangan_sha256 === d.cincangan_sha256 && r.status === 'DIBUKA')
           const terakhir = pembukaan[0]
@@ -73,10 +79,10 @@ export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, not
               <div className="min-w-0 flex-1 basis-48">
                 <p className="break-words text-sm font-semibold">{d.nama_fail}</p>
                 <p className="mt-1 text-xs">{formatSaiz(d.saiz)} · {formatMasa(d.dimuat_naik_pada)}</p>
-                <p className="mt-2 flex items-center gap-1.5 text-xs font-medium"><Ikon className="h-4 w-4 shrink-0" aria-hidden />
-                  {memuat ? 'Memuatkan status…' : ralat ? 'Status belum tersedia' : s ? LABEL_SEMAKAN[s.status] : penyemak ? `Belum ada rekod semakan ${labelPenyemak}` : 'Belum dibuka oleh anda'}
-                </p>
-                {!memuat && !ralat && penyemak && s && <p className="mt-1 text-xs">
+                {(!pemohon || memuat || ralat || s) && <p className="mt-2 flex items-center gap-1.5 text-xs font-medium"><Ikon className="h-4 w-4 shrink-0" aria-hidden />
+                  {memuat ? 'Memuatkan status…' : ralat ? 'Status belum tersedia' : s ? (rujukanPPD && s.status === 'DIBUKA' ? 'Dibuka oleh penyemak PPD' : LABEL_SEMAKAN[s.status]) : penyemak ? `Belum ada rekod semakan ${labelPenyemak}` : 'Belum dibuka oleh anda'}
+                </p>}
+                {!memuat && !ralat && (penyemak || pemohon) && s && <p className="mt-1 text-xs">
                   {s.status === 'DIBUKA' ? 'Dibuka' : 'Disemak'} oleh {s.nama_pegawai} · {LABEL_PERANAN[s.peranan]} · {formatMasa(s.masa)}
                 </p>}
                 {!memuat && !ralat && terakhir && <p className="mt-2 text-xs">
@@ -88,19 +94,20 @@ export function SemakanDokumen({ permohonanId, dokumen, pegawai, bolehSemak, not
                 <button type="button" disabled={memuat} className="btn-utama min-h-11 px-4 text-xs" onClick={() => pilih(d)}>{bolehSemak ? 'Semak' : 'Lihat'}</button>
               </div>
             </div>
-            {s?.catatan && <p className="mt-3 whitespace-pre-wrap break-words border-t border-current/10 pt-2 text-sm">{penyemak ? 'Catatan penyemak' : 'Catatan anda'}: {s.catatan}</p>}
+            {s?.catatan && <p className="mt-3 whitespace-pre-wrap break-words border-t border-current/10 pt-2 text-sm">{pemohon ? 'Catatan pegawai' : penyemak ? 'Catatan penyemak' : 'Catatan anda'}: {s.catatan}</p>}
           </li>
         })}
       </ul>
     </div>
     {dipilih && !memuat && createPortal(<PanelDokumen key={`${dipilih.id}:${pegawai.id}`} dokumen={dipilih}
       senarai={dokumen} rekod={rekod} pegawai={pegawai} bolehSemak={bolehSemak && !ralat}
-      notaSemakan={ralat || notaSemakan}
+      notaSemakan={ralat || notaSemakan} rujukanPPD={rujukanPPD}
       pilih={pilih} tambah={tambah} segarLog={segarLog} />, document.body)}
   </section>
 }
 
-function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, notaSemakan, pilih, tambah, segarLog }: {
+function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, notaSemakan, pilih, tambah, segarLog, rujukanPPD }: {
+  rujukanPPD: boolean
   dokumen: Dokumen; senarai: Dokumen[]; rekod: Rekod[]; pegawai: Pegawai; bolehSemak: boolean
   pilih: (d: Dokumen | null) => void; tambah: (r: Rekod) => void
   segarLog: () => Promise<void>
@@ -108,8 +115,9 @@ function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, notaSem
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const asal = semakanSendiri(rekod, d, pegawai.id)
-  const penyemak = penyemakBagiPengesah(pegawai.peranan)
-  const semakanPenyemak = semakanUntukPaparan(rekod, d, pegawai)
+  const pemohon = pegawai.peranan === 'sekolah'
+  const penyemak = rujukanPPD ? 'ppd_pegawai' : penyemakBagiPengesah(pegawai.peranan)
+  const semakanPenyemak = semakanUntukPaparan(rekod, d, pegawai, rujukanPPD)
   const [keputusan, setKeputusan] = useState<StatusSemakan | ''>(asal?.status === 'DIBUKA' ? '' : asal?.status ?? '')
   const [catatan, setCatatan] = useState(asal?.catatan ?? '')
   const [kotor, setKotor] = useState(false)
@@ -221,8 +229,8 @@ function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, notaSem
         <button type="button" className="btn-kedua min-h-11 min-w-11 shrink-0 px-2" onClick={() => beralih(null)} disabled={sibuk} aria-label="Tutup panel dokumen"><X className="h-5 w-5" /></button>
       </header>
       <div className="panel-dokumen-kawalan shrink-0 overflow-y-auto border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
-        {penyemak && <div className={kelas('mb-3 rounded-md border p-3 text-sm', semakanPenyemak ? WARNA[semakanPenyemak.status] : 'border-slate-200 text-slate-700')}>
-          <p className="font-semibold">Semakan {penyemak === 'ppd_pegawai' ? 'penyemak PPD' : 'penyemak JPN'}: {semakanPenyemak ? LABEL_SEMAKAN[semakanPenyemak.status] : 'Belum ada rekod'}</p>
+        {(penyemak || (pemohon && semakanPenyemak)) && <div className={kelas('mb-3 rounded-md border p-3 text-sm', semakanPenyemak ? WARNA[semakanPenyemak.status] : 'border-slate-200 text-slate-700')}>
+          <p className="font-semibold">Semakan {pemohon ? 'pegawai' : penyemak === 'ppd_pegawai' ? 'penyemak PPD' : 'penyemak JPN'}: {semakanPenyemak ? (rujukanPPD && semakanPenyemak.status === 'DIBUKA' ? 'Dibuka' : LABEL_SEMAKAN[semakanPenyemak.status]) : 'Belum ada rekod'}</p>
           {semakanPenyemak && <>
             <p className="mt-1 text-xs">{semakanPenyemak.nama_pegawai} · {LABEL_PERANAN[semakanPenyemak.peranan]} · {formatMasa(semakanPenyemak.masa)}</p>
             {semakanPenyemak.catatan && <p className="mt-2 whitespace-pre-wrap break-words">Catatan penyemak: {semakanPenyemak.catatan}</p>}
@@ -246,7 +254,7 @@ function PanelDokumen({ dokumen: d, senarai, rekod, pegawai, bolehSemak, notaSem
             </fieldset>
             <button type="button" onClick={() => void simpan()} disabled={sibuk || !dibuka || memuat} className="btn-utama min-h-11">{sibuk ? <Berputar /> : <CheckCircle2 className="h-4 w-4" />}Simpan semakan</button>
           </div>
-        </div> : <p className="text-sm text-slate-600">{notaSemakan}</p>}
+        </div> : !pemohon && !rujukanPPD && <p className="text-sm text-slate-600">{notaSemakan}</p>}
         {ralat && <div role="alert" className="mt-2 text-sm text-red-700">{ralat} {url && !dibuka && <button type="button" disabled={sibuk} className="underline" onClick={() => void ulangRekod()}>Cuba rekod semula</button>}</div>}
         {berjaya && <p role="status" className="mt-2 text-sm text-emerald-800">{berjaya}</p>}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">

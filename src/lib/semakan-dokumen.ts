@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Dokumen, Pegawai, Peranan } from './jenis'
+import type { Dokumen, Pegawai, Peranan, Permohonan } from './jenis'
 
 export type StatusSemakan = 'DIBUKA' | 'PATUH' | 'PEMBETULAN'
 export type SemakanDokumen = {
@@ -56,11 +56,26 @@ export function penyemakBagiPengesah(peranan: Peranan) {
   return null
 }
 
+/** JPN membaca semakan PPD bagi urusan daerah atau permohonan yang masih di PPD. */
+export function paparanRujukanPPD(peranan: Peranan, p: Pick<Permohonan, 'kategori' | 'status'>) {
+  return (peranan === 'jpn_pegawai' || peranan === 'jpn_pengarah') &&
+    (p.kategori === 'DALAM_DAERAH' || p.status === 'MENUNGGU_PPD_SEMAK' || p.status === 'MENUNGGU_PPD_SAH')
+}
+
 /** Pengesah membaca keputusan penyemak peringkatnya, bukan status dirinya.
  * Pembukaan selepas keputusan tidak menukar warna; versi fail mesti sepadan.
  */
-export function semakanUntukPaparan(rekod: SemakanDokumen[], d: Dokumen, pegawai: Pick<Pegawai, 'id' | 'peranan'>) {
-  const peranan = penyemakBagiPengesah(pegawai.peranan)
+export function semakanUntukPaparan(rekod: SemakanDokumen[], d: Dokumen, pegawai: Pick<Pegawai, 'id' | 'peranan'>, rujukanPPD = false) {
+  // Pemohon melihat keputusan pegawai terkini untuk versi fail ini.
+  // Membuka fail sendiri atau pembukaan pegawai bukan keputusan semakan.
+  if (pegawai.peranan === 'sekolah') {
+    return rekod.filter((r) => r.dokumen_id === d.id &&
+      r.cincangan_sha256 === d.cincangan_sha256 &&
+      (r.peranan === 'ppd_pegawai' || r.peranan === 'jpn_pegawai') && r.status !== 'DIBUKA')
+      .sort((a, b) => b.masa.localeCompare(a.masa) || a.id.localeCompare(b.id))[0]
+  }
+  const peranan = rujukanPPD && (pegawai.peranan === 'jpn_pegawai' || pegawai.peranan === 'jpn_pengarah')
+    ? 'ppd_pegawai' : penyemakBagiPengesah(pegawai.peranan)
   if (!peranan) return semakanSendiri(rekod, d, pegawai.id)
   const sepadan = rekod.filter((r) => r.dokumen_id === d.id &&
     r.cincangan_sha256 === d.cincangan_sha256 && r.peranan === peranan)
