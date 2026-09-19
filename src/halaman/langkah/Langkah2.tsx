@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { kemasBaris, padamBaris, tambahBaris } from '@/lib/api'
 import { formatTarikh, hariLagi, tarikhTambahHari } from '@/lib/guna'
 import { Medan, Mesej } from '@/komponen/ui'
+import { peringatanSabtuJulat } from '@/lib/peringatan-sabtu'
 import type { Peringkat, Tempat } from '@/lib/jenis'
 import type { PropLangkah } from '../BorangPermohonan'
 
@@ -9,6 +10,12 @@ export function Langkah2({ bundel, muatSemula }: PropLangkah) {
   const { permohonan: p, tempat, peringkat, sekolah } = bundel
   const [sibuk, setSibuk] = useState(false)
   const [ralat, setRalat] = useState<string | null>(null)
+  // Kemas kini makluman ketika memilih tarikh, tanpa menunggu simpanan pelayan.
+  const [tarikhPilihan, setTarikhPilihan] = useState<Record<string, { dari?: string; hingga?: string }>>({})
+  const sabtu = peringatanSabtuJulat(tempat.map((t) => ({
+    mula: tarikhPilihan[t.id]?.dari ?? t.tarikh_dari,
+    tamat: tarikhPilihan[t.id]?.hingga ?? t.tarikh_hingga,
+  })))
 
   async function jalankan(kerja: () => Promise<unknown>) {
     setSibuk(true)
@@ -172,34 +179,40 @@ export function Langkah2({ bundel, muatSemula }: PropLangkah) {
                   <input
                     type="date"
                     className="medan"
-                    defaultValue={t.tarikh_dari}
-                    onChange={(e) =>
-                      jalankan(() =>
+                    value={tarikhPilihan[t.id]?.dari ?? t.tarikh_dari}
+                    onChange={(e) => {
+                      const tarikh = e.target.value
+                      const hingga = tarikhPilihan[t.id]?.hingga ?? t.tarikh_hingga
+                      const pindaan = tarikh > hingga ? { tarikh_hingga: tarikh } : {}
+                      setTarikhPilihan((lama) => ({ ...lama, [t.id]: {
+                        ...lama[t.id], dari: tarikh, ...(tarikh > hingga ? { hingga: tarikh } : {}),
+                      } }))
+                      void jalankan(() =>
                         // Tarikh tamat ditolak ke hadapan sekali supaya
                         // kekangan tarikh_hingga >= tarikh_dari tidak pecah.
                         kemasBaris('permohonan_tempat', t.id, {
-                          tarikh_dari: e.target.value,
-                          ...(e.target.value > t.tarikh_hingga
-                            ? { tarikh_hingga: e.target.value }
-                            : {}),
+                          tarikh_dari: tarikh,
+                          ...pindaan,
                         }),
                       )
-                    }
+                    }}
                   />
                 </Medan>
                 <Medan label="Tarikh hingga" perlu>
                   <input
                     type="date"
                     className="medan"
-                    min={t.tarikh_dari}
-                    defaultValue={t.tarikh_hingga}
-                    onChange={(e) =>
-                      jalankan(() =>
+                    min={tarikhPilihan[t.id]?.dari ?? t.tarikh_dari}
+                    value={tarikhPilihan[t.id]?.hingga ?? t.tarikh_hingga}
+                    onChange={(e) => {
+                      const tarikh = e.target.value
+                      setTarikhPilihan((lama) => ({ ...lama, [t.id]: { ...lama[t.id], hingga: tarikh } }))
+                      void jalankan(() =>
                         kemasBaris('permohonan_tempat', t.id, {
-                          tarikh_hingga: e.target.value,
+                          tarikh_hingga: tarikh,
                         }),
                       )
-                    }
+                    }}
                   />
                 </Medan>
                 {p.ada_penginapan && (
@@ -226,6 +239,15 @@ export function Langkah2({ bundel, muatSemula }: PropLangkah) {
               </div>
             </div>
           ))}
+
+              {sabtu.length > 0 && (
+                  <Mesej jenis="amaran" tajuk="Peringatan tarikh lawatan">
+                    {sabtu.map((s) => <p key={s.tarikh}>{s.kedudukan}: {formatTarikh(s.tarikh)} ialah <strong>Sabtu {s.minggu === 1 ? 'pertama' : s.minggu === 3 ? 'ketiga' : 'kelima'} dalam bulan tersebut</strong>.</p>)}
+                    <p className="mt-2">Perenggan 3 Surat Siaran KPM Bil. 2 Tahun 2016 — Peringatan Pelaksanaan Bekerja Lima Hari Seminggu menyatakan aktiviti, program atau mesyuarat yang dinyatakan dalam surat tersebut tidak dibenarkan pada Sabtu pertama, ketiga dan kelima.</p>
+                    <p className="mt-2">Ini ialah makluman sahaja. Anda masih boleh meneruskan ke langkah seterusnya, termasuk bagi program anjuran KPM pada tarikh tersebut. Sila rujuk arahan program yang berkaitan; permohonan tetap tertakluk kepada pertimbangan pelulus.</p>
+                    <a className="mt-2 inline-block underline underline-offset-2" href="https://cheroshilah.wordpress.com/wp-content/uploads/2016/03/pelaksanaan-bekerja-5hari.pdf" target="_blank" rel="noreferrer">Lihat salinan surat rujukan (laman pihak ketiga)</a>
+                  </Mesej>
+              )}
 
           {tempat.length > 0 && (
             <div className="rounded-lg bg-jata-50 px-4 py-3 text-sm">

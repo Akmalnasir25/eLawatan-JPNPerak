@@ -73,10 +73,52 @@ semula frontend terdahulu jika perlu. Jangan drop jadual atau reset data.
 
 ## Batasan
 
+### Peringatan B1.4 (keputusan susulan 19 September 2026)
+
+Tarikh mula atau tamat keseluruhan pada Sabtu pertama, ketiga atau kelima mencetuskan
+makluman serta-merta sebelum ringkasan julat tarikh, berdasarkan tarikh
+yang sedang dipilih sebelum respons simpanan pelayan. Rujukan ialah perenggan
+3 Surat Siaran KPM Bil. 2 Tahun 2016; pautan salinan surat dilabel sebagai
+laman pihak ketiga. Pengiraan mengikut turutan Sabtu, bukan baris kalendar.
+
+Ini makluman sahaja: pemohon masih boleh ke langkah berikutnya dan proses
+permohonan biasa, termasuk program KPM pada tarikh berkenaan. Tiada syarat
+justifikasi baharu atau sekatan penghantaran/kelulusan ditambah. Sabtu di
+tengah perjalanan tidak mencetuskan makluman. Kedua-dua hujung julat keseluruhan
+disemak, bukan sempadan setiap destinasi. Contoh 2–7 November 2026 memberi
+peringatan tarikh tamat (Sabtu pertama), manakala 2–8 November tidak.
+Lawatan sehari memaparkan satu peringatan bertanda tarikh mula dan tamat.
+
+Sebelum perubahan ini, B1.4 hanya memaparkan julat tarikh dan bilangan hari
+sebelum lawatan. Kini kotak peringatan menyatakan tarikh yang terlibat,
+kedudukannya sebagai tarikh mula/tamat, turutan Sabtu dan rujukan surat.
+
+| Contoh julat tahun 2026 | Paparan yang dijangka |
+| --- | --- |
+| 2–7 November | Peringatan tarikh tamat: Sabtu pertama |
+| 2–8 November | Tiada peringatan; 7 November hanya di tengah perjalanan |
+| 7–8 November | Peringatan tarikh mula: Sabtu pertama |
+| 7 November sahaja | Satu peringatan untuk tarikh mula dan tamat |
+| 7–21 November | Dua tarikh dalam kotak peringatan: Sabtu pertama dan ketiga |
+| 14–28 November | Tiada peringatan ini; Sabtu kedua dan keempat |
+
+Fail terlibat: `src/halaman/langkah/Langkah2.tsx` memaparkan makluman dan
+menyimpan pilihan medan tarikh sementara; `src/lib/peringatan-sabtu.ts`
+mengira kedua-dua hujung julat tanpa bergantung pada API cuti atau rangkaian.
+Medan tarikh tamat turut bergerak ke hadapan apabila tarikh mula yang dipilih
+melepasi tarikh tamat, selaras dengan kekangan simpanan sedia ada.
+
+Pengesahan: 7 ujian `ujian/peringatan-sabtu.test.mjs` dan build lulus.
+Chrome demo mengesahkan 2–7 November memaparkan peringatan tarikh tamat
+sebaik sahaja tarikh hingga dipilih, sebelum simpanan pelayan selesai.
+Pilihan 7 November sebagai tarikh mula juga diuji; butang Seterusnya masih
+membuka Langkah 3 (Kewangan). Tarikh asal draf demo dipulihkan selepas ujian.
+
 Penanda cuti tidak meluluskan atau melarang lawatan. Tiada sekatan Sabtu
 minggu 1/3/5 atau Ahad ditambah; tafsiran operasi JPN, pengecualian dan
-lawatan berbilang hari masih perlu disahkan. Fail borang, API kelulusan
-dan peraturan pangkalan data tidak diubah.
+lawatan berbilang hari masih perlu disahkan sebelum sebarang sekatan ditambah.
+Perubahan borang hanya menyediakan makluman. API kelulusan dan peraturan
+pangkalan data tidak diubah.
 
 Data cuti kekal tersedia jika permintaan lawatan gagal. Status lawatan
 yang belum tersedia tidak dipaparkan sebagai sifar. Respons bulan lama
