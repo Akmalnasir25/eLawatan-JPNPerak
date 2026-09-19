@@ -1,3 +1,4 @@
+import { RingkasanPerjalanan } from '@/komponen/RingkasanPerjalanan'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
@@ -596,6 +597,7 @@ export function PaparPermohonan() {
                   </tbody>
                 </table>
               )}
+              <RingkasanPerjalanan p={p} />
             </div>
           </section>
 

@@ -1,3 +1,4 @@
+import { RingkasanPerjalanan } from '@/komponen/RingkasanPerjalanan'
 import { useParams } from 'react-router-dom'
 import { BingkaiCetak, BlokTandatangan, gunaCetak, Pangkah } from './rangka'
 import {
@@ -199,6 +200,8 @@ function Isi({ b, url }: { b: NonNullable<ReturnType<typeof gunaCetak>['bundel']
           ))}
         </tbody>
       </table>
+
+      <RingkasanPerjalanan p={p} />
 
       {/* B2 */}
       {p.lawatan_berperingkat && (

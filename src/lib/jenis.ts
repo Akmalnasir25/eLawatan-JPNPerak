@@ -125,6 +125,11 @@ export type Permohonan = {
   lawatan_berperingkat: boolean
   tarikh_mula: string | null
   tarikh_tamat: string | null
+  masa_bertolak?: string | null
+  tarikh_pulang?: string | null
+  masa_pulang?: string | null
+  tarikh_tiba?: string | null
+  masa_tiba?: string | null
   kutipan_murid: number
   kutipan_guru: number
   sumber_lain: number

@@ -126,6 +126,39 @@ diabaikan selepas pengguna berpindah bulan.
 
 ## Pengesahan
 
+### Masa perjalanan B1.4 (19 September 2026)
+
+- Tarikh destinasi dikekalkan. Perjalanan keseluruhan diisi sekali: bahagian
+  pergi (tarikh mula automatik daripada destinasi paling awal + masa bertolak)
+  dan pulang (tarikh/masa bertolak pulang + tarikh/anggaran masa tiba di sekolah).
+- Tarikh pulang lalai kepada destinasi terakhir. Tarikh tiba lalai kepada tarikh
+  pulang sehingga pemohon mengubahnya; kedua-duanya boleh diselaraskan.
+- Lima kolum nullable baharu pada `permohonan`, migration
+  `20260919000200_masa_perjalanan.sql`. Tiada perubahan RLS atau data lama.
+  Tarikh agregat destinasi, kiraan tempoh permohonan dan peringatan Sabtu kekal
+  berasaskan tarikh destinasi; tarikh ketibaan ialah maklumat tambahan perjalanan.
+- Peringatan segera, tidak menyekat langkah seterusnya: tanpa penginapan,
+  tarikh tiba selepas hari mula dan masa tiba diisi mencetuskan perkara 4.1.3.
+  23:59 pada hari mula tidak mencetuskan; 00:00 hari berikutnya mencetuskan.
+  Urutan pulang/tiba sebelum perjalanan sebelumnya turut diberi peringatan.
+- Tiada peringatan umum bagi lawatan bermalam. Paparkan amaran hanya apabila
+  semakan masa/urutan mengesan isu; masa tamat aktiviti tidak direkodkan, jadi
+  perkara 4.1.4 tidak dinilai daripada masa ketibaan. Tiada had masa bertolak
+  direka. Lanjutan waktu tetap memerlukan pertimbangan pelulus.
+- Ringkasan disertakan pada paparan permohonan pegawai dan cetakan Lampiran A.
+  Label pergi dan ketibaan menggunakan "sekolah/lokasi ditetapkan" supaya
+  tempat berkumpul seperti PPD atau lokasi lain turut diliputi.
+  Masa yang belum diisi tidak diberi nilai andaian. Waktu menggunakan waktu
+  Malaysia. Semakan ini tidak mengesahkan jadual zon waktu luar negara.
+- Sumber: SPI KPM Bil. 9 Tahun 2023, halaman bercetak 6, perkara 4.1.3–4.1.4
+  (PDF rasmi KPM yang disemak dalam sesi ini).
+- Uji: `node --test ujian/masa-perjalanan.test.mjs ujian/peringatan-sabtu.test.mjs`.
+  11/11 ujian dan build lulus dalam persekitaran tempatan. Pelayar demo
+  mengesahkan amaran tengah malam, simpanan kekal selepas reload dan butang
+  Seterusnya yang masih boleh digunakan ketika amaran dipaparkan.
+  Migration production belum dijalankan. Demo memuat migration baharu secara
+  automatik selepas reload, tanpa reset data.
+
 `node --test ujian/cuti-kalendar.test.mjs` menyemak sempadan julat,
 pertindihan, cuti tambahan/gantian, skop Perak dan tahun tanpa data.
 Jalankan `npm.cmd run build` serta semakan desktop/telefon untuk perubahan UI.

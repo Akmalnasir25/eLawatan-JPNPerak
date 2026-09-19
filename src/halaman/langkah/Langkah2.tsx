@@ -5,8 +5,9 @@ import { Medan, Mesej } from '@/komponen/ui'
 import { peringatanSabtuJulat } from '@/lib/peringatan-sabtu'
 import type { Peringkat, Tempat } from '@/lib/jenis'
 import type { PropLangkah } from '../BorangPermohonan'
+import { PerjalananLawatan } from './PerjalananLawatan'
 
-export function Langkah2({ bundel, muatSemula }: PropLangkah) {
+export function Langkah2({ bundel, muatSemula, simpan }: PropLangkah) {
   const { permohonan: p, tempat, peringkat, sekolah } = bundel
   const [sibuk, setSibuk] = useState(false)
   const [ralat, setRalat] = useState<string | null>(null)
@@ -76,6 +77,8 @@ export function Langkah2({ bundel, muatSemula }: PropLangkah) {
         : null
 
   const hari = hariLagi(p.tarikh_mula)
+  const mula = tempat.map(t => tarikhPilihan[t.id]?.dari ?? t.tarikh_dari).filter(Boolean).sort()[0] || ''
+  const tamat = tempat.map(t => tarikhPilihan[t.id]?.hingga ?? t.tarikh_hingga).filter(Boolean).sort().at(-1) || ''
 
   return (
     <>
@@ -240,6 +243,8 @@ export function Langkah2({ bundel, muatSemula }: PropLangkah) {
             </div>
           ))}
 
+          {tempat.length > 0 && <PerjalananLawatan p={p} mula={mula} tamat={tamat} simpan={simpan} />}
+
               {sabtu.length > 0 && (
                   <Mesej jenis="amaran" tajuk="Peringatan tarikh lawatan">
                     {sabtu.map((s) => <p key={s.tarikh}>{s.kedudukan}: {formatTarikh(s.tarikh)} ialah <strong>Sabtu {s.minggu === 1 ? 'pertama' : s.minggu === 3 ? 'ketiga' : 'kelima'} dalam bulan tersebut</strong>.</p>)}
@@ -252,7 +257,7 @@ export function Langkah2({ bundel, muatSemula }: PropLangkah) {
           {tempat.length > 0 && (
             <div className="rounded-lg bg-jata-50 px-4 py-3 text-sm">
               <p className="text-slate-700">
-                <span className="font-medium">Julat tarikh keseluruhan:</span>{' '}
+                <span className="font-medium">Julat tarikh destinasi:</span>{' '}
                 {formatTarikh(p.tarikh_mula)} – {formatTarikh(p.tarikh_tamat)}
               </p>
               {hari !== null && (
