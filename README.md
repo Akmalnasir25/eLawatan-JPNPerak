@@ -441,6 +441,16 @@ tahun) boleh dianonimkan di *Pentadbiran → Sistem*.
 
 ### Kalendar dan Pusat Bantuan
 
+Cuti umum Perak dan cuti sekolah Kumpulan B dipaparkan kuning pada kalendar.
+Panel **Pentadbiran > Kalendar Cuti** menyemak data baharu sebelum diterbitkan.
+Pengambilan tahun semasa dan tahun hadapan disediakan melalui REST
+[Malaysia Calendar API](https://github.com/Junhui20/malaysia-calendar-api),
+Edge Function dan Supabase Cron. Pengaktifan backend sekali masih diperlukan;
+commit kod atau demo pelayar tidak mengaktifkan jadual secara automatik.
+
+- [Sumber API, endpoint dan langkah pengaktifan](infra/CUTI-AUTO.md)
+- [Perubahan, skop, batasan dan bukti ujian kalendar](KALENDAR.md)
+
 `/kalendar` memaparkan lawatan dihantar dan diluluskan dalam skop RLS,
 dengan nombor telefon ketua rombongan. `/bantuan` dan `/privasi` boleh
 dibaca tanpa log masuk.

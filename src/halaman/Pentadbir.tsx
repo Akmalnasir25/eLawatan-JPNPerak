@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import { PanelKalendar } from './PentadbirKalendar'
 import {
   catatAudit,
   importPegawai,
@@ -57,12 +58,15 @@ const TAB = [
   { kod: 'kategori', teks: 'Tetapan & Surat' },
   { kod: 'permohonan', teks: 'Semua Permohonan' },
   { kod: 'sistem', teks: 'Sistem' },
+  { kod: 'kalendar', teks: 'Kalendar Cuti' },
 ] as const
 
 type KodTab = (typeof TAB)[number]['kod']
 
 export function Pentadbir() {
-  const [tab, setTab] = useState<KodTab>('pegawai')
+  const [params, setParams] = useSearchParams()
+  const tab: KodTab = TAB.find((t) => t.kod === params.get('tab'))?.kod ?? 'pegawai'
+  const setTab = (kod: KodTab) => setParams({ tab: kod }, { replace: true })
 
   return (
     <>
@@ -99,6 +103,7 @@ export function Pentadbir() {
       {tab === 'kategori' && <TabKategori />}
       {tab === 'permohonan' && <TabPermohonan />}
       {tab === 'sistem' && <TabSistem />}
+      {tab === 'kalendar' && <PanelKalendar />}
     </>
   )
 }

@@ -142,6 +142,7 @@ export const LABEL_JENIS_SEKOLAH: Record<string, string> = {
 }
 
 export const LABEL_PERISTIWA_AUDIT: Record<string, string> = {
+  CUTI_DISEMAK: 'Semakan data cuti',
   PERMOHONAN_DIHANTAR: 'Permohonan dihantar',
   TINDAKAN_KELULUSAN: 'Tindakan kelulusan',
   KELULUSAN_PINTASAN_PENTADBIR: 'Kelulusan (pintasan pentadbir)',

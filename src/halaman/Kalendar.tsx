@@ -7,6 +7,8 @@ import { formatHari, formatTarikh, kelas, tarikhHariIni, tarikhIso } from '@/lib
 import { KadStatistik, LencanaStatus, Memuat, Mesej } from '@/komponen/ui'
 import { TajukHalaman } from '@/komponen/Rangka'
 import type { Kategori, LawatanKalendar } from '@/lib/jenis'
+import { adaDataCuti, SUMBER_CUTI, TARIKH_SEMAKAN_CUTI } from '@/lib/cuti-kalendar'
+import { bacaCuti, gabungCuti, type CutiDiterima } from '@/lib/cuti-auto'
 
 const BULAN = [
   'Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
@@ -53,16 +55,38 @@ export function Kalendar() {
   const [tapisan, setTapisan] = useState<Tapisan>('semua')
   const [ppd, setPpd] = useState('')
   const [kategori, setKategori] = useState('')
+  const [rekodCuti, setRekodCuti] = useState<CutiDiterima[]>([])
+  const [ralatCuti, setRalatCuti] = useState<string | null>(null)
+  const [memuatCuti, setMemuatCuti] = useState(true)
+  const [cubaanCuti, setCubaanCuti] = useState(0)
 
   const grid = useMemo(() => gridBulan(bulan.tahun, bulan.bulan), [bulan])
+  const tahunDari = Number(grid[0].slice(0, 4))
+  const tahunHingga = Number(grid[grid.length - 1].slice(0, 4))
+  useEffect(() => {
+    let aktif = true
+    setMemuatCuti(true)
+    setRalatCuti(null)
+    bacaCuti(tahunDari, tahunHingga).then((hasil) => {
+      if (aktif) setRekodCuti((lama) => [...lama.filter((c) => c.tahun < tahunDari || c.tahun > tahunHingga), ...hasil])
+    }).catch((e) => { if (aktif) setRalatCuti(e.message) })
+      .finally(() => { if (aktif) setMemuatCuti(false) })
+    return () => { aktif = false }
+  }, [tahunDari, tahunHingga, cubaanCuti])
+  const semuaCuti = useMemo(() => gabungCuti(rekodCuti), [rekodCuti])
+  const cutiPadaTarikh = (tarikh: string) => semuaCuti.filter((c) => c.mula <= tarikh && tarikh <= c.tamat)
+  const jenisBelumAda = (tahun: number) => adaDataCuti(tahun) ? [] : (['umum', 'sekolah'] as const)
+    .filter((jenis) => !rekodCuti.some((c) => c.tahun === tahun && c.jenis === jenis))
 
   useEffect(() => {
+    let aktif = true
     setData(null)
     setRalat(null)
     // Julat grid sentiasa merangkumi hari ini apabila bulan semasa dipapar.
     kalendarLawatan(grid[0], grid[grid.length - 1])
-      .then(setData)
-      .catch((e) => setRalat(e instanceof Error ? e.message : 'Gagal memuatkan kalendar.'))
+      .then((hasil) => { if (aktif) setData(hasil) })
+      .catch((e) => { if (aktif) setRalat(e instanceof Error ? e.message : 'Gagal memuatkan kalendar.') })
+    return () => { aktif = false }
   }, [grid])
 
   const senaraiPpd = useMemo(() => {
@@ -85,6 +109,7 @@ export function Kalendar() {
   const padaHari = (h: string) => tapis.filter((l) => berlangsung(l, h))
   const hariIniSenarai = padaHari(hariIni).filter(diluluskan)
   const dipilih = padaHari(pilih)
+  const cutiDipilih = cutiPadaTarikh(pilih)
   const bulanIni = `${bulan.tahun}-${String(bulan.bulan + 1).padStart(2, '0')}`
   const dalamBulan = tapis.filter(
     (l) => l.tarikh_mula.slice(0, 7) <= bulanIni && (l.tarikh_tamat ?? l.tarikh_mula).slice(0, 7) >= bulanIni,
@@ -182,12 +207,28 @@ export function Kalendar() {
           <span className="h-2.5 w-2.5 rounded-sm border border-dashed border-slate-500" aria-hidden />
           Dalam proses kelulusan
         </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm border border-yellow-400 bg-yellow-100" aria-hidden />
+          Cuti umum Perak / cuti sekolah Kumpulan B
+        </span>
       </div>
+
+      {memuatCuti && <p role="status" className="mb-3 text-sm text-slate-600">Memuatkan kemas kini cuti…</p>}
+      {ralatCuti && <Mesej jenis="ralat">{ralatCuti} Salinan yang tersedia dikekalkan. <button className="underline" type="button" onClick={() => setCubaanCuti((n) => n + 1)}>Cuba lagi</button></Mesej>}
+      {!memuatCuti && jenisBelumAda(bulan.tahun).length > 0 && <p role="status" className="mb-3 text-sm text-slate-600">
+        Data cuti {jenisBelumAda(bulan.tahun).join(' dan ')} tahun {bulan.tahun} belum tersedia dalam sistem. Tarikh tanpa penanda tidak semestinya hari persekolahan.
+      </p>}
+      {!adaDataCuti(bulan.tahun) && rekodCuti.some((c) => c.tahun === bulan.tahun) && <p className="mb-3 text-sm text-slate-600">Hanya rekod yang sudah diterima admin dipaparkan. Senarai cuti tahun ini mungkin belum lengkap.</p>}
+      <details className="mb-4 text-xs text-slate-600">
+        <summary className="w-fit cursor-pointer py-2 underline underline-offset-2">Sumber dan kemas kini cuti</summary>
+        <p className="my-2">Rujukan Perak 2026 disemak pada {formatTarikh(TARIKH_SEMAKAN_CUTI)}. Rekod tambahan daripada API dipaparkan selepas diterima admin. Penanda cuti bukan kelulusan atau larangan lawatan.</p>
+        <ul className="space-y-2">{Object.entries(SUMBER_CUTI).map(([k, s]) => <li key={k}><a href={s.url} target="_blank" rel="noreferrer" className="underline underline-offset-2">{s.nama}</a></li>)}</ul>
+      </details>
 
       {ralat && <Mesej jenis="ralat">{ralat}</Mesej>}
       {!data && !ralat && <Memuat />}
 
-      {data && (
+      {(
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_340px]">
           {/* ── Grid bulan (skrin lebar) ─────────────────────────── */}
           <div className="kad hidden overflow-hidden md:block">
@@ -199,6 +240,7 @@ export function Kalendar() {
             <div className="grid grid-cols-7">
               {grid.map((h) => {
                 const senarai = padaHari(h)
+                const cuti = cutiPadaTarikh(h)
                 const luar = h.slice(0, 7) !== bulanIni
                 return (
                   <button
@@ -206,10 +248,11 @@ export function Kalendar() {
                     type="button"
                     onClick={() => setPilih(h)}
                     aria-pressed={pilih === h}
-                    aria-label={`${formatTarikh(h)}: ${senarai.length} lawatan`}
+                    aria-label={`${formatTarikh(h)}: ${data ? `${senarai.length} lawatan` : 'Data lawatan belum tersedia'}${cuti.length ? `. ${cuti.map((c) => c.nama).join(', ')}` : ''}`}
                     className={kelas(
-                      'flex min-h-[6.5rem] flex-col gap-1 border-b border-r border-slate-100 p-1.5 text-left transition hover:bg-biru-50/40',
-                      luar && 'bg-slate-50/70 text-slate-400',
+                      'flex min-h-[6.5rem] min-w-0 flex-col gap-1 border-b border-r border-slate-100 p-1.5 text-left transition',
+                      cuti.length ? 'bg-yellow-100 hover:bg-yellow-200' : 'hover:bg-biru-50/40',
+                      luar && !cuti.length && 'bg-slate-50/70 text-slate-400',
                       pilih === h && 'ring-2 ring-inset ring-biru-500',
                     )}
                   >
@@ -237,6 +280,9 @@ export function Kalendar() {
                     {senarai.length > 3 && (
                       <span className="text-[0.65rem] font-semibold text-slate-500">+{senarai.length - 3} lagi</span>
                     )}
+                    {cuti.length > 0 && <span className="mt-auto block w-full space-y-1 pt-2 text-[0.65rem] leading-snug text-yellow-950">
+                      {cuti.map((c) => <span key={`${c.jenis}-${c.nama}`} className="block break-words">{c.jenis === 'sekolah' ? `Cuti sekolah: ${c.nama}` : c.nama}</span>)}
+                    </span>}
                   </button>
                 )
               })}
@@ -246,14 +292,16 @@ export function Kalendar() {
           {/* ── Agenda (telefon) ────────────────────────────────── */}
           <div className="space-y-2 md:hidden">
             {grid
-              .filter((h) => h.slice(0, 7) === bulanIni && padaHari(h).length > 0)
+              .filter((h) => h.slice(0, 7) === bulanIni && (padaHari(h).length > 0 || cutiPadaTarikh(h).length > 0))
               .map((h) => (
                 <button
                   key={h}
                   type="button"
                   onClick={() => setPilih(h)}
+                  aria-pressed={pilih === h}
                   className={kelas(
                     'kad flex w-full items-center gap-3 px-4 py-3 text-left',
+                    cutiPadaTarikh(h).length > 0 && '!bg-yellow-100',
                     pilih === h && 'ring-2 ring-biru-500',
                   )}
                 >
@@ -262,13 +310,14 @@ export function Kalendar() {
                   </span>
                   <span className="min-w-0">
                     <span className="block text-sm font-semibold text-jata-900">{formatHari(h)}</span>
-                    <span className="block truncate text-xs text-slate-500">
-                      {padaHari(h).length} lawatan · {padaHari(h).map((l) => l.nama_sekolah).join(', ')}
+                    <span className={kelas('block truncate text-xs', cutiPadaTarikh(h).length ? 'text-yellow-950' : 'text-slate-500')}>
+                      {data ? `${padaHari(h).length} lawatan` : 'Data lawatan belum tersedia'}{padaHari(h).length > 0 && ` · ${padaHari(h).map((l) => l.nama_sekolah).join(', ')}`}
                     </span>
+                    {cutiPadaTarikh(h).map((c) => <span key={`${c.jenis}-${c.nama}`} className="mt-1 block text-xs text-yellow-950">{c.jenis === 'sekolah' ? `Cuti sekolah: ${c.nama}` : c.nama}</span>)}
                   </span>
                 </button>
               ))}
-            {dalamBulan.length === 0 && (
+            {data && dalamBulan.length === 0 && !grid.some((h) => h.slice(0, 7) === bulanIni && cutiPadaTarikh(h).length) && (
               <p className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">
                 Tiada lawatan pada bulan ini.
               </p>
@@ -281,10 +330,18 @@ export function Kalendar() {
               <h2>
                 {formatHari(pilih)}, {formatTarikh(pilih)}
               </h2>
-              <span className="text-xs text-slate-500">{dipilih.length} lawatan</span>
+              <span className="text-xs text-slate-500">{data ? `${dipilih.length} lawatan` : 'Data lawatan belum tersedia'}</span>
             </div>
             <div className="max-h-[70vh] divide-y divide-slate-100 overflow-y-auto">
-              {dipilih.length === 0 && (
+              {cutiDipilih.length > 0 && <div className="space-y-3 bg-yellow-100 px-5 py-3 text-sm text-yellow-950">
+                {cutiDipilih.map((c) => <div key={`${c.jenis}-${c.nama}`}>
+                  <p className="font-semibold">{c.nama}</p>
+                  <p className="text-xs">{c.jenis === 'umum' ? 'Cuti umum Perak' : 'Cuti sekolah Kumpulan B'}{c.mula !== c.tamat && ` · ${formatTarikh(c.mula)} – ${formatTarikh(c.tamat)}`}</p>
+                  <a href={SUMBER_CUTI[c.sumber].url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs underline underline-offset-2">{c.sumber === 'api' ? 'Sumber API · diterima admin' : 'Rujukan rasmi'}</a>
+                </div>)}
+              </div>}
+              {jenisBelumAda(Number(pilih.slice(0, 4))).length > 0 && <p className="px-5 py-3 text-sm text-slate-600">Sebahagian data cuti tahun ini belum tersedia.</p>}
+              {data && dipilih.length === 0 && (
                 <p className="px-5 py-8 text-center text-sm text-slate-500">Tiada lawatan pada hari ini.</p>
               )}
               {dipilih.map((l) => (
